@@ -6,3 +6,4 @@
 ## Planned Features
   - Pausing Re-write.
   - Official Matchmaking.
+  - Official SM 1.10 Support.
