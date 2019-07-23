@@ -69,6 +69,7 @@ ConVar g_MaxPausesCvar;
 ConVar g_MaxPauseTimeCvar;
 ConVar g_MessagePrefixCvar;
 ConVar g_PausingEnabledCvar;
+ConVar g_PauseModeCvar;
 ConVar g_ResetPausesEachHalfCvar;
 ConVar g_ServerIdCvar;
 ConVar g_SetClientClanTagCvar;
@@ -299,6 +300,7 @@ public void OnPluginStart() {
       CreateConVar("get5_reset_pauses_each_half", "1",
                    "Whether pause limits will be reset each halftime period");
   g_PausingEnabledCvar = CreateConVar("get5_pausing_enabled", "1", "Whether pausing is allowed.");
+  g_PauseModeCvar = CreateConVar("get5_pause_mode", "", "Which pause mode to use. Faceit: Uses timer set by get5_max_pause_time. Valve: Uses valves pausing. See repo for settings. \"\" Default will use Get5's pausing.");
   g_ServerIdCvar = CreateConVar(
       "get5_server_id", "0",
       "Integer that identifies your server. This is used in temp files to prevent collisions.");
