@@ -2,15 +2,15 @@
 
 ## Status
 - Get5 - Newly Forked.
+- Pausing system rewritten to allow 3 different styles of pause systems.
 
 ## Planned Features
   - Remove ready system, start once all players join.
-  - Remove vetos, just load the correct map.
-  - Pausing Re-write.
+  - Remove vetos, just load the correct map. 
   - Official Matchmaking.
   - Official SM 1.10 Support.
 
-### Pause System
+## Pause System
 This section will discuss about the Pause system which is a bit different from the default Get5 pausing system.
 
 This pause system has 3 modes:
