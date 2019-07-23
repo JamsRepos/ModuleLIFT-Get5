@@ -4,6 +4,8 @@
 - Get5 - Newly Forked.
 
 ## Planned Features
+  - Remove ready system, start once all players join.
+  - Remove vetos, just load the correct map.
   - Pausing Re-write.
   - Official Matchmaking.
   - Official SM 1.10 Support.
