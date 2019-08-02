@@ -79,6 +79,7 @@ ConVar g_StopCommandEnabledCvar;
 ConVar g_TeamTimeToKnifeDecisionCvar;
 ConVar g_TeamTimeToStartCvar;
 ConVar g_TimeFormatCvar;
+ConVar g_voteMode;
 ConVar g_VetoConfirmationTimeCvar;
 ConVar g_VetoCountdownCvar;
 ConVar g_WarmupCfgCvar;
@@ -324,6 +325,7 @@ public void OnPluginStart() {
   g_TimeFormatCvar = CreateConVar(
       "get5_time_format", "%Y-%m-%d_%H",
       "Time format to use when creating file names. Don't tweak this unless you know what you're doing! Avoid using spaces or colons.");
+  g_voteMode = CreateConVar("get5_votemode", "", "Which team voting system. ESEA: The players vote for the team they want to be on. Default: Captain will use !switch or !stay");
   g_VetoConfirmationTimeCvar = CreateConVar(
       "get5_veto_confirmation_time", "2.0",
       "Time (in seconds) from presenting a veto menu to a selection being made, during which a confirmation will be required, 0 to disable");
@@ -349,20 +351,21 @@ public void OnPluginStart() {
   /** Client commands **/
   g_ChatAliases = new ArrayList(ByteCountToCells(ALIAS_LENGTH));
   g_ChatAliasesCommands = new ArrayList(ByteCountToCells(COMMAND_LENGTH));
-  AddAliasedCommand("ready", Command_Ready, "Marks the client as ready");
-  AddAliasedCommand("unready", Command_NotReady, "Marks the client as not ready");
-  AddAliasedCommand("notready", Command_NotReady, "Marks the client as not ready");
-  AddAliasedCommand("forceready", Command_ForceReadyClient, "Force marks clients team as ready");
   AddAliasedCommand("tech", Command_TechPause, "Calls for a tech pause");
   AddAliasedCommand("pause", Command_Pause, "Pauses the game");
   AddAliasedCommand("unpause", Command_Unpause, "Unpauses the game");
   AddAliasedCommand("coach", Command_SmCoach, "Marks a client as a coach for their team");
+
+  // Default voting commands
   AddAliasedCommand("stay", Command_Stay,
                     "Elects to stay on the current team after winning a knife round");
   AddAliasedCommand("swap", Command_Swap,
                     "Elects to swap the current teams after winning a knife round");
+  
+  // If ESEA vote mode is enabled. These commands will be used.
   AddAliasedCommand("t", Command_T, "Elects to start on T side after winning a knife round");
   AddAliasedCommand("ct", Command_Ct, "Elects to start on CT side after winning a knife round");
+
   AddAliasedCommand("stop", Command_Stop, "Elects to stop the game to reload a backup file");
 
   /** Admin/server commands **/

@@ -66,7 +66,77 @@ static bool AwaitingKnifeDecision(int client) {
   return waiting && (onWinningTeam || admin);
 }
 
+public Action Command_VoteCT(int client, int args) {
+  GetConVarString(g_voteMode, voteMode, sizeof(voteMode));
+  if (StrEqual(pauseMode, "ESEA", false)) {
+    if (AwaitingKnifeDecision(client)) {
+      if (g_bVoteStart && g_bPlayerCanVote[client]) {
+        g_bPlayerCanVote[client] = false;
+        g_iVoteCTs++;
+        Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "TeamVoteCT");
+
+        bool runFinal = true;
+        for (int i = 1; i <= MaxClients; i++) {
+          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) {
+            runFinal = false;
+          }
+        }
+
+        if (runFinal) {
+          HandleVotes();
+        }
+      } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } else {
+        return Plugin_Stop;
+      }
+    }
+
+    return Plugin_Handled;
+  }
+  else {
+    return Plugin_Stop;
+  }
+}
+
+public Action Command_VoteT(int client, int args) {
+  GetConVarString(g_voteMode, voteMode, sizeof(voteMode));
+  if (StrEqual(voteMode, "ESEA", false)) {
+    if (AwaitingKnifeDecision(client)) {
+      if (g_bVoteStart && g_bPlayerCanVote[client]) {
+        g_bPlayerCanVote[client] = false;
+        g_iVoteTs++;
+        Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "TeamVoteT");
+
+        bool runFinal = true;
+        for (int i = 1; i <= MaxClients; i++) {
+          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) {
+            runFinal = false;
+          }
+        }
+
+        if (runFinal) {
+          HandleVotes();
+        }
+      } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } else {
+        return Plugin_Stop;
+      }
+    }
+    else {
+      return Plugin_Stop;
+    }
+  else {
+    return Plugin_Stop;
+  }
+}
+
 public Action Command_Stay(int client, int args) {
+  if (voteMode == "ESEA") {
+    return Plugin_Stop;
+  }
+
   if (AwaitingKnifeDecision(client)) {
     EndKnifeRound(false);
     Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage",
@@ -76,6 +146,10 @@ public Action Command_Stay(int client, int args) {
 }
 
 public Action Command_Swap(int client, int args) {
+  if (voteMode == "ESEA") {
+    return Plugin_Stop;
+  }
+
   if (AwaitingKnifeDecision(client)) {
     EndKnifeRound(true);
     Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage",
@@ -83,31 +157,6 @@ public Action Command_Swap(int client, int args) {
   } else if (g_GameState == Get5State_Warmup && g_InScrimMode &&
              GetClientMatchTeam(client) == MatchTeam_Team1) {
     PerformSideSwap(true);
-  }
-  return Plugin_Handled;
-}
-
-public Action Command_Ct(int client, int args) {
-  if (IsPlayer(client)) {
-    if (GetClientTeam(client) == CS_TEAM_CT)
-      FakeClientCommand(client, "sm_stay");
-    else if (GetClientTeam(client) == CS_TEAM_T)
-      FakeClientCommand(client, "sm_swap");
-  }
-
-  LogDebug("cs team = %d", GetClientTeam(client));
-  LogDebug("m_iCoachingTeam = %d", GetEntProp(client, Prop_Send, "m_iCoachingTeam"));
-  LogDebug("m_iPendingTeamNum = %d", GetEntProp(client, Prop_Send, "m_iPendingTeamNum"));
-
-  return Plugin_Handled;
-}
-
-public Action Command_T(int client, int args) {
-  if (IsPlayer(client)) {
-    if (GetClientTeam(client) == CS_TEAM_T)
-      FakeClientCommand(client, "sm_stay");
-    else if (GetClientTeam(client) == CS_TEAM_CT)
-      FakeClientCommand(client, "sm_swap");
   }
   return Plugin_Handled;
 }
