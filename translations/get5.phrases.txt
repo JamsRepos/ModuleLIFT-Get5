@@ -377,4 +377,16 @@
         "#format"       "{1:i}"
         "en"        "Veto commencing in {GREEN}{1} {NORMAL}seconds."
     }
+    "VoteHasAlreadyCasted"
+    {
+        "en"        "You have already voted for a side."
+    }
+    "TeamVoteT"
+    {
+        "en"        "Vote recorded for the Terrorist team."
+    }
+    "TeamVoteCT"
+    {
+        "en"        "Vote recorded for the Counter-Terrorist team."
+    }
 }
