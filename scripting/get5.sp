@@ -202,6 +202,13 @@ Handle g_OnRoundStatsUpdated = INVALID_HANDLE;
 Handle g_OnSeriesInit = INVALID_HANDLE;
 Handle g_OnSeriesResult = INVALID_HANDLE;
 
+/** Team Voting **/
+bool g_bVoteStart = false;
+int g_iVoteCts = 0;
+int g_iVoteTs = 0;
+bool g_bPlayerCanVote[MAXPLAYERS + 1] = {true, ...};
+Handle g_bSideVoteTimer = null;
+
 #include "get5/util.sp"
 #include "get5/version.sp"
 
@@ -512,7 +519,14 @@ public Action Timer_InfoMessages(Handle timer) {
   }
 
   // Handle waiting for knife decision
+  
   if (g_GameState == Get5State_WaitingForKnifeRoundDecision) {
+    if (g_voteMode == "ESEA") {
+      Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage");
+      g_bVoteStart = true;
+      CreateTimer(15.0, Timer_VoteSide);
+    }
     Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",
                       g_FormattedTeamNames[g_KnifeWinnerTeam]);
   }

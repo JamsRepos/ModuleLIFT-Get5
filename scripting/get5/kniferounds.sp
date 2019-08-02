@@ -66,6 +66,7 @@ static bool AwaitingKnifeDecision(int client) {
   return waiting && (onWinningTeam || admin);
 }
 
+/** ESEA Vote Commands **/
 public Action Command_VoteCT(int client, int args) {
   GetConVarString(g_voteMode, voteMode, sizeof(voteMode));
   if (StrEqual(pauseMode, "ESEA", false)) {
@@ -132,7 +133,46 @@ public Action Command_VoteT(int client, int args) {
   }
 }
 
+public Action Timer_VoteSide(Handle timer) {
+  HandleVotes();
+}
+
+void HandleVotes() {
+  delete g_bSideVoteTimer;
+
+  int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
+
+  if (g_iVoteCts > g_iVoteTs) {
+    if (winner == CS_TEAM_CT) {
+      Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      EndKnifeRound(false);
+    } else if (winner == CS_TEAM_T) {
+      Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      EndKnifeRound(true);
+    }
+  } else if (g_iVoteTs > g_iVoteCts) {
+    if (winner == CS_TEAM_T) {
+      Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      EndKnifeRound(false);
+    } else if (winner == CS_TEAM_CT) {
+      Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      EndKnifeRound(true);
+    }
+  } else {
+    EndKnifeRound(false);
+  }
+
+  g_bVoteStart = false;
+  g_iVoteCts = 0;
+  g_iVoteTs = 0;
+
+  for (int i = 1; i <= MaxClients; i++) {
+    g_bPlayerCanVote[i] = true;
+  }
+}
+/** Default Vote Commands **/
 public Action Command_Stay(int client, int args) {
+  GetConVarString(g_voteMode, voteMode, sizeof(voteMode));
   if (voteMode == "ESEA") {
     return Plugin_Stop;
   }
@@ -146,6 +186,7 @@ public Action Command_Stay(int client, int args) {
 }
 
 public Action Command_Swap(int client, int args) {
+  GetConVarString(g_voteMode, voteMode, sizeof(voteMode));
   if (voteMode == "ESEA") {
     return Plugin_Stop;
   }
