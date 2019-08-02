@@ -10,7 +10,8 @@
   - Official Matchmaking.
   - Official SM 1.10 Support.
 
-## Pause System
+## New Features
+### Pause System
 This section will discuss about the Pause system which is a bit different from the default Get5 pausing system.  
 
 This pause system has 3 modes:
@@ -26,3 +27,8 @@ how this pause system works.
 - Faceit pausing system: This pause system was supposed to be designed within Get5 originally but it didn't work correctly, so it was revamped. This pause system requires tweaking of the ``get5_max_pause_time``. This is how long a player can pause in the match.  
 
 To use this system you will need to edit the ``get5_pause_mode`` within the config to either "Faceit", "Valve" or if left blank will default to Get5 pausing mode. 
+
+### Team Voting system
+This section will discuss about the team voting system which implements the ESEA way of voting as well as keeping the standard way of voting from captains.
+
+This section is to be written.
