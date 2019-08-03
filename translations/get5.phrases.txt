@@ -389,4 +389,14 @@
     {
         "en"        "Vote recorded for the Counter-Terrorist team."
     }
+    "WaitingForEnemyVoteInfoMessage"
+    {
+        "#format"       "{1:s}"
+        "en"            "{1} won the knife round and will now choose sides."
+    }
+    "VoteMessage"
+    {
+        "#format"       "{1:.0f}"
+        "en"        "Say t or ct in the next {1} seconds to vote for your starting side."
+    }
 }

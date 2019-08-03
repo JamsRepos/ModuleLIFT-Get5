@@ -521,16 +521,12 @@ public Action Timer_InfoMessages(Handle timer) {
   // Handle waiting for knife decision
   
   if (g_GameState == Get5State_WaitingForKnifeRoundDecision) {
-    // If we are in ESEA Voting mode.
     GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
     if (StrEqual(voteMode, "ESEA", false)) {
       Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
-      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage");
-      g_bVoteStart = true;
-      CreateTimer(15.0, Timer_VoteSide);
+    } else {
+      Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
     }
-    Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",
-                      g_FormattedTeamNames[g_KnifeWinnerTeam]);
   }
 
   // Handle postgame
@@ -587,6 +583,14 @@ public void OnClientPutInServer(int client) {
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs) {
   if (StrEqual(command, "say") && g_GameState != Get5State_None) {
     EventLogger_ClientSay(client, sArgs);
+  }
+
+  if ((StrEqual(command, "say") || StrEqual(command, "say_team")) && g_GameState == Get5State_WaitingForKnifeRoundDecision) {
+    if (StrEqual(sArgs, "ct", false)) {
+      FakeClientCommand(client, "sm_ct");
+    } else if (StrEqual(sArgs, "t", false)) {
+      FakeClientCommand(client, "sm_t");
+    }
   }
   CheckForChatAlias(client, command, sArgs);
 }
@@ -1188,11 +1192,17 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     }
 
     g_KnifeWinnerTeam = CSTeamToMatchTeam(winningCSTeam);
-    Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",
-                      g_FormattedTeamNames[g_KnifeWinnerTeam]);
-
-    if (g_TeamTimeToKnifeDecisionCvar.FloatValue > 0)
-      CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_ForceKnifeDecision);
+    GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
+    if (StrEqual(voteMode, "ESEA", false)) {
+      Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
+      g_bVoteStart = true;
+      CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_VoteSide);
+    } else {
+      Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      if (g_TeamTimeToKnifeDecisionCvar.FloatValue > 0)
+        CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_ForceKnifeDecision);
+    }
   }
 
   if (g_GameState == Get5State_Live) {
