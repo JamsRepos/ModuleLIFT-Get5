@@ -79,7 +79,7 @@ ConVar g_StopCommandEnabledCvar;
 ConVar g_TeamTimeToKnifeDecisionCvar;
 ConVar g_TeamTimeToStartCvar;
 ConVar g_TimeFormatCvar;
-ConVar g_voteMode;
+ConVar g_voteModeCvar;
 ConVar g_VetoConfirmationTimeCvar;
 ConVar g_VetoCountdownCvar;
 ConVar g_WarmupCfgCvar;
@@ -204,7 +204,7 @@ Handle g_OnSeriesResult = INVALID_HANDLE;
 
 /** Team Voting **/
 bool g_bVoteStart = false;
-int g_iVoteCts = 0;
+int g_iVoteCTs = 0;
 int g_iVoteTs = 0;
 bool g_bPlayerCanVote[MAXPLAYERS + 1] = {true, ...};
 Handle g_bSideVoteTimer = null;
@@ -332,7 +332,7 @@ public void OnPluginStart() {
   g_TimeFormatCvar = CreateConVar(
       "get5_time_format", "%Y-%m-%d_%H",
       "Time format to use when creating file names. Don't tweak this unless you know what you're doing! Avoid using spaces or colons.");
-  g_voteMode = CreateConVar("get5_votemode", "", "Which team voting system. ESEA: The players vote for the team they want to be on. Default: Captain will use !switch or !stay");
+  g_voteModeCvar = CreateConVar("get5_votemode", "", "Which team voting system. ESEA: The players vote for the team they want to be on. Default: Captain will use !switch or !stay");
   g_VetoConfirmationTimeCvar = CreateConVar(
       "get5_veto_confirmation_time", "2.0",
       "Time (in seconds) from presenting a veto menu to a selection being made, during which a confirmation will be required, 0 to disable");
@@ -370,8 +370,8 @@ public void OnPluginStart() {
                     "Elects to swap the current teams after winning a knife round");
   
   // If ESEA vote mode is enabled. These commands will be used.
-  AddAliasedCommand("t", Command_T, "Elects to start on T side after winning a knife round");
-  AddAliasedCommand("ct", Command_Ct, "Elects to start on CT side after winning a knife round");
+  AddAliasedCommand("t", Command_VoteT, "Elects to start on T side after winning a knife round");
+  AddAliasedCommand("ct", Command_VoteCT, "Elects to start on CT side after winning a knife round");
 
   AddAliasedCommand("stop", Command_Stop, "Elects to stop the game to reload a backup file");
 
@@ -521,7 +521,9 @@ public Action Timer_InfoMessages(Handle timer) {
   // Handle waiting for knife decision
   
   if (g_GameState == Get5State_WaitingForKnifeRoundDecision) {
-    if (g_voteMode == "ESEA") {
+    // If we are in ESEA Voting mode.
+    GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
+    if (StrEqual(voteMode, "ESEA", false)) {
       Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage");
       g_bVoteStart = true;
