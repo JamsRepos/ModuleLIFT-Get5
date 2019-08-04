@@ -58,6 +58,8 @@ char Q_GET_PLAYER[] = "SELECT * FROM `statistics` WHERE `steamid` = '%s'";
 ArrayList g_hQueuedQueries = null;
 Database g_hThreadedDb = null;
 
+char g_iNextHitgroup[MAXPLAYERS+1];
+
 methodmap QueuedQuery < StringMap
 {
 	public QueuedQuery(const char[] steamid64)
@@ -423,9 +425,10 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
 	g_hQueuedQueries = new ArrayList();
-	Database.Connect(OnDbConnect, "BasicPlayerStats");
+	Database.Connect(OnDbConnect, "BasicPlayerStats-DEV");
 	
 	HookEvent("weapon_fire", Event_PlayerShoot);
+	HookEvent("player_hurt", Event_PlayerHurt);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("round_end", Event_RoundEnd);
 }
@@ -457,8 +460,6 @@ public void OnClientPostAdminCheck(int client)
 	
 	g_hPlayers[client] = new PlayerStatsTracker(client);
 	g_hPlayers[client].insertToDb(false);
-	//SDKHook(client, SDKHook_FireBulletsPost, FireBulletsPost);
-	SDKHook(client, SDKHook_TraceAttackPost, TraceAttackPost);
 }
 
 public void OnClientDisconnect(int client)
@@ -479,11 +480,12 @@ public void OnClientDisconnect(int client)
 	}
 	g_hPlayers[client].updateToDb(true);
 	//SDKUnhook(client, SDKHook_FireBulletsPost, FireBulletsPost);
-	SDKUnhook(client, SDKHook_TraceAttackPost, TraceAttackPost);
+	// SDKUnhook(client, SDKHook_TraceAttackPost, TraceAttackPost);
 	delete g_hPlayers[client];
 	
 }
 
+// This works fine.
 public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadcast)
 {
 	int userid = event.GetInt("userid");
@@ -510,6 +512,51 @@ public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadca
 		}
 	}
 	return Plugin_Continue;
+}
+
+public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)  {
+	int victimid = event.GetInt("userid");
+	int attackerid = event.GetInt("attacker");
+	int assisterid = event.GetInt("assister");
+	int victim = GetClientOfUserId(victimid);
+	int attacker = GetClientOfUserId(attackerid);
+	int assister = GetClientOfUserId(assisterid);
+
+	int hitgroup = GetEventInt(event, "hitgroup");
+
+	if (attacker && (VALIDPLAYER(attacker) || DEBUG))
+	{
+		int aid = GetClientUserId(attacker);
+		if (g_hPlayers[attacker] != null && g_hPlayers[attacker].isPlayersStats(aid))
+		{
+			g_hPlayers[attacker].incrementHits();
+			Call_StartForward(g_hOnPlayerHit);
+			Call_PushCell(victim);
+			Call_PushCell(attacker);
+			//Call_PushFloat(damage);
+			Call_Finish();
+			
+			if (DEBUG)
+			{
+				PrintToServer("Attacker %d hit victim %d.", attacker, victim);
+			}
+			
+			if (GetClientHealth(victim) <= 0 && hitgroup == 1)
+			{
+				g_hPlayers[attacker].incrementHeadshots();
+				Call_StartForward(g_hOnHeadShot);
+				Call_PushCell(victim);
+				Call_PushCell(attacker);
+				Call_Finish();
+				
+				if (DEBUG)
+				{
+					PrintToServer("Attacker %d headshot victim %d.", attacker, victim);
+				}
+				
+			}
+		}
+	}
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -662,42 +709,43 @@ public void FireBulletsPost(int client, int shots, const char[] weaponname)
 	}
 }
 */
-public void TraceAttackPost(int victim, int attacker, int inflictor, float damage, int damagetype, int ammotype, int hitbox, int hitgroup)
-{
-	if (attacker && (VALIDPLAYER(attacker) || DEBUG))
-	{
-		int aid = GetClientUserId(attacker);
-		if (g_hPlayers[attacker] != null && g_hPlayers[attacker].isPlayersStats(aid))
-		{
-			g_hPlayers[attacker].incrementHits();
-			Call_StartForward(g_hOnPlayerHit);
-			Call_PushCell(victim);
-			Call_PushCell(attacker);
-			Call_PushFloat(damage);
-			Call_Finish();
-			
-			if (DEBUG)
-			{
-				PrintToServer("Attacker %d hit victim %d.", attacker, victim);
-			}
-			
-			if (hitbox == 0)
-			{
-				g_hPlayers[attacker].incrementHeadshots();
-				Call_StartForward(g_hOnHeadShot);
-				Call_PushCell(victim);
-				Call_PushCell(attacker);
-				Call_Finish();
+	// public void TraceAttackPost(int victim, int attacker, int inflictor, float damage, int damagetype, int ammotype, int hitbox, int hitgroup)
+	// {
+	// 	if (attacker && (VALIDPLAYER(attacker) || DEBUG))
+	// 	{
+	// 		hitgroup = g_iNextHitgroup[victim];
+	// 		int aid = GetClientUserId(attacker);
+	// 		if (g_hPlayers[attacker] != null && g_hPlayers[attacker].isPlayersStats(aid))
+	// 		{
+	// 			g_hPlayers[attacker].incrementHits();
+	// 			Call_StartForward(g_hOnPlayerHit);
+	// 			Call_PushCell(victim);
+	// 			Call_PushCell(attacker);
+	// 			Call_PushFloat(damage);
+	// 			Call_Finish();
 				
-				if (DEBUG)
-				{
-					PrintToServer("Attacker %d headshot victim %d.", attacker, victim);
-				}
+	// 			if (DEBUG)
+	// 			{
+	// 				PrintToServer("Attacker %d hit victim %d.", attacker, victim);
+	// 			}
 				
-			}
-		}
-	}
-}
+	// 			if (GetClientHealth(victim) <= 0 && hitgroup == 1)
+	// 			{
+	// 				g_hPlayers[attacker].incrementHeadshots();
+	// 				Call_StartForward(g_hOnHeadShot);
+	// 				Call_PushCell(victim);
+	// 				Call_PushCell(attacker);
+	// 				Call_Finish();
+					
+	// 				if (DEBUG)
+	// 				{
+	// 					PrintToServer("Attacker %d headshot victim %d.", attacker, victim);
+	// 				}
+					
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
