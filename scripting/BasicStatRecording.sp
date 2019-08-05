@@ -59,6 +59,7 @@ ArrayList g_hQueuedQueries = null;
 Database g_hThreadedDb = null;
 
 char g_iNextHitgroup[MAXPLAYERS+1];
+int g_iPlayTime[MAXPLAYERS+1] = 0;
 
 methodmap QueuedQuery < StringMap
 {
@@ -136,7 +137,7 @@ methodmap PlayerStatsTracker < StringMap
 		playerstats.SetValue("headshots", 0);
 		playerstats.SetValue("points", 0);
 		playerstats.SetValue("lastconnect", GetTime());
-		playerstats.SetValue("connectiontime", 0);
+		playerstats.SetValue("totaltime", 0);
 		
 		return view_as<PlayerStatsTracker>(playerstats);
 	}
@@ -303,6 +304,7 @@ methodmap PlayerStatsTracker < StringMap
 		char ipaddress[32];
 		char playername[32];
 		int lastconnect;
+		int totaltime;
 		DataPack dp = new DataPack();
 		this.GetString("id64", STRING(id64));
 		this.GetString("ip", STRING(ipaddress));
@@ -323,7 +325,7 @@ methodmap PlayerStatsTracker < StringMap
 		char ipaddress[32];
 		char playername[32];
 		int kills, deaths, assists, triplekill, quadrakill, pentakill, roundswon, roundslost, matcheswon, matcheslost, matchestied, shots, hits, headshots, 
-		points, lastconnect;
+		points, lastconnect, time;
 		DataPack dp = new DataPack();
 		this.GetString("id64", STRING(id64));
 		this.GetString("ip", STRING(ipaddress));
@@ -344,18 +346,19 @@ methodmap PlayerStatsTracker < StringMap
 		this.GetValue("headshots", headshots);
 		this.GetValue("points", points);
 		this.GetValue("lastconnect", lastconnect);
+		this.GetValue("time", time);
 		
 		dp.WriteCell(close);
 		dp.WriteCell(this);
 		
 		int uid; this.GetValue("uid", uid);
 		int client = GetClientOfUserId(uid);
-		float time = 0.0;
 		if (close)
 		{
 			if (client != INVALID_ENT_REFERENCE && !(StrContains(id64, "BOT") != -1 || StrContains(id64, "INVALID") != -1))
 			{
-				time = GetClientTime(client);
+				time = g_iPlayTime[client];
+				PrintToServer("Time on server: %i", time);
 			}
 		}
 		
@@ -460,6 +463,15 @@ public void OnClientPostAdminCheck(int client)
 	
 	g_hPlayers[client] = new PlayerStatsTracker(client);
 	g_hPlayers[client].insertToDb(false);
+	CreateTimer(1.0, PlayTimeTimer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
+}
+
+public Action PlayTimeTimer(Handle timer) {
+	for (int i = 1; i <= MaxClients; i++) {
+		if (IsClientInGame(i)){
+			++g_iPlayTime[i];
+		}
+	}
 }
 
 public void OnClientDisconnect(int client)
