@@ -28,6 +28,7 @@ ConVar g_CVEmbedColour;
 ConVar g_CVEmbedAvatar;
 ConVar g_CVServerIp;
 ConVar g_CVWebsocketPass;
+ConVar g_CVLeagueID;
 
 ArrayList ga_sWinningPlayers;
 ArrayList ga_iEndMatchVotesT;
@@ -56,7 +57,7 @@ public Plugin myinfo =
 public void OnPluginStart()
 {
 
-    Database.Connect(AttemptMySQLConnection, "sql_matches"); /* This has changed  */
+    Database.Connect(AttemptMySQLConnection, "sql_matches");
 	//Create Timer
 	// CreateTimer(1.0, AttemptMySQLConnection);
 
@@ -65,7 +66,7 @@ public void OnPluginStart()
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("weapon_fire", Event_WeaponFired);
 	HookEvent("player_hurt", Event_PlayerHurt);
-    HookEvent("announce_phase_end", Event_HalfTime); /* This has changed  */
+	HookEvent("announce_phase_end", Event_HalfTime);
 
 	//ConVars
 	g_CVSiteURL = CreateConVar("sm_site_url", "", "Website url for viewing scores", FCVAR_PROTECTED);
@@ -73,7 +74,9 @@ public void OnPluginStart()
 	g_CVEmbedAvatar = CreateConVar("sm_embed_avatar", "https://i.imgur.com/Y0J4yzv.png", "Avatar to use for webhook", FCVAR_PROTECTED);
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
 	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "jf8u689shgfds", "pass for websocket");
-	
+	g_CVLeagueID = CreateConVar("sqlmatch_leagueid", "", "League identifier used for renting purposes.", FCVAR_PROTECTED);
+
+	AutoExecConfig(true, "sqlmatch");
 	//Initalize ArrayLists
 	ga_sWinningPlayers = new ArrayList(64);
 	ga_iEndMatchVotesT = new ArrayList();
@@ -181,14 +184,17 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 	if(oldState == Get5State_GoingLive && newState == Get5State_Live)
 	{
 		char sQuery[1024], sMap[64];
+		char sRegion[32], sLeagueID[32];
+		GetConVarString(FindConVar("stats_serverregion"), sRegion, sizeof(sRegion));
+		g_CVLeagueID.GetString(sLeagueID, sizeof(sLeagueID));
 		GetCurrentMap(sMap, sizeof(sMap));
 		for(int i = 1; i <= MaxClients; i++)
 			if(IsValidClient(i, true))
 				ResetVars(i);
         
-        int teamIndex_T = -1, teamIndex_CT = -1;
-
-        int index = -1;
+		int teamIndex_T = -1, teamIndex_CT = -1;
+		
+		int index = -1;
         while ((index = FindEntityByClassname(index, "cs_team_manager")) != -1)
         {
             int teamNum = GetEntProp(index, Prop_Send, "m_iTeamNum");
@@ -206,7 +212,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
         GetEntPropString(teamIndex_T, Prop_Send, "m_szClanTeamname", teamName_T, 32);
         char teamName_CT[32];
         GetEntPropString(teamIndex_CT, Prop_Send, "m_szClanTeamname", teamName_CT, 32);
-
+		
 		int ip[4];
 		char pieces[4][8], sIP[32], sPort[32];
 		FindConVar("hostport").GetString(sPort, sizeof(sPort));
@@ -219,7 +225,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
 
-		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (team_t, team_ct,team_1_name,team_2_name, map, live, server) VALUES (%i, %i,'%s','%s', '%s', 1, '%s');", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sIP);
+		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES (%i, %i,'%s','%s', '%s', 1, '%s');", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 		UpdatePlayerStats();
 	}
@@ -271,7 +277,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	
 	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
-	char sData[1024], sPort[16], sQuery[1024], sEncodedData[1024], sIP[32], sPass[128];
+	char sData[1024], sPort[16], sQuery[1024], sIP[32], sPass[128];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
@@ -381,7 +387,7 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 			GetClientAuthId(i, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
 
 			int len = 0;
-			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches_tet (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
+			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
 			len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i], sTeamName);
 			len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i]);	
 			txn_UpdateStats.AddQuery(sQuery);
@@ -414,7 +420,7 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 	len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
 	len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);
 	len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);	
-    g_Database.Query(SQL_GenericQuery, sQuery);
+	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
 public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] results, any[] queryData)
