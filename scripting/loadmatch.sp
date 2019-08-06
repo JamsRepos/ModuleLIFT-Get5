@@ -363,6 +363,8 @@ public Action Timer_IdleCheck(Handle timer)
     if(iTime >= 600)
     {
         ServerCommand("get5_endmatch");
+		ChangeState(Get5State_Cancelled)
+
         UpdateMatchStatus();
 
         for(int i = 1; i <= MaxClients; i++)
