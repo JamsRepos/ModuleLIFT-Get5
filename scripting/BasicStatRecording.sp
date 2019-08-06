@@ -442,7 +442,7 @@ public void OnPluginStart()
 	g_hQueuedQueries = new ArrayList();
 	Database.Connect(OnDbConnect, "BasicPlayerStats-DEV");
 
-	g_serverRegion = CreateConVar("stats_serverregion", "N/A", "Which region the players are playing on. NA = North America, EU= Europe, OCE = Ocenaic");
+	g_serverRegion = CreateConVar("sm_region", "N/A", "Which region the players are playing on. NA = North America, EU= Europe, OCE = Ocenaic");
 	AutoExecConfig(true, "stats");
 	HookEvent("weapon_fire", Event_PlayerShoot);
 	HookEvent("player_hurt", Event_PlayerHurt);

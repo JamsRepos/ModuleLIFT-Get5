@@ -185,7 +185,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 	{
 		char sQuery[1024], sMap[64];
 		char sRegion[32], sLeagueID[32];
-		GetConVarString(FindConVar("stats_serverregion"), sRegion, sizeof(sRegion));
+		GetConVarString(FindConVar("sm_region"), sRegion, sizeof(sRegion));
 		g_CVLeagueID.GetString(sLeagueID, sizeof(sLeagueID));
 		GetCurrentMap(sMap, sizeof(sMap));
 		for(int i = 1; i <= MaxClients; i++)
