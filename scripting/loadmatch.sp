@@ -47,7 +47,7 @@ public void OnPluginStart()
 	AddCommandListener(Listener_Stop, "kill");
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
-	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	CreateTimer(1.0, Timer_ConnectionTimer, TIMER_REPEAT);
 }
 
 /* Core calculations */
