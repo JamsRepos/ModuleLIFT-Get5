@@ -47,7 +47,7 @@ public void OnPluginStart()
 	AddCommandListener(Listener_Stop, "kill");
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
-	CreateTimer(1.0, Timer_ConnectionTimer, TIMER_REPEAT);
+	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 }
 
 /* Core calculations */
@@ -152,8 +152,8 @@ static void CheckWaitingTimes() {
 
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
-
-		if (timeLeft <= 0.0) {
+		
+		if (timeLeft <= 0) {
 			ServerCommand("get5_endmatch");
 			UpdateMatchStatus();
 			for(int i = 1; i <= MaxClients; i++) {
