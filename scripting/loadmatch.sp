@@ -31,7 +31,6 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-	Database.Connect(SQL_InitialConnection, "sql_matches");
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
 	//HookEvent("player_spawn", Event_PlayerSpawn);
@@ -48,6 +47,11 @@ public void OnPluginStart()
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+}
+
+public void OnConfigsExecuted()
+{
+	Database.Connect(SQL_InitialConnection, "sql_matches");
 }
 
 /* Core calculations */
@@ -152,7 +156,7 @@ static void CheckWaitingTimes() {
 
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
-		
+
 		if (timeLeft <= 0) {
 			ServerCommand("get5_endmatch");
 			UpdateMatchStatus();
@@ -217,28 +221,20 @@ public void OnClientPutInServer(int Client)
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
 
-	for(int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i)) continue;
-		g_ConnectCount++;
-	}
 	if (IsEveryoneReady()) {
 		PrintToChatAll("%s All players have connected. Match will start in 30 seconds.", ChatTag);
 		EndWarmup(30);
 		CreateTimer(25.0, Timer_StartMatch);
 	}
 	else {
-		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - g_ConnectCount);
+		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - GetRealClientCount());
 	}
 }
 
 public void OnClientDisconnect(int Client) {
 	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	SetClientReady(Client, false);
-	for (int i = 1; i <= MaxClients; i++) {
-		if (!IsValidClient(i)) continue;
-		g_ConnectCount--;
-	}
-	PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - g_ConnectCount);
+	PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 -  GetRealClientCount());
 }
 
 public Action Listener_Pause(int Client, const char[] sCommand, int argc)
@@ -263,7 +259,7 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 	}
 
 	if(!results.FetchRow()) return;
-
+	
 	int idCol;
 	results.FieldNameToNum("id", idCol);
 	int id = results.FetchInt(idCol);
