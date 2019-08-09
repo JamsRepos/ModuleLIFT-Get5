@@ -35,7 +35,7 @@ The team voting has 2 modes:
 
 - Default team voting: This voting mode is the exact default from Get5.
 
-To change the voting mode, edit the cvar: ``get5_votemode`` to either ESEA or Default.
+To change the voting mode you will need to edit the ``get5_votemode`` value wihin the config to either ESEA or leave blank for default.
 
 ### Ready system.
 A brand new ready system has been added which runs a 5 min timer for players to connect and if they do not connect within this time the game will be cancelled and everyone kicked from the server. 
