@@ -5,13 +5,8 @@ public Action StartKnifeRound(Handle timer) {
   g_PendingSideSwap = false;
 
   Get5_MessageToAll("%t", "KnifeIn5SecInfoMessage");
-  if (InWarmup()) {
-    EndWarmup(5);
-  } else {
-    RestartGame(5);
-  }
 
-  CreateTimer(10.0, Timer_AnnounceKnife);
+  CreateTimer(8.0, Timer_AnnounceKnife);
   return Plugin_Handled;
 }
 

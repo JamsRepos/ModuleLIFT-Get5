@@ -11,6 +11,11 @@ int g_iMatchID = 0;
 char g_sTeamName[4][128];
 
 Database g_Database;
+int g_ConnectCount = 0;
+bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
+
+int g_connectTimer = 300;
+
 
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
@@ -40,23 +45,127 @@ public void OnPluginStart()
 	AddCommandListener(Listener_Stop, "sm_stop");
 	AddCommandListener(Listener_Stop, "sm_get5");
 	AddCommandListener(Listener_Stop, "kill");
-	//AddCommandListener(Listener_Unpause, "sm_unpause");
-	AddCommandListener(Listener_Ready, "sm_ready");
-
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
+	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 }
 
-// public Action AttemptMySQLConnection(Handle timer)
-// {
-// 	if (g_Database != null)
-// 	{
-// 		delete g_Database;
-// 		g_Database = null;
-// 	}
-// 	Database.Connect(SQL_InitialConnection, "sql_matches");
-// 	return Plugin_Stop;
-// }
+/* Core calculations */
+
+public int FloatToInt(float fValue) {
+	char cValue[300];
+	FloatToString(fValue, cValue, sizeof(cValue));
+	return StringToInt(cValue);
+}
+
+stock float GetWarmupStartTime()
+{
+	return GameRules_GetPropFloat("m_fWarmupPeriodStart");
+}
+
+stock float GetWarmupEndTime()
+{
+	return (GetWarmupStartTime() + GetConVarFloat(FindConVar("mp_warmuptime")));
+}
+
+stock float GetWarmupLeftTime()
+{
+	return (GetWarmupEndTime() - GetGameTime());
+}
+
+stock int GetRealClientCount() {
+  int clients = 0;
+  for (int i = 1; i <= MaxClients; i++) {
+    if (IsPlayer(i)) {
+      clients++;
+    }
+  }
+  return clients;
+}
+
+/* Initialise Warmup */
+stock void StartWarmup(int warmupTime = 60) {
+  ServerCommand("mp_do_warmup_period 1");
+  ServerCommand("mp_warmuptime %d", warmupTime);
+  ServerCommand("mp_warmup_start");
+}
+
+stock void EndWarmup(int time = 0) {
+  if (time == 0) {
+    ServerCommand("mp_warmup_end");
+  } else {
+    ServerCommand("mp_warmup_pausetimer 0");
+    ServerCommand("mp_warmuptime %d", time);
+  }
+}
+
+/* "Ready" system */
+stock bool IsPlayer(int client) {
+  return IsValidClient(client) && !IsFakeClient(client);
+}
+
+public void SetClientReady(int client, bool ready) {
+  g_ClientReady[client] = ready;
+}
+
+public bool IsEveryoneReady() {
+	int readyCount = 0;
+	for(int i = 1; i <= MaxClients; i++) {
+		if (g_ClientReady[i] == true){
+			readyCount++
+		}
+	}
+	if (readyCount >= 10){// Debug
+		return true;
+	} else {
+		return false;
+	}
+}
+
+public void ForceEveryoneReady() {
+	for(int i = 1; i <= MaxClients; i++) {
+		SetClientReady(i, true);
+	}
+}
+
+/* Connection Timer section */
+public Action Timer_ConnectionTimer(Handle timer) {
+	if (Get5_GetGameState() == Get5State_None) {
+		return Plugin_Continue;
+	}
+
+	if (Get5_GetGameState() <= Get5State_Warmup && Get5_GetGameState() != Get5State_None) {
+    	if (GetRealClientCount() < 1) {
+      		StartWarmup(g_connectTimer);
+    	}
+  	}
+
+	if (Get5_GetGameState() == Get5State_Warmup) {
+		if (!IsEveryoneReady()) {
+			CheckWaitingTimes();
+		}
+	}
+}
+
+static void CheckWaitingTimes() {
+	//g_timeUsed++;
+
+	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
+		int timeLeft = FloatToInt(GetWarmupLeftTime());
+
+		if (timeLeft <= 0.0) {
+			ServerCommand("get5_endmatch");
+			UpdateMatchStatus();
+			for(int i = 1; i <= MaxClients; i++) {
+				if(IsValidClient(i)) {
+					KickClient(i, "Players did not ready up in time. Match has been cancelled");
+				}
+			}
+		} else if (timeLeft <= 300 && timeLeft % 60 == 0) {
+			Get5_MessageToAll("Time remaining to join the server: %i mins", timeLeft / 60);
+		}
+	}
+} 
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
@@ -106,20 +215,30 @@ public void OnClientPutInServer(int Client)
 {
 	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	updateIPAddress(Client);
-	int iCount;
-	for(int i = 1; i <= MaxClients; i++)
-	{
-		if(!IsValidClient(i)) continue;
-		iCount++;
-	}
+	SetClientReady(Client, true);
 
-	if(iCount >= 10)
-	{
-		PrintToChatAll("%s All players have connected. Match will start in 30 seconds.", ChatTag);
-		CreateTimer(30.0, Timer_StartMatch);
+	for(int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i)) continue;
+		g_ConnectCount++;
 	}
-	else
-		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - iCount);
+	if (IsEveryoneReady()) {
+		PrintToChatAll("%s All players have connected. Match will start in 30 seconds.", ChatTag);
+		EndWarmup(30);
+		CreateTimer(25.0, Timer_StartMatch);
+	}
+	else {
+		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - g_ConnectCount);
+	}
+}
+
+public void OnClientDisconnect(int Client) {
+	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
+	SetClientReady(Client, false);
+	for (int i = 1; i <= MaxClients; i++) {
+		if (!IsValidClient(i)) continue;
+		g_ConnectCount--;
+	}
+	PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - g_ConnectCount);
 }
 
 public Action Listener_Pause(int Client, const char[] sCommand, int argc)
@@ -133,32 +252,6 @@ public Action Listener_Stop(int Client, const char[] sCommand, int argc)
 {
 	return Plugin_Stop;
 }
-
-public Action Listener_Ready(int Client, const char[] sCommand, int argc)
-{
-	if(!IsValidClient(Client)) return Plugin_Handled;
-
-	PrintToChat(Client, "%s Please wait for all players to join the match.", ChatTag);
-	return Plugin_Stop;
-}
-
-// public void AttemptMySQLConnection(Database db, const char[] error, any data)
-// {
-//     if (db == null)
-//     {
-//         SetFailState("Could not connect to db: %s", error);
-// 		return;
-//     }
-
-//     g_Database = db;
-//     int ip[4];
-// 	char sIP[32], sPort[32], sQuery[1024];
-// 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-// 	SteamWorks_GetPublicIP(ip);
-// 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-//     Format(sQuery, sizeof(sQuery), "SELECT * FROM get5_matchsetup WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 1;", sIP);
-// 	g_Database.Query(SQL_SelectSetup, sQuery);
-// }
 
 public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sError, any data)
 {
@@ -234,65 +327,6 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 			Spectators.PushString(sSpectatorsList[i]);
 	}
 
-	/*for(int i = 0; i < 5; i++)
-	{
-		if(!StrEqual(sTeamPlayers1[i], ""))
-			g_Players.PushString(sTeam1Players[i]);
-
-		if(!StrEqual(sTeamPlayers2[i], ""))
-			g_Players.PushString(sTeam2Players[i]);
-	}*/
-
-/*
-	KeyValues kv = new KeyValues("Match");
-	kv.SetString("matchid", id);
-	kv.SetString("num_maps", "1");
-
-	kv.JumpToKey("spectators", true);
-	kv.JumpToKey("players", true);
-	for(int i = 0; i < Spectators.Length; i++)
-	{
-		char steamID[64];
-		Spectators.GetString(i, steamID, sizeof(steamID));
-		kv.SetString(steamID, " ");
-	}
-	kv.Rewind();
-
-	kv.JumpToKey("maplist", true);
-	kv.SetString(sMap, " ");
-	kv.Rewind();
-
-	kv.JumpToKey("team1", true);
-	kv.SetString("name", sTeamName1);
-	kv.SetString("flag", sTeamFlag1);
-
-	kv.JumpToKey("players", true);
-	for(int i = 0; i < Team1Players.Length; i++)
-	{
-		char steamID[64];
-		Team1Players.GetString(i, steamID, sizeof(steamID));
-		kv.SetString(steamID, " ");
-	}
-	kv.Rewind();
-
-	kv.JumpToKey("team2", true);
-	kv.SetString("name", sTeamName2);
-	kv.SetString("flag", sTeamFlag2);
-
-	kv.JumpToKey("players", true);
-	for(int i = 0; i < Team2Players.Length; i++)
-	{
-		char steamID[64];
-		Team2Players.GetString(i, steamID, sizeof(steamID));
-		kv.SetString(steamID, " ");
-	}
-	kv.Rewind();
-
-	char sPath[255];
-	BuildPath(Path_SM, sPath, sizeof(sPath), "data/get5_match.cfg");
-	kv.ExportToFile(sPath);
-	delete kv;
-*/
 	Handle jsonObj = json_object();
 	Handle mapArray = json_array();
 	Handle teamOne = json_object();
@@ -348,33 +382,8 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 	if(Get5_LoadMatchConfig(sPath))
 	{
 		UpdateMatchStatus();
-		CreateTimer(1.0, Timer_IdleCheck, _, TIMER_REPEAT);
 		DeleteFile(sPath);
 	}
-}
-
-public Action Timer_IdleCheck(Handle timer)
-{
-    if(Get5_GetGameState() == Get5State_KnifeRound) return Plugin_Stop;
-
-    static int iTime = 0;
-    iTime++;
-
-    if(iTime >= 600)
-    {
-        ServerCommand("get5_endmatch");
-		ChangeState(Get5State_Cancelled)
-
-        UpdateMatchStatus();
-
-        for(int i = 1; i <= MaxClients; i++)
-        {
-            if(IsValidClient(i))
-                KickClient(i, "Players did not ready up in time");
-        }
-    }
-
-    return Plugin_Continue;
 }
 
 public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
@@ -382,48 +391,12 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	UpdateMatchStatus();
 }
 
-/*public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
-{
-	if(Get5_GetGameState() == Get5State_None) return;
-
-	for(int i = 0; i <= MaxClients; i++)
-	{
-		if(IsValidClient(i))
-		{
-			char sSteam64[32];
-			if(!GetClientAuthId(i, AuthId_SteamID64, sSteam64, sizeof(sSteam64))) continue;
-
-			for(int j = 0; j < g_Players.Length; j++)
-			{
-				char sCurrent[32];
-				g_Players.GetString(j, sCurrent, sizeof(sCurrent));
-				LogMessage("g_Players.GetString(%i) = %s", j, sCurrent);
-
-				if(StrEqual(sCurrent, sSteam64))
-				{
-					g_Players.Erase(j);
-					if(g_Players.Length >= 1)
-						PrintToChatAll("[LoadMatch] Waiting for %i more players to join the match.", g_Players.Length);
-					else
-					{
-						PrintToChatAll("[LoadMatch] All players have joined, starting match...");
-						ServerCommand("get5_forceready");
-					}
-				}
-			}
-		}
-	}
-}*/
-
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int Client = GetClientOfUserId(event.GetInt("userid"));
 	if(!IsValidClient(Client)) return;
 	if (GameRules_GetProp("m_bMatchWaitingForResume") != 0 && GameRules_GetProp("m_bFreezePeriod") == 1)
 		CS_RespawnPlayer(Client);
-
-	// if(GameRules_GetProp("m_bTerroristTimeOutActive") != 0 || GameRules_GetProp("m_bCTTimeOutActive") != 0)
-	// 	CS_RespawnPlayer(Client);
 }
 
 public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)

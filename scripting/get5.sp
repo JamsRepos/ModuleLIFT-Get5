@@ -403,10 +403,9 @@ public void OnPluginStart() {
               "Adds/removes a ringer to/from the home scrim team");
 
   RegAdminCmd("sm_get5", Command_Get5AdminMenu, ADMFLAG_CHANGEMAP, "Displays a helper menu");
-
-  RegAdminCmd("get5_forceready", Command_AdminForceReady, ADMFLAG_CHANGEMAP,
-              "Force readies all current teams");
   RegAdminCmd("get5_forcestart", Command_AdminForceReady, ADMFLAG_CHANGEMAP,
+              "Force readies all current teams");
+  RegAdminCmd("get5_forceready", Command_AdminForceReady, ADMFLAG_CHANGEMAP,
               "Force readies all current teams");
 
   RegAdminCmd("get5_dumpstats", Command_DumpStats, ADMFLAG_CHANGEMAP,
@@ -491,7 +490,6 @@ public Action Timer_InfoMessages(Handle timer) {
     } else {
       Get5_MessageToAll("%t", "ReadyToVetoInfoMessage");
     }
-    MissingPlayerInfoMessage();
   }
 
   // Handle warmup state, provided we're not waiting for a map change
@@ -506,14 +504,7 @@ public Action Timer_InfoMessages(Handle timer) {
     if (IsTeamsReady() && !IsSpectatorsReady()) {
       Get5_MessageToAll("%t", "WaitingForCastersReadyInfoMessage",
                         g_FormattedTeamNames[MatchTeam_TeamSpec]);
-    } else {
-      if (g_MapSides.Get(GetMapNumber()) == SideChoice_KnifeRound) {
-        Get5_MessageToAll("%t", "ReadyToKnifeInfoMessage");
-      } else {
-        Get5_MessageToAll("%t", "ReadyToStartInfoMessage");
-      }
-    }
-    MissingPlayerInfoMessage();
+    } 
   } else if (g_DisplayGotvVeto.BoolValue && g_GameState == Get5State_Warmup && g_MapChangePending) {
     Get5_MessageToAll("%t", "WaitingForGOTVVetoInfoMessage");
   }
@@ -573,11 +564,11 @@ public void OnClientPutInServer(int client) {
   if (g_GameState <= Get5State_Warmup && g_GameState != Get5State_None) {
     if (GetRealClientCount() <= 1) {
       ExecCfg(g_WarmupCfgCvar);
-      EnsurePausedWarmup();
     }
   }
 
   Stats_ResetClientRoundValues(client);
+  
 }
 
 public void OnClientSayCommand_Post(int client, const char[] command, const char[] sArgs) {
@@ -656,7 +647,6 @@ public void OnConfigsExecuted() {
     ExecCfg(g_WarmupCfgCvar);
     SetMatchTeamCvars();
     ExecuteMatchConfigCvars();
-    EnsurePausedWarmup();
   }
 }
 

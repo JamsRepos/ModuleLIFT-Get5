@@ -126,7 +126,6 @@ public Action Command_AdminForceReady(int client, int args) {
     return Plugin_Handled;
   }
 
-  Get5_MessageToAll("%t", "AdminForceReadyInfoMessage");
   SetAllTeamsForcedReady(true);
   SetAllClientsReady(true);
   SetMatchTeamCvars();
@@ -210,8 +209,6 @@ static void PrintReadyMessage(MatchTeam team) {
     SideChoice sides = view_as<SideChoice>(g_MapSides.Get(GetMapNumber()));
     if (g_WaitingForRoundBackup) {
       Get5_MessageToAll("%t", "TeamReadyToRestoreBackupInfoMessage", g_FormattedTeamNames[team]);
-    } else if (sides == SideChoice_KnifeRound) {
-      Get5_MessageToAll("%t", "TeamReadyToKnifeInfoMessage", g_FormattedTeamNames[team]);
     } else {
       Get5_MessageToAll("%t", "TeamReadyToBeginInfoMessage", g_FormattedTeamNames[team]);
     }
