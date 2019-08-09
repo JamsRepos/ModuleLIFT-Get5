@@ -5,7 +5,6 @@
 - Pausing system rewritten to allow 3 different styles of pause systems.
 
 ## Planned Features
-  - Remove ready system, start once all players join.
   - Remove vetos, just load the correct map. 
   - Official Matchmaking.
   - Official SM 1.10 Support.
@@ -31,4 +30,12 @@ To use this system you will need to edit the ``get5_pause_mode`` within the conf
 ### Team Voting system
 This section will discuss about the team voting system which implements the ESEA way of voting as well as keeping the standard way of voting from captains.
 
-This section is to be written.
+The team voting has 2 modes:
+- ESEA team voting: This voting mode works similar to how ESEA voting works, for people unfamiliar with ESEA voting the winning team has 60 seconds to all vote on which side they want to be on either t or ct within the chat window. The majority vote wins. 
+
+- Default team voting: This voting mode is the exact default from Get5.
+
+To change the voting mode you will need to edit the ``get5_votemode`` value wihin the config to either ESEA or leave blank for default.
+
+### Ready system.
+A brand new ready system has been added which runs a 5 min timer for players to connect and if they do not connect within this time the game will be cancelled and everyone kicked from the server. 
