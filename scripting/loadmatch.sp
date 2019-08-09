@@ -158,7 +158,7 @@ static void CheckWaitingTimes() {
 			UpdateMatchStatus();
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
-					KickClient(i, "Players did not ready up in time. Match has been cancelled");
+					KickClient(i, "Players did not connect in time. Match has been cancelled");
 				}
 			}
 		} else if (timeLeft <= 300 && timeLeft % 60 == 0) {
