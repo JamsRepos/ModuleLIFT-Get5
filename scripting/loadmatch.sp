@@ -11,7 +11,6 @@ int g_iMatchID = 0;
 char g_sTeamName[4][128];
 
 Database g_Database;
-int g_ConnectCount = 0;
 bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
 int g_connectTimer = 300;
@@ -105,7 +104,7 @@ stock void EndWarmup(int time = 0) {
 
 /* "Ready" system */
 stock bool IsPlayer(int client) {
-  return IsValidClient(client) && !IsFakeClient(client);
+  return IsClientInGame(client) && !IsFakeClient(client);
 }
 
 public void SetClientReady(int client, bool ready) {
@@ -425,13 +424,9 @@ public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sErr
 
 stock bool IsValidClient(int client)
 {
-	if (client >= 1 && 
-	client <= MaxClients &&
-	IsClientConnected(client) &&  
-	IsClientInGame(client) &&
-	!IsFakeClient(client))
-		return true;
-	return false;
+	if(client <= 0 || client > MaxClients || !IsClientInGame(client))
+		return false;
+	return true;
 }
 
 public int Native_Get5_GetTeamName(Handle plugin, int numParams)
