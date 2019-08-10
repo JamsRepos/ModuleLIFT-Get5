@@ -116,11 +116,11 @@ public Action Command_VoteCT(int client, int args) {
 
         if (runFinal) {
           HandleVotes();
-        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-        } else {
-          return Plugin_Stop;
         }
+      else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } else {
+        return Plugin_Stop;
       }
     } else {
       // If we are not in a knife round.
@@ -152,11 +152,11 @@ public Action Command_VoteT(int client, int args) {
 
         if (runFinal) {
           HandleVotes();
-        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-        } else {
-          return Plugin_Stop;
-        }
+        } 
+      else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } else {
+        return Plugin_Stop;
       }
     } else {
       // If we are not in a knife round.

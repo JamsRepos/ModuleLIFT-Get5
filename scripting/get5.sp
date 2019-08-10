@@ -1187,7 +1187,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
       Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
       g_bVoteStart = true;
-      CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_VoteSide);
+      g_bSideVoteTimer = CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_VoteSide);
     } else {
       Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
       if (g_TeamTimeToKnifeDecisionCvar.FloatValue > 0)
