@@ -116,23 +116,20 @@ public Action Command_VoteCT(int client, int args) {
 
         if (runFinal) {
           HandleVotes();
+        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+        } else {
+          return Plugin_Stop;
         }
-      else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-      } else {
-        return Plugin_Stop;
       }
     } else {
-      // If we are not in a knife round.
       return Plugin_Stop;
     }
   } else {
-    // If we are not in ESEA Voting mode.
     return Plugin_Stop;
   }
   return Plugin_Handled;
 }
-
 
 public Action Command_VoteT(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
@@ -152,18 +149,16 @@ public Action Command_VoteT(int client, int args) {
 
         if (runFinal) {
           HandleVotes();
-        } 
-      else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-      } else {
-        return Plugin_Stop;
+        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
+          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+        } else {
+          return Plugin_Stop;
+        }
       }
     } else {
-      // If we are not in a knife round.
       return Plugin_Stop;
     }
   } else {
-    // If we are not in ESEA Voting mode.
     return Plugin_Stop;
   }
   return Plugin_Handled;
@@ -194,11 +189,9 @@ public Action Command_Swap(int client, int args) {
     return Plugin_Stop;
   } else {
     if (AwaitingKnifeDecision(client)) {
-    EndKnifeRound(true);
-    Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage",
-                      g_FormattedTeamNames[g_KnifeWinnerTeam]);
-  } else if (g_GameState == Get5State_Warmup && g_InScrimMode &&
-             GetClientMatchTeam(client) == MatchTeam_Team1) {
+      EndKnifeRound(true);
+      Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
+  } else if (g_GameState == Get5State_Warmup && g_InScrimMode && GetClientMatchTeam(client) == MatchTeam_Team1) {
     PerformSideSwap(true);
     }
   }
