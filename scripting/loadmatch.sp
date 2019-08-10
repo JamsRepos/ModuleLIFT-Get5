@@ -233,6 +233,9 @@ public void OnClientPutInServer(int Client)
 public void OnClientDisconnect(int Client) {
 	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	SetClientReady(Client, false);
+}
+
+public void OnClientDisconnect_Post(int Client) {
 	PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 -  GetRealClientCount());
 }
 
