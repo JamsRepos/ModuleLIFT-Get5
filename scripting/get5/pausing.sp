@@ -1,6 +1,8 @@
 char pauseMode[128];
 char steamid[64];
 
+MatchTeam teamPaused;
+
 Handle pauseTimerHandler;
 
 public bool Pauseable() {
@@ -29,7 +31,7 @@ public Action Command_TechPause(int client, int args) {
 public Action Command_Pause(int client, int args)
 {
   if (!Pauseable() || IsPaused()) {
-    return Plugin_Handled;
+    return Plugin_Stop;
   }
 
   GetConVarString(g_PauseModeCvar, pauseMode, sizeof(pauseMode));
@@ -45,6 +47,8 @@ public Action Command_Pause(int client, int args)
     }
 
     ServerCommand("mp_pause_match");
+    teamPaused = team;
+    
     int timeLeft = maxPauseTime - g_TeamPauseTimeUsed[team];
     int minutes = timeLeft / 60;
     int seconds = timeLeft % 60;
@@ -169,7 +173,7 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
 
 public Action Command_Unpause(int client, int args) {
   if (!IsPaused()) {
-    return Plugin_Handled;
+    return Plugin_Stop;
   }
 
   GetConVarString(g_PauseModeCvar, pauseMode, sizeof(pauseMode));
@@ -194,9 +198,12 @@ public Action Command_Unpause(int client, int args) {
     int minutes = timeLeft / 60;
     int seconds = timeLeft % 60;
 
-    ServerCommand("mp_unpause_match");
-    KillTimer(pauseTimerHandler);
-    Get5_MessageToAll("%s has %imin%isec left for pauses", teamName, minutes, seconds);
+    if (team == teamPaused) {
+      ServerCommand("mp_unpause_match");
+      KillTimer(pauseTimerHandler);
+      Get5_MessageToAll("%s has %imin%isec left for pauses", teamName, minutes, seconds);
+    }
+
     return Plugin_Handled;
 
   } else if (StrEqual(pauseMode, "Valve", false)) {
