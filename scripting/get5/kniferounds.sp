@@ -178,12 +178,12 @@ public Action Command_Stay(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
   if (StrEqual(voteMode, "ESEA", false)) {
     return Plugin_Stop;
-  }
-
-  if (AwaitingKnifeDecision(client)) {
+  } else {
+    if (AwaitingKnifeDecision(client)) {
     EndKnifeRound(false);
     Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage",
                       g_FormattedTeamNames[g_KnifeWinnerTeam]);
+    }
   }
   return Plugin_Handled;
 }
@@ -192,15 +192,15 @@ public Action Command_Swap(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
   if (StrEqual(voteMode, "ESEA", false)) {
     return Plugin_Stop;
-  }
-
-  if (AwaitingKnifeDecision(client)) {
+  } else {
+    if (AwaitingKnifeDecision(client)) {
     EndKnifeRound(true);
     Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage",
                       g_FormattedTeamNames[g_KnifeWinnerTeam]);
   } else if (g_GameState == Get5State_Warmup && g_InScrimMode &&
              GetClientMatchTeam(client) == MatchTeam_Team1) {
     PerformSideSwap(true);
+    }
   }
   return Plugin_Handled;
 }
