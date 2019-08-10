@@ -236,7 +236,7 @@ public void OnClientDisconnect(int Client) {
 }
 
 public void OnClientDisconnect_Post(int Client) {
-	if (Get5_GetGameState() != Get5State_Warmup)) {
+	if (Get5_GetGameState() != Get5State_Warmup) {
 		return;
 	} else {
 		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 -  GetRealClientCount());

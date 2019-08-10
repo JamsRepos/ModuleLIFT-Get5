@@ -196,7 +196,7 @@ public Action Command_Unpause(int client, int args) {
 
     ServerCommand("mp_unpause_match");
     KillTimer(pauseTimerHandler);
-    Get5_MessageToAll("Team %s has %imin%isec left for pauses", teamName, minutes, seconds);
+    Get5_MessageToAll("%s has %imin%isec left for pauses", teamName, minutes, seconds);
     return Plugin_Handled;
 
   } else if (StrEqual(pauseMode, "Valve", false)) {
