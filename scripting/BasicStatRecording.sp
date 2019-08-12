@@ -192,23 +192,23 @@ methodmap PlayerStatsTracker < StringMap
 	{
 		int kills = 0;
 		this.GetValue("kills", kills);
-		switch(kills)
-		{
-			case 2:
-			{
-				this.setTripleKill();
-			}
-			case 3:
-			{
-				this.setQuadraKill();
-			}
-			case 4:
-			{
-				this.setPentaKill();
-			}
-			
-		}
 		this.SetValue("kills", ++kills);
+		// switch(kills)
+		// {
+		// 	case 2:
+		// 	{
+		// 		this.setTripleKill();
+		// 	}
+		// 	case 3:
+		// 	{
+		// 		this.setQuadraKill();
+		// 	}
+		// 	case 4:
+		// 	{
+		// 		this.setPentaKill();
+		// 	}
+			
+		// }
 	}
 	
 	public void incrementDeaths()
@@ -409,6 +409,7 @@ Handle g_hOnShotFired;
 Handle g_hOnPlayerHit;
 Handle g_hOnHeadShot;
 PlayerStatsTracker g_hPlayers[MAXPLAYERS];
+int g_RoundKills[MAXPLAYERS + 1]; 
 
 public Plugin myinfo = 
 {
@@ -612,6 +613,7 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	
 	if (attacker && (VALIDPLAYER(attacker) || DEBUG) && g_hPlayers[attacker] != null && g_hPlayers[attacker].isPlayersStats(attackerid))
 	{
+		g_RoundKills[attacker]++;
 		g_hPlayers[attacker].incrementKills();
 		Call_StartForward(g_hOnKill);
 		Call_PushCell(attacker);
@@ -669,6 +671,15 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		int clientteam;
 		if ((clientteam = GetClientTeam(i)) == team)
 		{
+			switch (g_RoundKills[i]) {
+				case 3:
+					g_hPlayers[i].setTripleKill();
+				case 4:
+					g_hPlayers[i].setQuadraKill();
+				case 5:
+					g_hPlayers[i].setPentaKill();
+			}
+			g_RoundKills[i] = 0;
 			g_hPlayers[i].incrementRoundsWon();
 			Call_StartForward(g_hOnPlayerRoundWon);
 			Call_PushCell(i);
@@ -683,6 +694,15 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		}
 		else if (clientteam == otherTeam)
 		{
+			switch (g_RoundKills[i]) {
+				case 3:
+					g_hPlayers[i].setTripleKill();
+				case 4:
+					g_hPlayers[i].setQuadraKill();
+				case 5:
+					g_hPlayers[i].setPentaKill();
+			}
+			g_RoundKills[i] = 0;
 			g_hPlayers[i].incrementRoundsLost();
 			Call_StartForward(g_hOnPlayerRoundLost);
 			Call_PushCell(i);
