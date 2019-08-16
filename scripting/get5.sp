@@ -119,6 +119,8 @@ ArrayList g_CvarValues = null;
 bool g_InScrimMode = false;
 bool g_HasKnifeRoundStarted = false;
 
+int g_cooldownTimes[MAXPLAYERS + 1] = {-1, ...};
+
 /** Other state **/
 Get5State g_GameState = Get5State_None;
 ArrayList g_MapsToPlay = null;
@@ -559,6 +561,8 @@ public void OnClientPutInServer(int client) {
   if (IsFakeClient(client)) {
     return;
   }
+
+  g_cooldownTimes[client] = -1;
 
   CheckAutoLoadConfig();
   if (g_GameState <= Get5State_Warmup && g_GameState != Get5State_None) {

@@ -34,6 +34,13 @@ public Action Command_Pause(int client, int args)
     return Plugin_Stop;
   }
 
+  int currentTime = GetTime();
+  if (g_cooldownTimes[client] != -1 && cooldownTimes[client] > currentTime)
+  {
+    return Plugin_Handled;
+  }
+  cooldownTimes[client] = currentTime + 30;
+
   GetConVarString(g_PauseModeCvar, pauseMode, sizeof(pauseMode));
 
   if (StrEqual(pauseMode, "Faceit", false)) {
@@ -175,6 +182,14 @@ public Action Command_Unpause(int client, int args) {
   if (!IsPaused()) {
     return Plugin_Stop;
   }
+
+  int currentTime = GetTime();
+  if (g_cooldownTimes[client] != -1 && cooldownTimes[client] > currentTime)
+  {
+    return Plugin_Handled;
+  }
+  cooldownTimes[client] = currentTime + 30;
+
 
   GetConVarString(g_PauseModeCvar, pauseMode, sizeof(pauseMode));
 
