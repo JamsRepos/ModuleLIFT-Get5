@@ -56,10 +56,8 @@ public Plugin myinfo =
 
 public void OnPluginStart()
 {
-
-    Database.Connect(AttemptMySQLConnection, "sql_matches");
 	//Create Timer
-	// CreateTimer(1.0, AttemptMySQLConnection);
+	CreateTimer(1.0, AttemptMySQLConnection);
 
 	//Hook Events
 	HookEvent("player_death", Event_PlayerDeath);
@@ -100,6 +98,42 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 }
+
+public Action AttemptMySQLConnection(Handle timer)
+{
+	if (g_Database != null)
+	{
+		delete g_Database;
+		g_Database = null;
+	}
+	
+	char sFolder[32];
+	GetGameFolderName(sFolder, sizeof(sFolder));
+	if (SQL_CheckConfig("sql_matches"))
+	{
+		PrintToServer("Initalizing Connection to MySQL Database");
+		Database.Connect(SQL_InitialConnection, "sql_matches");
+	}
+	else
+		LogError("Database Error: No Database Config Found! (%s/addons/sourcemod/configs/databases.cfg)", sFolder);
+}
+
+public void SQL_InitialConnection(Database db, const char[] sError, int data)
+{
+	if (db == null)
+	{
+		LogMessage("Database Error: %s", sError);
+		CreateTimer(10.0, AttemptMySQLConnection);
+		return;
+	}
+	
+	char sDriver[16];
+	db.Driver.GetIdentifier(sDriver, sizeof(sDriver));
+	if (StrEqual(sDriver, "mysql", false)) LogMessage("MySQL Database: connected");
+	
+	g_Database = db;
+}
+
 
 void ConnectRelay()
 {	
@@ -168,17 +202,6 @@ public void ResetVars(int Client)
 }
 
 /* This has changed */
-public void AttemptMySQLConnection(Database db, const char[] error, any data)
-{
-    if (db == null)
-    {
-        SetFailState("Could not connect to db: %s", error);
-        return;
-    }
-    g_Database = db;
-}
-
-/* This has changed */
 public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 {
 	if(oldState == Get5State_GoingLive && newState == Get5State_Live)
@@ -225,7 +248,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
 
-		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES (%i, %i,'%s','%s', '%s', 1, '%s');", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
+		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES (%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 		UpdatePlayerStats();
 	}
@@ -265,7 +288,7 @@ public void SQL_MatchIDQuery(Database db, DBResultSet results, const char[] sErr
 	ServerCommand("tv_record %i", g_iMatchID);
 }
 
-public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
+public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	static float fTime;
 	if(GetGameTime() - fTime < 1.0) return;
@@ -302,7 +325,6 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
-
 /*public Action Command_JoinTeam(int Client, char[] sCommand, int iArgs)
 {
 	if(!IsValidClient(Client)) return Plugin_Handled;
@@ -387,7 +409,7 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 			GetClientAuthId(i, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
 
 			int len = 0;
-			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
+			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid64, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
 			len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i], sTeamName);
 			len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i]);	
 			txn_UpdateStats.AddQuery(sQuery);
@@ -417,7 +439,7 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
 
 	int len = 0;
-	len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
+	len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid64, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
 	len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);
 	len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);	
 	g_Database.Query(SQL_GenericQuery, sQuery);
@@ -533,7 +555,7 @@ public void CheckSurrenderVotes()
 		}
 
 		ServerCommand("get5_endmatch"); // Force end the match
-		Get5_OnMapResult("", MatchTeam_TeamNone, 0, 0, 0);
+		// Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_T), 0, 0, 0);
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
 		return;
@@ -551,6 +573,7 @@ public void CheckSurrenderVotes()
 		}
 
 		ServerCommand("get5_endmatch"); // Force end the match
+		// Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_CT), 0, 0, 0);
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
 		return;
@@ -712,10 +735,8 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
 
         teamNameNew_T = teamNameOld_CT;
         teamNameNew_CT = teamNameOld_T;
-        PrintToChatAll("teamNameNew_T: %s", teamNameNew_T);
-        PrintToChatAll("teamNameNew_CT: %s", teamNameNew_CT);
 
-        Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal_test SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = LAST_INSERT_ID();", teamNameNew_T, teamNameNew_CT);
+        Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = LAST_INSERT_ID();", teamNameNew_T, teamNameNew_CT);
         g_Database.Query(SQL_GenericQuery, sQuery);
         g_alreadySwapped = true;
     }
@@ -741,7 +762,7 @@ public void OnClientDisconnect(int Client)
 		{
 			char sQuery[1024], sSteamID[64];
 			GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
-			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id=LAST_INSERT_ID() AND steamid='%s'", sSteamID);
+			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id=LAST_INSERT_ID() AND steamid64='%s'", sSteamID);
 			g_Database.Query(SQL_GenericQuery, sQuery);
 		}
 	}
