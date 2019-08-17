@@ -214,12 +214,11 @@ public void updateIPAddress(int Client)
 
 }
 
-public void OnClientAuthorized(int Client)
+public void OnClientPostAdminCheck(int Client)
 {
-	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
+	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
-
 	if (IsEveryoneReady()) {
 		PrintToChatAll("%s All players have connected. Match will start in 30 seconds.", ChatTag);
 		EndWarmup(30);
@@ -228,6 +227,7 @@ public void OnClientAuthorized(int Client)
 	else {
 		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - GetRealClientCount());
 	}
+
 }
 
 public void OnClientDisconnect(int Client) {
