@@ -334,7 +334,7 @@
     }
     "MatchPoweredBy"
     {
-        "en"        "Powered by {BLUE}Nexus League"
+        "en"        "Match provided to you by {LIGHT_BLUE}NexusLeague.gg"
     }
     "MapVetoPickMenuText"
     {
