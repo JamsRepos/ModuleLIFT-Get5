@@ -214,7 +214,7 @@ public void updateIPAddress(int Client)
 
 }
 
-public void OnClientPutInServer(int Client)
+public void OnClientAuthorized(int Client)
 {
 	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	updateIPAddress(Client);
@@ -427,7 +427,7 @@ public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sErr
 		LogError("MySQL Query Failed: %s", sError);
 		return;
 	}
-}
+}	
 
 stock bool IsValidClient(int client)
 {
