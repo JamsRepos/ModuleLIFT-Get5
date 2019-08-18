@@ -199,8 +199,6 @@ public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 		return;
 	}
 
-	LogMessage("Eh?");
-
 	if (enemyRemaining == 2)
 	{
 		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsTwo.IntValue);
@@ -312,7 +310,6 @@ public void Get5_OnGoingLive(int mapNumber)
 			}
 		}
 		g_hPlayer[i] = new PlayerEloMap(auth);
-		LogMessage("Created new player map.");
 		
 		if (!isInvalid) {
 			g_hPlayer[i].SetTeam(Get5_GetPlayerTeam(auth));
@@ -347,9 +344,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		int currentElo, matchesPlayed;
 		GetPlayerFromTable(auth, currentElo, matchesPlayed);
 		player.SetValue("currentelo", currentElo);
-		LogMessage("Debug: Current elo %s.", currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
-		LogMessage("Debug: Current matches played %s.", matchesPlayed);
 		if (team == seriesWinner)
 		{
 			winningTeamAvgElo += currentElo;
@@ -376,19 +371,13 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
-		LogMessage("Debug: Current elo %i.", playerElo);
 		player.GetValue("matchesplayed", playerMatches);
-		LogMessage("Debug: Current matches played %i.", playerMatches);
-		LogMessage("Debug: Player Matches value %i", playerMatches);
-		LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchCount.IntValue);
 		if (team == seriesWinner)
 		{
 			LogMessage("Debug: Series winner info");
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
-				LogMessage("Debug: Added to Elo gain");
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
-				LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
@@ -397,24 +386,20 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		}
 		else if (team == seriesLoser)
 		{
-			LogMessage("Debug: Series loser info");
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
-				LogMessage("Debug: Series loser add elo");
 				player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
-				LogMessage("Debug: Series loser add elo");
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, false));
 			}
 		}
 
+		// Up for discussion but if it is a draw they get half elo instead of people thinking it was a "waste"
 		if (team == MatchTeam_TeamNone)
 		{
-			LogMessage("Debug: The game was a draw.");
 			player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue / 2);
-			LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchEloGain.IntValue / 2);
 		}
 		
 		UpdatePlayerInTable(player);
