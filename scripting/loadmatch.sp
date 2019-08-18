@@ -15,6 +15,8 @@ bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
 int g_connectTimer = 300;
 
+Handle g_playerCountTimer = null;
+
 
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
@@ -46,6 +48,7 @@ public void OnPluginStart()
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	g_playerCountTimer = CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 }
 
 public void OnConfigsExecuted()
@@ -112,22 +115,10 @@ public void SetClientReady(int client, bool ready) {
 }
 
 public bool IsEveryoneReady() {
-	int readyCount = 0;
-	for(int i = 1; i <= MaxClients; i++) {
-		if (g_ClientReady[i] == true){
-			readyCount++
-		}
-	}
-	if (readyCount >= 10){// Debug
+	if (GetTeamClientCount(CS_TEAM_CT) == 5 && GetTeamClientCount(CS_TEAM_T) == 5){// Debug
 		return true;
 	} else {
 		return false;
-	}
-}
-
-public void ForceEveryoneReady() {
-	for(int i = 1; i <= MaxClients; i++) {
-		SetClientReady(i, true);
 	}
 }
 
@@ -146,6 +137,31 @@ public Action Timer_ConnectionTimer(Handle timer) {
 	if (Get5_GetGameState() == Get5State_Warmup) {
 		if (!IsEveryoneReady()) {
 			CheckWaitingTimes();
+		}
+	}
+}
+
+public Action Timer_PlayerCount(Handle timer) {
+	if (Get5_GetGameState() == Get5State_None) {
+		return Plugin_Continue;
+	}
+
+	if (Get5_GetGameState() == Get5State_Warmup)
+	{
+		if (IsEveryoneReady()) 
+		{
+			PrintToChatAll("%s All players have connected. Match will start in 60 seconds.", ChatTag);
+			EndWarmup(60);
+			CreateTimer(55.0, Timer_StartMatch);
+			delete g_playerCountTimer;
+		}
+		else
+		{
+			int playersonTerrorist = GetTeamClientCount(CS_TEAM_T);
+			int playersOnCT = GetTeamClientCount(CS_TEAM_CT);
+			int playersOnServer = playersonTerrorist+playersOnCT; 
+			LogMessage("The amount of players in server are Terrorist: %i and CT: %i", playersonTerrorist, playersOnCT);
+			PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
 		}
 	}
 }
@@ -219,28 +235,11 @@ public void OnClientPostAdminCheck(int Client)
 	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
-	if (IsEveryoneReady()) {
-		PrintToChatAll("%s All players have connected. Match will start in 30 seconds.", ChatTag);
-		EndWarmup(30);
-		CreateTimer(25.0, Timer_StartMatch);
-	}
-	else {
-		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - GetRealClientCount());
-	}
-
 }
 
 public void OnClientDisconnect(int Client) {
 	if(!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	SetClientReady(Client, false);
-}
-
-public void OnClientDisconnect_Post(int Client) {
-	if (Get5_GetGameState() != Get5State_Warmup) {
-		return;
-	} else {
-		PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 -  GetRealClientCount());
-	}
 }
 
 public Action Listener_Pause(int Client, const char[] sCommand, int argc)

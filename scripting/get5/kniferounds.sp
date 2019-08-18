@@ -100,67 +100,112 @@ void HandleVotes() {
 
 public Action Command_VoteCT(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
-  if (StrEqual(voteMode, "ESEA", false)) {
-    if (AwaitingKnifeDecision(client)) {
-      if (g_bVoteStart && g_bPlayerCanVote[client]) {
+  if (StrEqual(voteMode, "ESEA", false)) 
+  {
+    if (AwaitingKnifeDecision(client)) 
+    {
+      if (g_bVoteStart && g_bPlayerCanVote[client]) 
+      {
         g_bPlayerCanVote[client] = false;
         g_iVoteCTs++;
         Get5_Message(client, "%t", "TeamVoteCT");
 
         bool runFinal = true;
-        for (int i = 1; i <= MaxClients; i++) {
-          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) {
+        for (int i = 1; i <= MaxClients; i++) 
+        {
+          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) 
+          {
             runFinal = false;
           }
         }
 
-        if (runFinal) {
+        if (runFinal) 
+        {
           HandleVotes();
-        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-        } else {
-          return Plugin_Stop;
         }
+
+        return Plugin_Handled;
+        
       }
-    } else {
+
+      if (g_bVoteStart && !g_bPlayerCanVote[client]) 
+      {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } 
+      else 
+      {
+        return Plugin_Stop;
+      }
+
+    } 
+
+    else 
+    {
       return Plugin_Stop;
     }
-  } else {
+
+  } 
+  else 
+  {
     return Plugin_Stop;
   }
+
   return Plugin_Handled;
 }
 
+
 public Action Command_VoteT(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
-  if (StrEqual(voteMode, "ESEA", false)) {
-    if (AwaitingKnifeDecision(client)) {
-      if (g_bVoteStart && g_bPlayerCanVote[client]) {
+  if (StrEqual(voteMode, "ESEA", false)) 
+  {
+    if (AwaitingKnifeDecision(client)) 
+    {
+      if (g_bVoteStart && g_bPlayerCanVote[client]) 
+      {
         g_bPlayerCanVote[client] = false;
         g_iVoteTs++;
         Get5_Message(client, "%t", "TeamVoteT");
 
         bool runFinal = true;
-        for (int i = 1; i <= MaxClients; i++) {
-          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) {
+        for (int i = 1; i <= MaxClients; i++) 
+        {
+          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) 
+          {
             runFinal = false;
           }
         }
 
-        if (runFinal) {
+        if (runFinal) 
+        {
           HandleVotes();
-        } else if (g_bVoteStart && !g_bPlayerCanVote[client]) {
-          Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-        } else {
-          return Plugin_Stop;
         }
+
+        return Plugin_Handled;
+
       }
-    } else {
+
+      if (g_bVoteStart && !g_bPlayerCanVote[client]) 
+      {
+        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+      } 
+      else 
+      {
+        return Plugin_Stop;
+      }
+
+    } 
+
+    else 
+    {
       return Plugin_Stop;
     }
-  } else {
+
+  } 
+  else 
+  {
     return Plugin_Stop;
   }
+
   return Plugin_Handled;
 }
 
