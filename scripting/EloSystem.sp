@@ -17,12 +17,12 @@ char g_szSqlError[256];
 char g_sz_INSERT_PLAYER[] = "INSERT IGNORE INTO `player_elo`"...
 " (`steamid`) VALUES ('%s')";
 char g_sz_UPDATE_PLAYER[] = "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'";
-char g_sz_GET_PLAYER[] = "SELECT * FROM `playerelo` WHERE `steamid` = '%s'";
+char g_sz_GET_PLAYER[] = "SELECT * FROM `player_elo` WHERE `steamid` = '%s'";
 
 char g_sz_INSERT_PLAYER_PREP[] = "INSERT IGNORE INTO `player_elo`"...
 " (`steamid`) VALUES (?)";
 char g_sz_UPDATE_PLAYER_PREP[] = "UPDATE `player_elo` SET `elo`=elo+?, `matches`=matches+1 WHERE `steamid` = ?";
-char g_sz_GET_PLAYER_PREP[] = "SELECT * FROM `playerelo` WHERE `steamid` = ?";
+char g_sz_GET_PLAYER_PREP[] = "SELECT * FROM `player_elo` WHERE `steamid` = ?";
 
 int roundCounter;
 
@@ -30,11 +30,16 @@ ConVar g_cvDefaultElo;
 ConVar g_cvEloPerKill;
 ConVar g_cvEloPerDeath;
 ConVar g_cvEloPerAssist;
+ConVar g_cvEloPerMVP;
 ConVar g_cvEloHeadShotKillBonus;
 ConVar g_cvEloPerBombExplosion;
 ConVar g_cvEloPerBombDisarm;
 ConVar g_cvPreliminaryMatchCount;
 ConVar g_cvPreliminaryMatchEloGain;
+ConVar g_cvEloPerOneVsTwo;
+ConVar g_cvEloPerOneVsThree;
+ConVar g_cvEloPerOneVsFour;
+ConVar g_cvEloPerOneVsFive;
 Database g_hThreadedDb;
 DBStatement g_hInsertNewEntry;
 DBStatement g_hUpdateElo;
@@ -110,6 +115,11 @@ public void OnPluginStart()
 	g_cvEloPerKill = CreateConVar("EloSys_EloPerKill", "2", "Elo gained per kill.");
 	g_cvEloPerDeath = CreateConVar("EloSys_EloPerDeath", "-2", "Elo gained per death.");
 	g_cvEloPerAssist = CreateConVar("EloSys_EloPerAssist", "1", "Elo gained per assist.");
+	g_cvEloPerMVP = CreateConVar("EloSys_EloPerMVPs", "2", "Elo gained per MVP.");
+	g_cvEloPerOneVsTwo = CreateConVar("EloSys_EloPerOneVsTwo", "0", "Elo gained per 1vs2");
+	g_cvEloPerOneVsThree = CreateConVar("EloSys_EloPerOneVsThree", "1", "Elo gained per 1vs3");
+	g_cvEloPerOneVsFour = CreateConVar("EloSys_EloPerOneVsFour", "2", "Elo gained per 1vs4");
+	g_cvEloPerOneVsFive = CreateConVar("EloSys_EloPerOneVsFive", "4", "Elo gained per 1vs5");
 	g_cvEloHeadShotKillBonus = CreateConVar("EloSys_HeadShotKillBonus", "0", "Bonus elo gained for a headshot kill.");
 	g_cvEloPerBombExplosion = CreateConVar("EloSys_EloPerBombExplode", "0", "Elo gained for successful bomb explosion.");
 	g_cvEloPerBombDisarm = CreateConVar("EloSys_EloPerBombDisarm", "0", "Elo gained for successfully disarming bomb.");
@@ -132,11 +142,6 @@ public void OnPluginStart()
 		LogError("%s", g_szSqlError);
 	}
 	AutoExecConfig(true);
-	
-	if (DEBUG)
-	{
-		HookEvent("round_end", Event_RoundEnd);
-	}
 }
 
 public void OnConfigsExecuted()
@@ -186,6 +191,34 @@ public void OnClientPostAdminCheck(int client)
 	}
 }
 
+public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
+{
+	if(g_hPlayer[client] == null)
+	{
+		PrintToServer("Client %d does not have an elo map.", client);
+		return;
+	}
+
+	LogMessage("Eh?");
+
+	if (enemyRemaining == 2)
+	{
+		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsTwo.IntValue);
+	}
+	else if (enemyRemaining == 3)
+	{
+		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsThree.IntValue);
+	}
+	else if (enemyRemaining == 4)
+	{
+		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFour.IntValue);
+	}
+	else if (enemyRemaining == 5)
+	{
+		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFive.IntValue);
+	}
+}
+
 public void OnKill(int killer, int victim, bool headshot)
 {
 	if (g_hPlayer[killer] == null)
@@ -203,6 +236,18 @@ public void OnKill(int killer, int victim, bool headshot)
 	}
 	
 	g_hPlayer[killer].addToEloGain(g_cvEloPerKill.IntValue);
+}
+
+public void OnRoundMVP(int client)
+{
+	if (g_hPlayer[client] == null)
+	{
+		if (DEBUG)
+		PrintToServer("Client %i does not have an elo map.", client);
+		return;
+	}
+
+	g_hPlayer[client].addToEloGain(g_cvEloPerMVP.IntValue);
 }
 
 public void OnDeath(int victim, int killer, int assister)
@@ -231,7 +276,7 @@ public void OnAssist(int assister, int victim)
 	g_hPlayer[assister].addToEloGain(g_cvEloPerAssist.IntValue);
 }
 
-public void Get5_OnSeriesInit()
+public void Get5_OnGoingLive(int mapNumber)
 {
 	/*if (!g_bBSREnabled)
 	{
@@ -267,12 +312,16 @@ public void Get5_OnSeriesInit()
 			}
 		}
 		g_hPlayer[i] = new PlayerEloMap(auth);
+		LogMessage("Created new player map.");
 		
-		if (!isInvalid)
-		g_hPlayer[i].SetTeam(Get5_GetPlayerTeam(auth));
-		else
-		g_hPlayer[i].SetTeam(Get5_CSTeamToMatchTeam(GetClientTeam(i)));
-	}
+		if (!isInvalid) {
+			g_hPlayer[i].SetTeam(Get5_GetPlayerTeam(auth));
+		} else {
+			g_hPlayer[i].SetTeam(Get5_CSTeamToMatchTeam(GetClientTeam(i)));
+		}
+
+		
+	}	
 }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
@@ -298,7 +347,9 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		int currentElo, matchesPlayed;
 		GetPlayerFromTable(auth, currentElo, matchesPlayed);
 		player.SetValue("currentelo", currentElo);
+		LogMessage("Debug: Current elo %s.", currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
+		LogMessage("Debug: Current matches played %s.", matchesPlayed);
 		if (team == seriesWinner)
 		{
 			winningTeamAvgElo += currentElo;
@@ -325,44 +376,49 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
+		LogMessage("Debug: Current elo %i.", playerElo);
 		player.GetValue("matchesplayed", playerMatches);
+		LogMessage("Debug: Current matches played %i.", playerMatches);
+		LogMessage("Debug: Player Matches value %i", playerMatches);
+		LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchCount.IntValue);
 		if (team == seriesWinner)
 		{
+			LogMessage("Debug: Series winner info");
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
+				LogMessage("Debug: Added to Elo gain");
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
+				LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
-				player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, true));
+				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 			}
 		}
 		else if (team == seriesLoser)
 		{
+			LogMessage("Debug: Series loser info");
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
+				LogMessage("Debug: Series loser add elo");
 				player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
+				LogMessage("Debug: Series loser add elo");
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, false));
 			}
+		}
+
+		if (team == MatchTeam_TeamNone)
+		{
+			LogMessage("Debug: The game was a draw.");
+			player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue / 2);
+			LogMessage("Debug: Prelim matches value %i", g_cvPreliminaryMatchEloGain.IntValue / 2);
 		}
 		
 		UpdatePlayerInTable(player);
 	}
-}
-
-public Action Event_RoundEnd(Handle event, const char[] name, bool dontBroadcast)
-{
-	roundCounter++;
-	
-	if (roundCounter % 3 == 0)
-	{
-		OnFakeMatchEnd();
-	}
-	
-	return Plugin_Continue;
 }
 
 void InsertPlayerToTable(const char[] auth)
@@ -612,84 +668,4 @@ int calculateEloGain(int playerElo, float otherTeamAvgElo, bool playerWon)
 	}
 	
 	return 0;
-}
-
-public void OnFakeMatchEnd()
-{
-	if (!DEBUG)
-	return;
-	
-	int winningTeamCount;
-	int losingTeamCount;
-	float winningTeamAvgElo;
-	float losingTeamAvgElo;
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		PlayerEloMap player = g_hPlayer[i];
-		if (player == null)
-		{
-			continue;
-		}
-		
-		char auth[32];
-		player.GetId64(auth, sizeof(auth));
-		int team = GetClientTeam(i);
-		
-		int currentElo, matchesPlayed;
-		GetPlayerFromTable(auth, currentElo, matchesPlayed);
-		player.SetValue("currentelo", currentElo);
-		player.SetValue("matchesplayed", matchesPlayed);
-		if (team == 3)
-		{
-			winningTeamAvgElo += currentElo;
-			winningTeamCount++;
-		}
-		else if (team == 2)
-		{
-			losingTeamAvgElo += currentElo;
-			losingTeamCount++;
-		}
-	}
-	
-	winningTeamAvgElo /= winningTeamCount;
-	losingTeamAvgElo /= losingTeamCount;
-	
-	for (int i = 1; i <= MaxClients; i++)
-	{
-		PlayerEloMap player = g_hPlayer[i];
-		if (player == null)
-		{
-			continue;
-		}
-		
-		int team = GetClientTeam(i);
-		int playerElo, playerMatches;
-		player.GetValue("currentelo", playerElo);
-		player.GetValue("matchesplayed", playerMatches);
-		if (team == 3)
-		{
-			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-			{
-				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
-			}
-			else
-			{
-				player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, true));
-			}
-		}
-		else if (team == 2)
-		{
-			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-			{
-				player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
-			}
-			else
-			{
-				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, false));
-			}
-		}
-		
-		UpdatePlayerInTable(player);
-	}
-}
+} 

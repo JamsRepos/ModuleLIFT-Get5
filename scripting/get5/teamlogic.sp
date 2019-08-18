@@ -3,13 +3,23 @@ public Action Command_JoinGame(int client, const char[] command, int argc) {
     return Plugin_Continue;
   }
 
-  // TODO: if we want to bypass the teammenu, this is probably the best
-  // place to put the player onto a team.
-  // if (IsPlayer(client)) {
-  //     FakeClientCommand(client, "jointeam 2");
-  // }
+  if (client != 0 && IsClientInGame(client) && !IsFakeClient(client)) {
+      CreateTimer(0.5, AssignTeamOnConnect, client);
+  }
 
   return Plugin_Continue;
+}
+
+public Action AssignTeamOnConnect(Handle timer, int client) {
+    if (IsClientInGame(client)) {
+        GetClientAuthId(client, AuthId_SteamID64, steamid, sizeof(steamid));
+        ChangeClientTeam(client, Get5_MatchTeamToCSTeam(Get5_GetPlayerTeam(steamid)));
+        if (GameRules_GetProp("m_bMatchWaitingForResume") != 0 && GameRules_GetProp("m_bFreezePeriod") == 1 || g_GameState == Get5State_Warmup)
+        {
+          CS_RespawnPlayer(client);
+        }
+    }
+    return Plugin_Continue;
 }
 
 public void CheckClientTeam(int client) {

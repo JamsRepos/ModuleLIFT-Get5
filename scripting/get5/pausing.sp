@@ -39,7 +39,7 @@ public Action Command_Pause(int client, int args)
   {
     return Plugin_Handled;
   }
-  g_cooldownTimes[client] = currentTime + 30;
+  g_cooldownTimes[client] = currentTime + 15;
 
   GetConVarString(g_PauseModeCvar, pauseMode, sizeof(pauseMode));
 

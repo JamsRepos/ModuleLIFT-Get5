@@ -49,7 +49,7 @@ char Q_INSERT_PLAYER[] = "INSERT INTO `statistics`"...
 " VALUES ('%s','%s','%s',%d) ON DUPLICATE KEY UPDATE `ip`='%s', `name`='%s', `lastconnect`=%d, `region`='%s'";
 
 char Q_UPDATE_PLAYER[] = "UPDATE `statistics` SET `ip`='%s', `name`='%s', `kills`=kills+%d, `deaths`=deaths+%d,"...
-" `assists`=assists+%d, `3k`=3k+%d, `4k`=4k+%d, `5k`=5k+%d, `shots`=shots+%d, `hits`=hits+%d, `headshots`=headshots+%d, "...
+" `assists`=assists+%d, `mvps`=mvps+%d, `1v2`=1v2+%d, `1v3`=1v3+%d, `1v4`=1v4+%d, `1v5`=1v5+%d, `3k`=3k+%d, `4k`=4k+%d, `5k`=5k+%d, `shots`=shots+%d, `hits`=hits+%d, `headshots`=headshots+%d, "...
 "`roundswon`=roundswon+%d, `roundslost`=roundslost+%d,"...
 " `wins`=wins+%d, `losses`=losses+%d, `ties`=ties+%d, "...
 "`points`=points+%d, `lastconnect`=%d, `totaltime`=totaltime+%d WHERE `steamid` = '%s'";
@@ -64,7 +64,7 @@ int g_iPlayTime[MAXPLAYERS+1] = 0;
 
 ConVar g_serverRegion;
 
-
+bool g_SetTeamClutching[4];
 
 methodmap QueuedQuery < StringMap
 {
@@ -134,6 +134,11 @@ methodmap PlayerStatsTracker < StringMap
 		playerstats.SetValue("kills", 0);
 		playerstats.SetValue("deaths", 0);
 		playerstats.SetValue("assists", 0);
+		playerstats.SetValue("mvps", 0);
+		playerstats.SetValue("1v2", 0);
+		playerstats.SetValue("1v3", 0);
+		playerstats.SetValue("1v4", 0);
+		playerstats.SetValue("1v5", 0);
 		playerstats.SetValue("triplekill", 0);
 		playerstats.SetValue("quadrakill", 0);
 		playerstats.SetValue("pentakill", 0);
@@ -186,6 +191,26 @@ methodmap PlayerStatsTracker < StringMap
 	public void setPentaKill()
 	{
 		this.SetValue("pentakill", 1);
+	}
+
+	public void setOneVTwo()
+	{
+		this.SetValue("1v2", 1);
+	}
+
+	public void setOneVThree()
+	{
+		this.SetValue("1v3", 1);
+	}
+
+	public void setOneVFour()
+	{
+		this.SetValue("1v4", 1);
+	}
+
+	public void setOneVFive()
+	{
+		this.SetValue("1v5", 1);
 	}
 	
 	public void incrementKills()
@@ -280,6 +305,13 @@ methodmap PlayerStatsTracker < StringMap
 		this.GetValue("headshots", headshots);
 		this.SetValue("headshots", ++headshots);
 	}
+
+	public void incrementMVPs()
+	{
+		int mvps = 0;
+		this.GetValue("mvps", mvps);
+		this.SetValue("mvps", ++mvps);
+	}
 	
 	public void addPoints(int pointsToAdd)
 	{
@@ -293,6 +325,11 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("kills", 0);
 		this.SetValue("deaths", 0);
 		this.SetValue("assists", 0);
+		this.SetValue("mvps", 0);
+		this.SetValue("1v2", 0);
+		this.SetValue("1v3", 0);
+		this.SetValue("1v4", 0);
+		this.SetValue("1v5", 0);
 		this.SetValue("triplekill", 0);
 		this.SetValue("quadrakill", 0);
 		this.SetValue("pentakill", 0);
@@ -306,6 +343,8 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("headshots", 0);
 		this.SetValue("points", 0);
 		this.SetValue("connectiontime", 0);
+		g_SetTeamClutching[CS_TEAM_CT] = false;
+ 		g_SetTeamClutching[CS_TEAM_T] = false;
 	}
 	
 	public void insertToDb(bool close)
@@ -336,7 +375,7 @@ methodmap PlayerStatsTracker < StringMap
 		char id64[32];
 		char ipaddress[32];
 		char playername[32];
-		int kills, deaths, assists, triplekill, quadrakill, pentakill, roundswon, roundslost, matcheswon, matcheslost, matchestied, shots, hits, headshots, 
+		int kills, deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, roundswon, roundslost, matcheswon, matcheslost, matchestied, shots, hits, headshots, 
 		points, lastconnect, time;
 		DataPack dp = new DataPack();
 		this.GetString("id64", STRING(id64));
@@ -345,6 +384,11 @@ methodmap PlayerStatsTracker < StringMap
 		this.GetValue("kills", kills);
 		this.GetValue("deaths", deaths);
 		this.GetValue("assists", assists);
+		this.GetValue("mvps", mvps);
+		this.GetValue("1v2", onevstwo);
+		this.GetValue("1v3", onevsthree);
+		this.GetValue("1v4", onevsfour);
+		this.GetValue("1v5", onevsfive);
 		this.GetValue("triplekill", triplekill);
 		this.GetValue("quadrakill", quadrakill);
 		this.GetValue("pentakill", pentakill);
@@ -375,7 +419,7 @@ methodmap PlayerStatsTracker < StringMap
 		}
 		
 		g_hThreadedDb.Format(STRING(formattedQuery), Q_UPDATE_PLAYER, ipaddress, playername, kills, 
-			deaths, assists, triplekill, quadrakill, pentakill, shots, hits, headshots, 
+			deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, shots, hits, headshots, 
 			roundswon, roundslost, matcheswon, matcheslost, matchestied, points, lastconnect, time, id64);
 		PrintToServer("%s", formattedQuery);
 		g_hThreadedDb.Query(updatecb, formattedQuery, dp);
@@ -402,6 +446,7 @@ Handle g_hOnKill;
 Handle g_hOnDeath;
 Handle g_hOnAssist;
 Handle g_hOnRoundWon;
+Handle g_hOnRoundMVP;
 Handle g_hOnPlayerRoundWon;
 Handle g_hOnRoundLost;
 Handle g_hOnPlayerRoundLost;
@@ -410,6 +455,8 @@ Handle g_hOnPlayerHit;
 Handle g_hOnHeadShot;
 PlayerStatsTracker g_hPlayers[MAXPLAYERS];
 int g_RoundKills[MAXPLAYERS + 1]; 
+
+int g_RoundClutchingEnemyCount[MAXPLAYERS+1];
 
 public Plugin myinfo = 
 {
@@ -428,9 +475,10 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	g_hOnDeath = CreateGlobalForward("OnDeath", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnAssist = CreateGlobalForward("OnAssist", ET_Ignore, Param_Cell, Param_Cell);
 	g_hOnRoundWon = CreateGlobalForward("OnRoundWon", ET_Ignore, Param_Cell);
-	g_hOnPlayerRoundWon = CreateGlobalForward("OnPlayerRoundWon", ET_Ignore, Param_Cell, Param_Cell);
+	g_hOnRoundMVP = CreateGlobalForward("OnRoundMVP", ET_Ignore, Param_Cell);
+	g_hOnPlayerRoundWon = CreateGlobalForward("OnPlayerRoundWon", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnRoundLost = CreateGlobalForward("OnRoundLost", ET_Ignore, Param_Cell);
-	g_hOnPlayerRoundLost = CreateGlobalForward("OnPlayerRoundLost", ET_Ignore, Param_Cell, Param_Cell);
+	g_hOnPlayerRoundLost = CreateGlobalForward("OnPlayerRoundLost", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnShotFired = CreateGlobalForward("OnShotFired", ET_Ignore, Param_Cell, Param_Cell, Param_String);
 	g_hOnPlayerHit = CreateGlobalForward("OnPlayerHit", ET_Ignore, Param_Cell, Param_Cell, Param_Float);
 	g_hOnHeadShot = CreateGlobalForward("OnHeadShot", ET_Ignore, Param_Cell, Param_Cell);
@@ -449,6 +497,7 @@ public void OnPluginStart()
 	HookEvent("player_hurt", Event_PlayerHurt);
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("round_end", Event_RoundEnd);
+	HookEvent("round_mvp", Event_RoundMVP);
 }
 
 public void OnDbConnect(Database db, const char[] error, any data)
@@ -506,10 +555,10 @@ public void OnClientDisconnect(int client)
 		return;
 	}
 	g_hPlayers[client].updateToDb(true);
-	//SDKUnhook(client, SDKHook_FireBulletsPost, FireBulletsPost);
-	// SDKUnhook(client, SDKHook_TraceAttackPost, TraceAttackPost);
-	delete g_hPlayers[client];
-	
+	if (Get5_GetGameState() != Get5State_Live)
+	{
+		delete g_hPlayers[client];
+	}
 }
 
 // This works fine.
@@ -539,6 +588,51 @@ public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadca
 		}
 	}
 	return Plugin_Continue;
+}
+
+public Action Event_RoundMVP(Event event, const char[] name, bool dontBroadcast)
+{
+	int userid = event.GetInt("userid");
+	int client = GetClientOfUserId(userid);
+	if (client && (VALIDPLAYER(client) || DEBUG))
+	{
+		int uid = GetClientUserId(client);
+		if (g_hPlayers[client] != null && g_hPlayers[client].isPlayersStats(uid))
+		{
+			g_hPlayers[client].incrementMVPs();
+			Call_StartForward(g_hOnRoundMVP);
+			Call_PushCell(client);
+			Call_Finish();
+		}
+	}
+	return Plugin_Continue;
+}
+
+static int GetClutchingClient(int csTeam) {
+  int client = -1;
+  int count = 0;
+  for (int i = 1; i <= MaxClients; i++) {
+    if (VALIDPLAYER(i) && GetClientTeam(i) == csTeam) {
+      client = i;
+      count++;
+    }
+  }
+
+  if (count == 1) {
+    return client;
+  } else {
+    return -1;
+  }
+}
+
+stock int CountAlivePlayersOnTeam(int csTeam) {
+  int count = 0;
+  for (int i = 1; i <= MaxClients; i++) {
+    if (VALIDPLAYER(i) && GetClientTeam(i) == csTeam) {
+      count++;
+    }
+  }
+  return count;
 }
 
 public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)  {
@@ -594,6 +688,21 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int victim = GetClientOfUserId(victimid);
 	int attacker = GetClientOfUserId(attackerid);
 	int assister = GetClientOfUserId(assisterid);
+
+	int tCount = CountAlivePlayersOnTeam(CS_TEAM_T);
+	int ctCount = CountAlivePlayersOnTeam(CS_TEAM_CT);
+
+	if (tCount == 1 && !g_SetTeamClutching[CS_TEAM_T]) {
+		g_SetTeamClutching[CS_TEAM_T] = true;
+		int clutcher = GetClutchingClient(CS_TEAM_T);
+		g_RoundClutchingEnemyCount[clutcher] = ctCount;
+	}
+
+	if (ctCount == 1 && !g_SetTeamClutching[CS_TEAM_CT]) {
+		g_SetTeamClutching[CS_TEAM_CT] = true;
+		int clutcher = GetClutchingClient(CS_TEAM_CT);
+		g_RoundClutchingEnemyCount[clutcher] = tCount;
+	}
 	
 	if (victim && (VALIDPLAYER(victim) || DEBUG) && g_hPlayers[victim] != null && g_hPlayers[victim].isPlayersStats(victimid))
 	{
@@ -656,6 +765,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 	Call_StartForward(g_hOnRoundLost);
 	Call_PushCell(otherTeam);
 	Call_Finish();
+	LogMessage("???????");
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (!VALIDPLAYER(i) && !DEBUG)
@@ -667,8 +777,10 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		{
 			continue;
 		}
+
 		
 		int clientteam;
+		LogMessage("g_RoundClutchingEnemyCount %i", g_RoundClutchingEnemyCount[i]);
 		if ((clientteam = GetClientTeam(i)) == team)
 		{
 			switch (g_RoundKills[i]) {
@@ -679,12 +791,26 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 				case 5:
 					g_hPlayers[i].setPentaKill();
 			}
+			switch (g_RoundClutchingEnemyCount[i]) {
+				case 2:
+					g_hPlayers[i].setOneVTwo();
+				case 3:
+					g_hPlayers[i].setOneVThree();
+				case 4:
+					g_hPlayers[i].setOneVFour();
+				case 5:
+					g_hPlayers[i].setOneVFive();
+			}
 			g_RoundKills[i] = 0;
 			g_hPlayers[i].incrementRoundsWon();
+
+
 			Call_StartForward(g_hOnPlayerRoundWon);
 			Call_PushCell(i);
 			Call_PushCell(team);
+			Call_PushCell(g_RoundClutchingEnemyCount[i]);
 			Call_Finish();
+			g_RoundClutchingEnemyCount[i] = 0;
 			
 			if (DEBUG)
 			{
@@ -704,6 +830,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 			}
 			g_RoundKills[i] = 0;
 			g_hPlayers[i].incrementRoundsLost();
+
 			Call_StartForward(g_hOnPlayerRoundLost);
 			Call_PushCell(i);
 			Call_PushCell(otherTeam);
@@ -726,7 +853,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		g_hPlayers[i].updateToDb(false);
 		g_hPlayers[i].resetStats();
 	}
-	
 	return Plugin_Continue;
 }
 
