@@ -81,7 +81,8 @@ public void OnPluginStart()
 	ga_iEndMatchVotesT = new ArrayList();
 	ga_iEndMatchVotesCT = new ArrayList();
 	//Register Command
-	RegConsoleCmd("sm_gg", Command_EndMatch, "Ends the match once everyone on the team has used it.");reate Socket
+
+	RegConsoleCmd("sm_gg", Command_EndMatch, "Ends the match once everyone on the team has used it.");
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
 
 	//Set Socket Options
