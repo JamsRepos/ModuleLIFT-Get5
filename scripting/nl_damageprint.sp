@@ -1,7 +1,7 @@
 #include <cstrike>
 #include <sourcemod>
 
-#include "pugsetup/util.sp"
+#include "get5/psutil.sp"
 
 #pragma semicolon 1
 #pragma newdecls required
