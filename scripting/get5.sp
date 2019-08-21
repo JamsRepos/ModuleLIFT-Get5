@@ -517,6 +517,7 @@ public Action Timer_InfoMessages(Handle timer) {
     GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
     if (StrEqual(voteMode, "ESEA", false)) {
       Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
     } else {
       Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
     }
@@ -1188,8 +1189,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     g_KnifeWinnerTeam = CSTeamToMatchTeam(winningCSTeam);
     GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
     if (StrEqual(voteMode, "ESEA", false)) {
-      Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
-      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
       g_bVoteStart = true;
       g_bSideVoteTimer = CreateTimer(g_TeamTimeToKnifeDecisionCvar.FloatValue, Timer_VoteSide);
     } else {

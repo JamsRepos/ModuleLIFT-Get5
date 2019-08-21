@@ -492,7 +492,7 @@ static void PrintDamageInfo(int client) {
 
   int otherTeam = (team == CS_TEAM_T) ? CS_TEAM_CT : CS_TEAM_T;
   for (int i = 1; i <= MaxClients; i++) {
-    if (IsPlayer(i) && GetClientTeam(i) == otherTeam && g_GameState != Get5State_KnifeRound) {
+    if (IsPlayer(i) && GetClientTeam(i) == otherTeam) {
       int health = IsPlayerAlive(i) ? GetClientHealth(i) : 0;
       char name[64];
       GetClientName(i, name, sizeof(name));
