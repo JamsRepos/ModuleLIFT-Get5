@@ -16,7 +16,8 @@ Database g_Database = null;
 int g_iShotsFired[MAXPLAYERS + 1] = 0;
 int g_iShotsHit[MAXPLAYERS + 1] = 0;
 int g_iHeadshots[MAXPLAYERS + 1] = 0;
-int g_iMatchID;
+
+char g_uuidString[64];
 
 bool g_bLoadMatchAvailable;
 bool g_alreadySwapped;
@@ -79,20 +80,14 @@ public void OnPluginStart()
 	ga_sWinningPlayers = new ArrayList(64);
 	ga_iEndMatchVotesT = new ArrayList();
 	ga_iEndMatchVotesCT = new ArrayList();
-
 	//Register Command
-	RegConsoleCmd("sm_gg", Command_EndMatch, "Ends the match once everyone on the team has used it.");
-
-	//Register Command Listeners
-	/*AddCommandListener(Command_JoinTeam, "jointeam");
-	AddCommandListener(Command_JoinTeam, "joingame");*/
-
-	//Create Socket
+	RegConsoleCmd("sm_gg", Command_EndMatch, "Ends the match once everyone on the team has used it.");reate Socket
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
 
 	//Set Socket Options
 	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
 	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
+	GenerateUUID(g_uuidString, sizeof(g_uuidString));
 
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
@@ -116,6 +111,28 @@ public Action AttemptMySQLConnection(Handle timer)
 	}
 	else
 		LogError("Database Error: No Database Config Found! (%s/addons/sourcemod/configs/databases.cfg)", sFolder);
+}
+
+int GenerateUUID(char[] szBuffer, int iBufferLength) {
+  return FormatEx(szBuffer, iBufferLength, "%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
+    // 32 bits for "time_low"
+    GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff),
+
+    // 16 bits for "time_mid"
+    GetRandomInt(0, 0xffff),
+
+    // 16 bits for "time_hi_and_version"
+    // four most significant bits holds version number 4
+    (GetRandomInt(0, 0x0fff) | 0x4000),
+
+    // 16 bits, 8 bits for "clk_seq_hi_res",
+    // 8 bits for "clk_seq_low",
+    // two most significant bits holds zero and one for variant DCE1.1
+    (GetRandomInt(0, 0x3fff) | 0x8000),
+
+    // 48 bits for node
+    GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff)
+  );
 }
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
@@ -247,13 +264,13 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		IntToString(ip[3], pieces[3], sizeof(pieces[]));
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
-
-		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES (%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
+		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 		UpdatePlayerStats();
 	}
 }
 
+// To be rewritten for UUIDs
 public void SQL_InitialInsert(Database db, DBResultSet results, const char[] sError, any data)
 {
 	if(results == null)
@@ -262,30 +279,7 @@ public void SQL_InitialInsert(Database db, DBResultSet results, const char[] sEr
 		LogError("MySQL Query Failed: %s", sError);
 		return;
 	}
-
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "SELECT LAST_INSERT_ID() as ID;");
-	g_Database.Query(SQL_MatchIDQuery, sQuery);
-}
-public void SQL_MatchIDQuery(Database db, DBResultSet results, const char[] sError, any data)
-{
-	if(results == null)
-	{
-		PrintToServer("Fetching Match ID Failed due to Error: %s");
-		LogError("Fetching Match ID Failed due to Error: %s");
-		return;
-	}
-
-	if(!results.FetchRow()) 
-	{
-		LogError("Retrieving Match ID returned no rows.");
-		return;
-	}
-
-	int iCol;
-	results.FieldNameToNum("ID", iCol);
-	g_iMatchID = results.FetchInt(iCol);
-	ServerCommand("tv_record %i", g_iMatchID);
+	ServerCommand("tv_record %s", g_uuidString);
 }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
@@ -297,7 +291,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	UpdatePlayerStats();
 	UpdateMatchStats();
 	SendReport();
-	
 	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
 	char sData[1024], sPort[16], sQuery[1024], sIP[32], sPass[128];
@@ -310,7 +303,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(1));
 	json_object_set_new(jsonObj, "server", json_string(sIP));
-	json_object_set_new(jsonObj, "matchid", json_integer(g_iMatchID));
+	json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
 	json_object_set_new(jsonObj, "pass", json_string(sPass));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
@@ -325,45 +318,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
-/*public Action Command_JoinTeam(int Client, char[] sCommand, int iArgs)
-{
-	if(!IsValidClient(Client)) return Plugin_Handled;
-
-	if(Get5_GetGameState() == Get5State_GoingLive) return Plugin_Handled;
-
-	if(Get5_GetGameState() != Get5State_Live) return Plugin_Continue;
-
-	if(g_eAllowedTeam[Client] == NOT_AUTHORIZED)
-	{
-		PrintToChat(Client, "%s Your team authorization status is still loading. Please try again in a moment.", PREFIX);
-		return Plugin_Handled;
-	}
-
-	if(GetClientTeam(Client) == 1 || GetClientTeam(Client) == 2 || GetClientTeam(Client) == 3) return Plugin_Handled;
-
-	char sTeamName[32];
-	GetCmdArg(1, sTeamName, sizeof(sTeamName)); // Get Team Name
-	int iTeam = StringToInt(sTeamName);
-
-	if(iTeam == 0 && g_eAllowedTeam[Client] != TEAM_ANY) // Auto join
-		return Plugin_Handled;
-	else if(iTeam == 1 && (g_eAllowedTeam[Client] != TEAM_ANY && g_eAllowedTeam[Client] != TEAM_SPEC))
-		return Plugin_Handled;
-	else if(iTeam == 2 && (g_eAllowedTeam[Client] != TEAM_ANY && g_eAllowedTeam[Client] != TEAM_T))
-		return Plugin_Handled;
-	else if(iTeam == 3 && (g_eAllowedTeam[Client] != TEAM_ANY && g_eAllowedTeam[Client] != TEAM_CT))
-		return Plugin_Handled;
-	else
-	{
-		CS_SwitchTeam(Client, iTeam);
-		return Plugin_Continue;
-	}
-}
-
-public Action Command_JoinGame(int Client, char[] sCommand, int iArgs)
-{
-	return Plugin_Handled;
-}*/
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
@@ -409,8 +363,8 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 			GetClientAuthId(i, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
 
 			int len = 0;
-			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid64, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
-			len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i], sTeamName);
+			len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
+			len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES ('%s', '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ",g_uuidString, sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i], sTeamName);
 			len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[i], g_iShotsHit[i], g_iHeadshots[i]);	
 			txn_UpdateStats.AddQuery(sQuery);
 		}
@@ -431,7 +385,6 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 	iScore = GetEntProp(iEnt, Prop_Send, "m_iScore", _, Client);
 
 	GetClientName(Client, sName, sizeof(sName));
-	//Get5_GetTeamName(GetClientTeam(Client), sTeamName, sizeof(sTeamName));
 
 	g_Database.Escape(sName, sName, sizeof(sName));
 	
@@ -439,8 +392,8 @@ void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
 	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
 
 	int len = 0;
-	len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid64, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
-	len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES (LAST_INSERT_ID(), '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ", sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);
+	len += Format(sQuery[len], sizeof(sQuery) - len, "INSERT IGNORE INTO sql_matches (match_id, name, steamid, team, alive, ping, account, kills, assists, deaths, mvps, score, disconnected, shots_fired, shots_hit, headshots) ");
+	len += Format(sQuery[len], sizeof(sQuery) - len, "VALUES ('%s', '%s', '%s', %i, %i, %i, %i, %i, %i, %i, %i, %i, 0, %i, %i, %i) ",g_uuidString, sName, sSteamID, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);
 	len += Format(sQuery[len], sizeof(sQuery) - len, "ON DUPLICATE KEY UPDATE name='%s', team=%i, alive=%i, ping=%i, account=%i, kills=%i, assists=%i, deaths=%i, mvps=%i, score=%i, disconnected=0, shots_fired=%i, shots_hit=%i, headshots=%i;", sName, iTeam, iAlive, iPing, iAccount, iKills, iAssists, iDeaths, iMVPs, iScore, g_iShotsFired[Client], g_iShotsHit[Client], g_iHeadshots[Client]);	
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
@@ -463,6 +416,14 @@ void UpdateMatchStats(bool duringMatch = false)
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id=LAST_INSERT_ID();", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
+
+// public Action Command_Surrender(int client, it args) {
+// 	if (IsSurrenderAvailable()) {
+// 		FakeClientCommandEx(client, "callvote Surrender");
+// 	} else {
+// 		Get5_Message(client, "Surrender is currently unavailable. You need to be 8 rounds behind.");
+// 	}
+// }
 
 public Action Command_EndMatch(int Client, int iArgs)
 {
@@ -644,7 +605,7 @@ public void SendReport()
 		Format(sWinTitle, sizeof(sWinTitle), "%s just won %i-%i!", sTeamName, iCTScore, iTScore);
 
 	json_object_set_new(jContentAuthor, "name", json_string(sWinTitle));
-	Format(sBuffer, sizeof sBuffer, "%s/scoreboard?id=%i", sSiteURL, g_iMatchID);
+	Format(sBuffer, sizeof sBuffer, "%s/scoreboard?id=%s", sSiteURL, g_uuidString);
 	json_object_set_new(jContentAuthor, "url", json_string(sBuffer));
 	json_object_set_new(jContentAuthor, "icon_url", json_string(sAvatarURL));
 	json_object_set_new(jContent, "author", jContentAuthor);
@@ -673,7 +634,7 @@ public void SendReport()
 		}
 	}
 
-	len += Format(sDescription[len], sizeof(sDescription) - len, "\n[View more](%s/scoreboard?id=%i)", sSiteURL, g_iMatchID);
+	len += Format(sDescription[len], sizeof(sDescription) - len, "\n[View more](%s/scoreboard?id=%s)", sSiteURL, g_uuidString);
 	json_object_set_new(jContent, "description", json_string(sDescription));
 
 	json_array_append_new(jEmbeds, jContent);
@@ -755,14 +716,13 @@ public void OnClientDisconnect(int Client)
 		UpdatePlayerStats(false, Client);
 
 		CheckSurrenderVotes();
-
 		ResetVars(Client);
 
 		if(Get5_GetGameState() == Get5State_Live && IsValidClient(Client, true))
 		{
 			char sQuery[1024], sSteamID[64];
 			GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
-			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id=LAST_INSERT_ID() AND steamid64='%s'", sSteamID);
+			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id=LAST_INSERT_ID() AND steamid='%s'", sSteamID);
 			g_Database.Query(SQL_GenericQuery, sQuery);
 		}
 	}
