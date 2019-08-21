@@ -102,7 +102,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 {
 	
 }
-
+	
 public void OnPluginStart()
 {
 	g_hThreadedDb = SQL_Connect("EloSys", true, g_szSqlError, sizeof(g_szSqlError));

@@ -703,6 +703,11 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		int clutcher = GetClutchingClient(CS_TEAM_CT);
 		g_RoundClutchingEnemyCount[clutcher] = tCount;
 	}
+
+	if (attacker == 0 || victim == attacker)
+	{
+		return Plugin_Handled;
+	}
 	
 	if (victim && (VALIDPLAYER(victim) || DEBUG) && g_hPlayers[victim] != null && g_hPlayers[victim].isPlayersStats(victimid))
 	{
