@@ -32,6 +32,7 @@
 
 #define CHECK_READY_TIMER_INTERVAL 1.0
 #define INFO_MESSAGE_TIMER_INTERVAL 29.0
+#define KNIFE_INFO_MESSAGE_TIMER_INTERVAL 15.0
 
 #define DEBUG_CVAR "get5_debug"
 #define MATCH_ID_LENGTH 64
@@ -481,6 +482,21 @@ public void OnPluginStart() {
   /** Start any repeating timers **/
   CreateTimer(CHECK_READY_TIMER_INTERVAL, Timer_CheckReady, _, TIMER_REPEAT);
   CreateTimer(INFO_MESSAGE_TIMER_INTERVAL, Timer_InfoMessages, _, TIMER_REPEAT);
+  CreateTimer(KNIFE_INFO_MESSAGE_TIMER_INTERVAL, Timer_KnifeInfoMessage, _, TIMER_REPEAT);
+}
+
+public Action Timer_KnifeInfoMessage(Handle timer) {
+  if (g_GameState == Get5State_WaitingForKnifeRoundDecision) {
+    GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
+    if (StrEqual(voteMode, "ESEA", false)) {
+      Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
+      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
+    } else {
+      Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
+    }
+  }
+
+  return Plugin_Continue;
 }
 
 public Action Timer_InfoMessages(Handle timer) {
@@ -509,18 +525,6 @@ public Action Timer_InfoMessages(Handle timer) {
     } 
   } else if (g_DisplayGotvVeto.BoolValue && g_GameState == Get5State_Warmup && g_MapChangePending) {
     Get5_MessageToAll("%t", "WaitingForGOTVVetoInfoMessage");
-  }
-
-  // Handle waiting for knife decision
-  
-  if (g_GameState == Get5State_WaitingForKnifeRoundDecision) {
-    GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
-    if (StrEqual(voteMode, "ESEA", false)) {
-      Get5_MessageToAll("%t", "WaitingForEnemyVoteInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
-      Get5_MessageToTeam(g_KnifeWinnerTeam, "%t", "VoteMessage", g_TeamTimeToKnifeDecisionCvar.FloatValue);
-    } else {
-      Get5_MessageToAll("%t", "WaitingForEnemySwapInfoMessage",g_FormattedTeamNames[g_KnifeWinnerTeam]);
-    }
   }
 
   // Handle postgame
