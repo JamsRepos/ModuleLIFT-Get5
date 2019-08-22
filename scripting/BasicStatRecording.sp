@@ -508,7 +508,7 @@ public void OnDbConnect(Database db, const char[] error, any data)
 	}
 	else
 	{
-		// db.Query(createtablecb, CREATE_TABLE);
+		db.Query(createtablecb, CREATE_TABLE);
 		g_hThreadedDb = db;
 	}
 }
