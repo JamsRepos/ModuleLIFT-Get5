@@ -784,7 +784,20 @@ public Action Command_EndMatch(int client, int args) {
            mapName, MatchTeam_TeamNone, team1score, team2score, GetMapNumber() - 1);
   Call_StartForward(g_OnMapResult);
   Call_PushString(mapName);
-  Call_PushCell(MatchTeam_TeamNone);
+
+  if (team1score > team2score)
+  {
+    Call_PushCell(MatchTeam_Team1);
+  }
+  else if (team2score > team1score)
+  {
+    Call_PushCell(MatchTeam_Team2);
+  }
+  else
+  {
+    Call_PushCell(MatchTeam_TeamNone);
+  }
+
   Call_PushCell(team1score);
   Call_PushCell(team2score);
   Call_PushCell(GetMapNumber() - 1);
@@ -794,7 +807,19 @@ public Action Command_EndMatch(int client, int args) {
            MatchTeam_TeamNone, g_TeamSeriesScores[MatchTeam_Team1],
            g_TeamSeriesScores[MatchTeam_Team2]);
   Call_StartForward(g_OnSeriesResult);
-  Call_PushCell(MatchTeam_TeamNone);
+  if (team1score > team2score)
+  {
+    Call_PushCell(MatchTeam_Team1);
+  }
+  else if (team2score > team1score)
+  {
+    Call_PushCell(MatchTeam_Team2);
+  }
+  else
+  {
+    Call_PushCell(MatchTeam_TeamNone);
+  }
+  
   Call_PushCell(g_TeamSeriesScores[MatchTeam_Team1]);
   Call_PushCell(g_TeamSeriesScores[MatchTeam_Team2]);
   Call_Finish();

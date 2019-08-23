@@ -283,7 +283,7 @@ public void SQL_InitialInsert(Database db, DBResultSet results, const char[] sEr
 	ServerCommand("tv_record %s", g_uuidString);
 }
 
-public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
+public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
 {
 	static float fTime;
 	if(GetGameTime() - fTime < 1.0) return;
@@ -515,9 +515,8 @@ public void CheckSurrenderVotes()
 			if(IsValidClient(i, true))
 				PrintToChat(i, "%s Counter-Terrorists have voted to surrender. Match ending...", PREFIX);
 		}
-
+		Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_T), 0, 0, 0);
 		ServerCommand("get5_endmatch"); // Force end the match
-		// Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_T), 0, 0, 0);
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
 		return;
@@ -534,8 +533,8 @@ public void CheckSurrenderVotes()
 				PrintToChat(i, "%s Terrorists have voted to surrender. Match ending...", PREFIX);
 		}
 
+		Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_CT), 0, 0, 0);
 		ServerCommand("get5_endmatch"); // Force end the match
-		// Get5_OnMapResult("", Get5_CSTeamToMatchTeam(CS_TEAM_CT), 0, 0, 0);
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
 		return;

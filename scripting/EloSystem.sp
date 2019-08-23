@@ -324,6 +324,7 @@ public void Get5_OnGoingLive(int mapNumber)
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
+
 	int winningTeamCount;
 	int losingTeamCount;
 	float winningTeamAvgElo;
@@ -345,6 +346,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		GetPlayerFromTable(auth, currentElo, matchesPlayed);
 		player.SetValue("currentelo", currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
+
 		if (team == seriesWinner)
 		{
 			winningTeamAvgElo += currentElo;
@@ -374,7 +376,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		player.GetValue("matchesplayed", playerMatches);
 		if (team == seriesWinner)
 		{
-			LogMessage("Debug: Series winner info");
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
@@ -395,11 +396,9 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, false));
 			}
 		}
-
-		// Up for discussion but if it is a draw they get half elo instead of people thinking it was a "waste"
-		if (team == MatchTeam_TeamNone)
+		else if (team == MatchTeam_TeamNone)
 		{
-			player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue / 2);
+		 	player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue / 2);
 		}
 		
 		UpdatePlayerInTable(player);
