@@ -396,10 +396,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, false));
 			}
 		}
-		else if (team == MatchTeam_TeamNone)
-		{
-		 	player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue / 2);
-		}
 		
 		UpdatePlayerInTable(player);
 	}
