@@ -65,36 +65,42 @@ static bool AwaitingKnifeDecision(int client) {
 
 /** ESEA Vote Commands **/
 void HandleVotes() {
-  delete g_bSideVoteTimer;
 
   int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
+  float votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(CS_TEAM_CT);
+  float votePercentTs = g_iVoteTs / GetNumHumansOnTeam(CS_TEAM_T);
 
-  if (g_iVoteCTs > g_iVoteTs) {
+
+  if (votePercentCTs >= 0.6) {
     if (winner == CS_TEAM_CT) {
       Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(false);
+      delete g_bSideVoteTimer;
     } else if (winner == CS_TEAM_T) {
       Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(true);
+      delete g_bSideVoteTimer;
     }
-  } else if (g_iVoteTs > g_iVoteCTs) {
+  } else if (votePercentTs >= 0.6) {
     if (winner == CS_TEAM_T) {
       Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(false);
+      delete g_bSideVoteTimer;
     } else if (winner == CS_TEAM_CT) {
       Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(true);
+      delete g_bSideVoteTimer;
     }
-  } else {
-    EndKnifeRound(false);
-  }
 
-  g_bVoteStart = false;
-  g_iVoteCTs = 0;
-  g_iVoteTs = 0;
+  if (Get5_GetGameState() == Get5State_GoingLive)
+  {
+    g_bVoteStart = false;
+    g_iVoteCTs = 0;
+    g_iVoteTs = 0;
 
-  for (int i = 1; i <= MaxClients; i++) {
-    g_bPlayerCanVote[i] = true;
+    for (int i = 1; i <= MaxClients; i++) {
+      g_bPlayerCanVote[i] = true;
+    }
   }
 }
 
@@ -109,20 +115,7 @@ public Action Command_VoteCT(int client, int args) {
         g_bPlayerCanVote[client] = false;
         g_iVoteCTs++;
         Get5_Message(client, "%t", "TeamVoteCT");
-
-        bool runFinal = true;
-        for (int i = 1; i <= MaxClients; i++) 
-        {
-          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) 
-          {
-            runFinal = false;
-          }
-        }
-
-        if (runFinal) 
-        {
-          HandleVotes();
-        }
+        HandleVotes();
 
         return Plugin_Handled;
         
@@ -165,20 +158,8 @@ public Action Command_VoteT(int client, int args) {
         g_bPlayerCanVote[client] = false;
         g_iVoteTs++;
         Get5_Message(client, "%t", "TeamVoteT");
-
-        bool runFinal = true;
-        for (int i = 1; i <= MaxClients; i++) 
-        {
-          if (AwaitingKnifeDecision(i) && g_bPlayerCanVote[i]) 
-          {
-            runFinal = false;
-          }
-        }
-
-        if (runFinal) 
-        {
-          HandleVotes();
-        }
+        HandleVotes();
+      }
 
         return Plugin_Handled;
 
