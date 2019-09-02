@@ -414,9 +414,18 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 				}
 				else
 				{
-					int eloValue = calculateEloGain(playerElo, winningTeamAvgElo, true);
+					int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
+					int playerNewElo = playerElo - eloValue;
+					if (playerNewElo < 0)
+					{
+						player.SetValue("currentelo", 0);
+					}
+					else
+					{
+						player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
+					}
 					LogMessage("[LOSER] The elo value is: %i", eloValue);
-					player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
+					LogMessage("[LOSER] Players new elo is: %i", playerNewElo);
 				}
 			}
 			
@@ -466,23 +475,22 @@ void UpdatePlayerInTable(PlayerEloMap player)
 	int eloGain = player.GetEloGain();
 	int playerElo = player.GetValue("currentelo", playerElo);
 
-	LogMessage("Players elo gain %i", eloGain);
-
-
 	if (g_hUpdateElo == null)
 	{
 		DBResultSet hQuery;
+		DBResultSet iQuery;
 		static char query[1024];
+		static char query_2[1024];
 		
 		Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
-		
+		LogMessage("Initial query is %s", query);
 		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
 		{
 			SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
 			LogMessage("Debug[UPDATE]: %s",g_szSqlError);
 			return;
 		}
-		
+
 		delete hQuery;
 		return;
 	}
@@ -494,6 +502,9 @@ void UpdatePlayerInTable(PlayerEloMap player)
 		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
 		LogMessage("Debug[UPDATE]: %s", g_szSqlError);
 	}
+
+	
+
 }
 
 void GetPlayerFromTable(const char[] auth, int &elo, int &matches)
