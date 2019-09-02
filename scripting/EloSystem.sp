@@ -326,7 +326,6 @@ public void Get5_OnGoingLive(int mapNumber)
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
-	LogMessage("ON SERIES RESULT CALLED");
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 
 	int winningTeamCount;
@@ -357,26 +356,17 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 			if (team == seriesWinner)
 			{
 				winningTeamAvgElo += currentElo;
-				LogMessage("Series Winner Average Elo %i", winningTeamAvgElo);
-				LogMessage("Series Winner Current Elo %i", currentElo);
 				winningTeamCount++;
 			}
 			else if (team == seriesLoser)
 			{
 				losingTeamAvgElo += currentElo;
-				LogMessage("Series Winner Average Elo %i", losingTeamAvgElo);
-				LogMessage("Series Winner Current Elo %i", currentElo);
 				losingTeamCount++;
 			}
 		}
 		
 		winningTeamAvgElo /= winningTeamCount;
 		losingTeamAvgElo /= losingTeamCount;
-
-		LogMessage("Winning Team Average Elo is %i", winningTeamAvgElo);
-		LogMessage("Losing Team Average Elo is %i", losingTeamAvgElo);
-		LogMessage("Winning Team Count is %i", winningTeamCount);
-		LogMessage("Losing Team Count is %i", losingTeamCount);
 		
 		for (int i = 1; i <= MaxClients; i++)
 		{
@@ -389,9 +379,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 			MatchTeam team = player.GetTeam();
 			int playerElo, playerMatches;
 			player.GetValue("currentelo", playerElo);
-			LogMessage("Current Player elo %i", playerElo);
 			player.GetValue("matchesplayed", playerMatches);
-			LogMessage("Current Matches %i", playerMatches);
 
 			if (team == seriesWinner)
 			{
@@ -402,7 +390,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 				else
 				{
 					int eloValue = calculateEloGain(playerElo, winningTeamAvgElo, true);
-					LogMessage("[WINNER] The elo value is: %i", eloValue);
 					player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 				}
 			}
@@ -424,8 +411,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 					{
 						player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
 					}
-					LogMessage("[LOSER] The elo value is: %i", eloValue);
-					LogMessage("[LOSER] Players new elo is: %i", playerNewElo);
 				}
 			}
 			
@@ -469,7 +454,6 @@ void InsertPlayerToTable(const char[] auth)
 
 void UpdatePlayerInTable(PlayerEloMap player)
 {
-	LogMessage("UPDATE PLAYER IN TABLE CALLED.");
 	char auth[32];
 	player.GetId64(auth, sizeof(auth));
 	int eloGain = player.GetEloGain();
@@ -483,7 +467,6 @@ void UpdatePlayerInTable(PlayerEloMap player)
 		static char query_2[1024];
 		
 		Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
-		LogMessage("Initial query is %s", query);
 		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
 		{
 			SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
