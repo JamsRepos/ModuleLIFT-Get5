@@ -181,17 +181,6 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 
 public void CreateAndVerifySQLTables()
 {
-	char sQuery[1024] = "";
-	StrCat(sQuery, 1024, "CREATE TABLE IF NOT EXISTS get5_matchbans (");
-	StrCat(sQuery, 1024, "id INTEGER NOT NULL AUTO_INCREMENT, ");
-	StrCat(sQuery, 1024, "steamid VARCHAR(64) NOT NULL, ");
-	StrCat(sQuery, 1024, "discordid VARCHAR(128), ");
-	StrCat(sQuery, 1024, "reason TEXT NOT NULL, ");
-	StrCat(sQuery, 1024, "timestamp VARCHAR(128), ");
-	StrCat(sQuery, 1024, "active INTEGER NOT NULL, ");
-	StrCat(sQuery, 1024, "PRIMARY KEY(id));");
-	g_Database.Query(SQL_GenericQuery, sQuery);
-
 	if(g_bLate)
 	{
 		for(int i = 1; i <= MaxClients; i++)
@@ -235,7 +224,7 @@ public void CheckBanStatus(int Client)
 	}
 
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "SELECT active, reason FROM get5_matchbans WHERE steamid='%s';", sSteamID);
+	Format(sQuery, sizeof(sQuery), "SELECT active, reason FROM bans WHERE steamid='%s';", sSteamID);
 	g_Database.Query(SQL_SelectBan, sQuery, GetClientUserId(Client));
 }
 
@@ -323,7 +312,7 @@ public void BanPlayer(int Client)
 
 	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
 
-	Format(sQuery, sizeof(sQuery), "INSERT INTO get5_matchbans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
+	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
 	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
 }
 
@@ -429,7 +418,7 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
 
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "INSERT INTO get5_matchbans (steamid, reason, active) VALUES ('%s', 'Automatic Left Match Ban', 1);", sSteamID);
+	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', 'Automatic Left Match Ban', 1);", sSteamID);
 	g_Database.Query(SQL_InsertBan, sQuery, disconnectPack);
 	return Plugin_Stop;
 }
