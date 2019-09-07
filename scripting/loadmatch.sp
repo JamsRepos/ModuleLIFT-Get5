@@ -204,7 +204,7 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	Format(sQuery, sizeof(sQuery), "SELECT * FROM get5_matchsetup WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 1;", sIP);
+	Format(sQuery, sizeof(sQuery), "SELECT * FROM queues WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 1;", sIP);
 	g_Database.Query(SQL_SelectSetup, sQuery);
 }
 
@@ -413,7 +413,7 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 public void UpdateMatchStatus()
 {
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE get5_matchsetup SET status=1 WHERE id=%i", g_iMatchID);
+	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE id=%i", g_iMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
