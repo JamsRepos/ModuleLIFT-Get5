@@ -291,7 +291,6 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
-	SendReport();
 	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
 	char sData[1024], sPort[16], sQuery[1024], sIP[32], sPass[128];
@@ -558,94 +557,6 @@ public Action Timer_KickEveryoneEnd(Handle timer)
 	ServerCommand("tv_stoprecord");
 	ServerCommand("get5_endmatch");
 	return Plugin_Stop;
-}
-
-public void SendReport()
-{
-	char sSiteURL[128], sAvatarURL[128];
-	g_CVSiteURL.GetString(sSiteURL, sizeof(sSiteURL));
-	g_CVEmbedAvatar.GetString(sAvatarURL, sizeof(sAvatarURL));
-
-	if(StrEqual(sSiteURL, "") || StrEqual(sAvatarURL, ""))
-	{
-		LogError("Missing Site Url or Embed Avatar Url.");
-		return;
-	}
-
-	int iTScore = CS_GetTeamScore(CS_TEAM_T);
-	int iCTScore = CS_GetTeamScore(CS_TEAM_CT);
-	int iWinners = 0;
-
-	if(iTScore == 0 && iCTScore == 0) return;
-	
-	bool bDraw = false;
-
-	if(iTScore > iCTScore) iWinners = CS_TEAM_T;
-	else if(iCTScore > iTScore) iWinners = CS_TEAM_CT;
-	else if(iTScore == iCTScore) bDraw = true;
-
-	Handle jRequest = json_object();
-	Handle jEmbeds = json_array();
-	Handle jContent = json_object();
-	Handle jContentAuthor = json_object();
-	
-	json_object_set(jContent, "color", json_integer(g_CVEmbedColour.IntValue));
-
-	char sWinTitle[64], sBuffer[128], sDescription[1024], sTeamName[128];
-	int len = 0;
-
-	if(g_bLoadMatchAvailable && iWinners != 0)
-		//Get5_GetTeamName(iWinners, sTeamName, sizeof(sTeamName));
-	
-	if(bDraw) 
-		Format(sWinTitle, sizeof(sWinTitle), "Match was a draw at %i:%i!", iTScore, iCTScore);
-	else if(iWinners == CS_TEAM_T) 
-		Format(sWinTitle, sizeof(sWinTitle), "%s just won %i-%i!", sTeamName, iTScore, iCTScore);
-	else 
-		Format(sWinTitle, sizeof(sWinTitle), "%s just won %i-%i!", sTeamName, iCTScore, iTScore);
-
-	json_object_set_new(jContentAuthor, "name", json_string(sWinTitle));
-	Format(sBuffer, sizeof sBuffer, "%s/scoreboard?id=%s", sSiteURL, g_uuidString);
-	json_object_set_new(jContentAuthor, "url", json_string(sBuffer));
-	json_object_set_new(jContentAuthor, "icon_url", json_string(sAvatarURL));
-	json_object_set_new(jContent, "author", jContentAuthor);
-
-	if(iWinners != 0)
-	{
-		for(int i = 1; i <= MaxClients; i++)
-		{
-			char sTemp[64];
-			if(IsValidClient(i))
-			{
-				if(GetClientTeam(i) == iWinners)
-				{
-					GetClientName(i, sTemp, sizeof(sTemp));
-					ga_sWinningPlayers.PushString(sTemp);
-				}
-			}
-		}
-
-		len += Format(sDescription[len], sizeof(sDescription) - len, "\nCongratulations:\n");
-		for(int i = 0; i < ga_sWinningPlayers.Length; i++)
-		{
-			char sName[64];
-			ga_sWinningPlayers.GetString(i, sName, sizeof(sName));
-			len += Format(sDescription[len], sizeof(sDescription) - len, "%s\n", sName);
-		}
-	}
-
-	len += Format(sDescription[len], sizeof(sDescription) - len, "\n[View more](%s/scoreboard?id=%s)", sSiteURL, g_uuidString);
-	json_object_set_new(jContent, "description", json_string(sDescription));
-
-	json_array_append_new(jEmbeds, jContent);
-	json_object_set_new(jRequest, "username", json_string("Match Bot"));
-	json_object_set_new(jRequest, "avatar_url", json_string(sAvatarURL));
-	json_object_set_new(jRequest, "embeds", jEmbeds);
-
-	char sJson[2048];
-	json_dump(jRequest, sJson, sizeof sJson, 0, false, false, true);
-
-	CloseHandle(jRequest);
 }
 
 public void Event_WeaponFired(Event event, const char[] name, bool dontBroadcast)
