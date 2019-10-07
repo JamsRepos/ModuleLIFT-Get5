@@ -204,7 +204,14 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	Format(sQuery, sizeof(sQuery), "SELECT * FROM queues WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 1;", sIP);
+	Format(sQuery, sizeof(sQuery), "SELECT `queues`.match_id, 
+	`queues`.server, `queues`.team_1_name, 
+	`queues`.team_2_name, `queues`.team_1_flag, 
+	`queues`.team_2_flag, `queues`.map, 
+	`queues`.status, `queues`.discord_channels, 
+	`queues`.spectators, `queues_players`.team, 
+	`queues_players`.capt, `queues_players`.steamid 
+	FROM queues INNER JOIN `queues_players` ON `queues_players`.match_id = `queues`.match_id WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 10;", sIP);
 	g_Database.Query(SQL_SelectSetup, sQuery);
 }
 
