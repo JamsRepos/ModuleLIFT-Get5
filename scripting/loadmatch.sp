@@ -6,7 +6,7 @@
 #include <sdktools>
 
 
-int g_iMatchID = 0;
+char g_sMatchID[38];
 //ArrayList g_Players;
 char g_sTeamName[4][128];
 
@@ -199,19 +199,22 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 	if (StrEqual(sDriver, "mysql", false)) LogMessage("MySQL Database: connected");
 	
 	g_Database = db;
+	CheckSetup();
+}
+
+public void CheckSetup()
+{
 	int ip[4];
 	char sIP[32], sPort[32], sQuery[1024];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	Format(sQuery, sizeof(sQuery), "SELECT `queues`.match_id, 
-	`queues`.server, `queues`.team_1_name, 
-	`queues`.team_2_name, `queues`.team_1_flag, 
-	`queues`.team_2_flag, `queues`.map, 
-	`queues`.status, `queues`.discord_channels, 
-	`queues`.spectators, `queues_players`.team, 
-	`queues_players`.capt, `queues_players`.steamid 
-	FROM queues INNER JOIN `queues_players` ON `queues_players`.match_id = `queues`.match_id WHERE server='%s' AND status=4 ORDER BY id DESC LIMIT 10;", sIP);
+	Format(sQuery, sizeof(sQuery), "SELECT `queues`.match_id, " ...
+	"`queues`.team_1_name, `queues`.team_2_name, " ...
+	"`queues`.team_1_flag, `queues`.team_2_flag, " ...
+	"`queues`.map, `queue_players`.team, " ...
+	"`queue_players`.steamid " ...
+	"FROM `queues` INNER JOIN `queue_players` ON `queue_players`.match_id = `queues`.match_id WHERE server='%s' AND status=1;", sIP);
 	g_Database.Query(SQL_SelectSetup, sQuery);
 }
 
@@ -235,6 +238,13 @@ public void updateIPAddress(int Client)
 	Format(sQuery, sizeof(sQuery), "UPDATE discord_auth SET ip='%s' WHERE steamid='%s'", sIP, sSteamID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
+}
+
+public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
+{
+	if(Get5_GetGameState() == Get5State_None)
+		CheckSetup();
+	return true;
 }
 
 public void OnClientPostAdminCheck(int Client)
@@ -270,98 +280,52 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 		return;
 	}
 
+	// Game is already started
+	if(Get5_GetGameState() != Get5State_None) return;
+
 	if(!results.FetchRow()) return;
 	
-	int idCol;
-	results.FieldNameToNum("id", idCol);
-	int id = results.FetchInt(idCol);
-	if(id <= g_iMatchID) return;
+	int matchIdCol;
+	results.FieldNameToNum("match_id", matchIdCol);
+	results.FetchString(matchIdCol, g_sMatchID, sizeof(g_sMatchID));
 
-	if(g_iMatchID > 0 && Get5_GetGameState() != Get5State_None)
-	{
-		ServerCommand("get5_endmatch");
-		UpdateMatchStatus();
-	}
-
-	g_iMatchID = id;
-	int team1NameCol, team2NameCol, team1PlayersCol, team2PlayersCol, team1FlagCol, team2FlagCol, mapCol, specCol;
+	int team1NameCol, team2NameCol, team1FlagCol, team2FlagCol, mapCol, teamCol, steamCol;
 	results.FieldNameToNum("team_1_name", team1NameCol);
 	results.FieldNameToNum("team_2_name", team2NameCol);
-	results.FieldNameToNum("team_1_players", team1PlayersCol);
-	results.FieldNameToNum("team_2_players", team2PlayersCol);
 	results.FieldNameToNum("team_1_flag", team1FlagCol);
 	results.FieldNameToNum("team_2_flag", team2FlagCol);
 	results.FieldNameToNum("map", mapCol);
-	results.FieldNameToNum("spectators", specCol);
+	results.FieldNameToNum("team", teamCol);
+	results.FieldNameToNum("steamid", steamCol);
 
-	char sTeamName1[128], sTeamName2[128], sTeamPlayers1[512], sTeamPlayers2[512], sSpectators[512], sTeamFlag1[16], sTeamFlag2[16], sMap[128], sTeam1Players[5][64], sTeam2Players[5][64], sSpectatorsList[30][64];
+	char sTeamName1[33], sTeamName2[33], sTeamFlag1[17], sTeamFlag2[17], sMap[33];
 	results.FetchString(team1NameCol, sTeamName1, sizeof(sTeamName1));
 	results.FetchString(team2NameCol, sTeamName2, sizeof(sTeamName2));
-	results.FetchString(team1PlayersCol, sTeamPlayers1, sizeof(sTeamPlayers1));
-	results.FetchString(team2PlayersCol, sTeamPlayers2, sizeof(sTeamPlayers2));
-	results.FetchString(specCol, sSpectators, sizeof(sSpectators));
 	results.FetchString(team1FlagCol, sTeamFlag1, sizeof(sTeamFlag1));
 	results.FetchString(team2FlagCol, sTeamFlag2, sizeof(sTeamFlag2));
 	results.FetchString(mapCol, sMap, sizeof(sMap));
 
-	if(StrEqual(sTeamPlayers1, "") || StrEqual(sTeamPlayers2, "")) return;
-
 	Format(g_sTeamName[2], sizeof(g_sTeamName[]), "%s", sTeamName1);
 	Format(g_sTeamName[3], sizeof(g_sTeamName[]), "%s", sTeamName2);
-
-	ExplodeString(sTeamPlayers1, "-", sTeam1Players, sizeof(sTeam1Players), sizeof(sTeam1Players[]));
-	ExplodeString(sTeamPlayers2, "-", sTeam2Players, sizeof(sTeam2Players), sizeof(sTeam2Players[]));
-	ExplodeString(sSpectators, "-", sSpectatorsList, sizeof(sSpectatorsList), sizeof(sSpectatorsList[]));
-
-	ArrayList Team1Players = new ArrayList(64);
-	ArrayList Team2Players = new ArrayList(64);
-	ArrayList Spectators = new ArrayList(64);
-
-	for(int i = 0; i < 5; i++)
-	{
-		if(!StrEqual(sTeam1Players[i], ""))
-			Team1Players.PushString(sTeam1Players[i]);
-	}
-
-	for(int i = 0; i < 5; i++)
-	{
-		if(!StrEqual(sTeam2Players[i], ""))
-			Team2Players.PushString(sTeam2Players[i]);
-	}
-
-	for(int i = 0; i < 30; i++)
-	{
-		if(!StrEqual(sSpectatorsList[i], ""))
-			Spectators.PushString(sSpectatorsList[i]);
-	}
 
 	Handle jsonObj = json_object();
 	Handle mapArray = json_array();
 	Handle teamOne = json_object();
 	Handle teamTwo = json_object();
-	Handle teamSpectators = json_object();
 	Handle teamOnePlayers = json_array();
 	Handle teamTwoPlayers = json_array();
-	Handle SpectatorPlayers = json_array();
 	char steamID[64];
 
-	for(int i = 0; i < Team1Players.Length; i++)
+	do
 	{
-		Team1Players.GetString(i, steamID, sizeof(steamID));
-		json_array_append(teamOnePlayers, json_string(steamID));
-	}
+		int team = results.FetchInt(teamCol);
+		results.FetchString(steamCol, steamID, sizeof(steamID));
 
-	for(int i = 0; i < Team2Players.Length; i++)
-	{
-		Team2Players.GetString(i, steamID, sizeof(steamID));
-		json_array_append(teamTwoPlayers, json_string(steamID));
-	}
-
-	for(int i = 0; i < Spectators.Length; i++)
-	{
-		Spectators.GetString(i, steamID, sizeof(steamID));
-		json_array_append(SpectatorPlayers, json_string(steamID));
-	}
+		if(team == 1)
+			json_array_append(teamOnePlayers, json_string(steamID));
+		else if(team == 2)
+			json_array_append(teamTwoPlayers, json_string(steamID));
+	} while(results.FetchRow());
 
 	json_object_set_new(teamOne, "name", json_string(sTeamName1));
 	json_object_set_new(teamOne, "flag", json_string(sTeamFlag1));
@@ -371,16 +335,13 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 	json_object_set_new(teamTwo, "flag", json_string(sTeamFlag2));
 	json_object_set_new(teamTwo, "players", teamTwoPlayers);
 
-	json_object_set_new(teamSpectators, "players", SpectatorPlayers);
-
-	json_object_set_new(jsonObj, "matchid", json_integer(id));
+	json_object_set_new(jsonObj, "matchid", json_string(g_sMatchID));
 	json_object_set_new(jsonObj, "num_maps", json_integer(1));
 	json_object_set_new(jsonObj, "skip_veto", json_true());
 	json_array_append(mapArray, json_string(sMap));
 	json_object_set_new(jsonObj, "maplist", mapArray);
 	json_object_set_new(jsonObj, "team1", teamOne);
 	json_object_set_new(jsonObj, "team2", teamTwo);
-	json_object_set_new(jsonObj, "spectators", teamSpectators);
 
 	char sPath[255];
 	BuildPath(Path_SM, sPath, sizeof(sPath), "data/get5_match.json");
@@ -392,6 +353,8 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 		UpdateMatchStatus();
 		DeleteFile(sPath);
 	}
+	else
+		LogError("Failed to load match config from file.");
 }
 
 public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
@@ -420,7 +383,7 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 public void UpdateMatchStatus()
 {
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE id=%i", g_iMatchID);
+	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE match_id='%s'", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
