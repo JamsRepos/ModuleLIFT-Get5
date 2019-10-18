@@ -24,8 +24,6 @@ char g_sz_INSERT_PLAYER_PREP[] = "INSERT IGNORE INTO `player_elo`"...
 char g_sz_UPDATE_PLAYER_PREP[] = "UPDATE `player_elo` SET `elo`=elo+?, `matches`=matches+1 WHERE `steamid` = ?";
 char g_sz_GET_PLAYER_PREP[] = "SELECT * FROM `player_elo` WHERE `steamid` = ?";
 
-int roundCounter;
-
 ConVar g_cvDefaultElo;
 ConVar g_cvEloPerKill;
 ConVar g_cvEloPerDeath;
@@ -202,21 +200,28 @@ public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 		return;
 	}
 
-	if (enemyRemaining == 2)
+	// Untested code (but shouldn't have issues as it's just a clean up.)
+	switch (enemyRemaining)
 	{
-		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsTwo.IntValue);
-	}
-	else if (enemyRemaining == 3)
-	{
-		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsThree.IntValue);
-	}
-	else if (enemyRemaining == 4)
-	{
-		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFour.IntValue);
-	}
-	else if (enemyRemaining == 5)
-	{
-		g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFive.IntValue);
+		case 2:
+		{
+			g_hPlayer[client].addToEloGain(g_cvEloPerOneVsTwo.IntValue);
+		}
+
+		case 3:
+		{
+			g_hPlayer[client].addToEloGain(g_cvEloPerOneVsThree.IntValue);
+		}
+
+		case 4:
+		{
+			g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFour.IntValue);
+		}
+
+		case 5:
+		{
+			g_hPlayer[client].addToEloGain(g_cvEloPerOneVsFive.IntValue);
+		}
 	}
 }
 
@@ -462,9 +467,7 @@ void UpdatePlayerInTable(PlayerEloMap player)
 	if (g_hUpdateElo == null)
 	{
 		DBResultSet hQuery;
-		DBResultSet iQuery;
 		static char query[1024];
-		static char query_2[1024];
 		
 		Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
 		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
