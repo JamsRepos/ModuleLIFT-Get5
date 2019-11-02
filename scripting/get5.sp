@@ -550,16 +550,27 @@ public void OnClientAuthorized(int client, const char[] auth) {
   }
 
   if (g_GameState != Get5State_None && g_CheckAuthsCvar.BoolValue) {
-    MatchTeam team = GetClientMatchTeam(client);
-    if (team == MatchTeam_TeamNone) {
-      KickClient(client, "%t", "YourAreNotAPlayerInfoMessage");
-    } else {
+    // Delay check to allow loadmatch to set team if needed
+    CreateTimer(1.0, Timer_DelayKickCheck, GetClientUserId(client));
+    else {
       int teamCount = CountPlayersOnMatchTeam(team, client);
       if (teamCount >= g_PlayersPerTeam && !g_CoachingEnabledCvar.BoolValue) {
         KickClient(client, "%t", "TeamIsFullInfoMessage");
       }
     }
   }
+}
+
+public Action Timer_DelayKickCheck(Handle timer, int userid)
+{
+  int client = GetClientOfUserId(client);
+  if(IsPlayer(client)) {
+    MatchTeam team = GetClientMatchTeam(client);
+    if (team == MatchTeam_TeamNone) {
+      KickClient(client, "%t", "YourAreNotAPlayerInfoMessage");
+    }
+  }
+  return Plugin_Handled;
 }
 
 public void OnClientPutInServer(int client) {

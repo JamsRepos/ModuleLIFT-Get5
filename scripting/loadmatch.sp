@@ -139,6 +139,7 @@ public Action Timer_ConnectionTimer(Handle timer) {
 			CheckWaitingTimes();
 		}
 	}
+	return Plugin_Continue;
 }
 
 public Action Timer_PlayerCount(Handle timer) {
@@ -154,6 +155,7 @@ public Action Timer_PlayerCount(Handle timer) {
 			EndWarmup(60);
 			CreateTimer(55.0, Timer_StartMatch);
 			delete g_playerCountTimer;
+			return Plugin_Handled;
 		}
 		else
 		{
@@ -164,6 +166,7 @@ public Action Timer_PlayerCount(Handle timer) {
 			PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
 		}
 	}
+	return Plugin_Continue;
 }
 
 static void CheckWaitingTimes() {
@@ -199,7 +202,6 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 	if (StrEqual(sDriver, "mysql", false)) LogMessage("MySQL Database: connected");
 	
 	g_Database = db;
-	CheckSetup();
 }
 
 public void CheckSetup()
@@ -245,6 +247,63 @@ public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
 	if(Get5_GetGameState() == Get5State_None)
 		CheckSetup();
 	return true;
+}
+
+public void OnClientAuthorized(int Client, const char[] auth)
+{
+	if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
+
+	if(StrEqual(g_sMatchID, ""))
+	{
+		// Retry in a few sec
+		CreateTimer(5.0, Timer_RetryPlayerCheck, GetClientUserId(Client));
+		return;
+	}
+
+	// Check if player is in queues table
+	char sSteamID[64], sQuery[256];
+	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))
+	Format(sQuery, sizeof(sQuery), "SELECT team FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
+	g_Database.Query(SQL_PlayerCheck, sQuery, GetClientUserId(Client));
+}
+
+public Action Timer_RetryPlayerCheck(Handle timer, int userid)
+{
+	int Client = GetClientOfUserId(userid);
+	if(!IsValidClient(Client) || StrEqual(g_sMatchID, "")) return Plugin_Handled;
+
+	// Check if player is in queues table
+	char sSteamID[64], sQuery[256];
+	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))
+	Format(sQuery, sizeof(sQuery), "SELECT team, steamid FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
+	g_Database.Query(SQL_PlayerCheck, sQuery);
+	return Plugin_Handled;
+}
+
+public void SQL_PlayerCheck(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
+
+	if(!results.FetchRow()) return;
+
+	int teamCol, steamCol;
+	results.FieldNameToNum("team", teamCol);
+	results.FieldNameToNum("steamid", steamCol);
+
+	MatchTeam team;
+	if(results.FetchInt(teamCol) == 0)
+		team = MatchTeam_Team1;
+	else
+		team = MatchTeam_Team2;
+
+	char sSteam[64];
+	results.FetchString(steamCol, sSteam, sizeof(sSteam));
+	Get5_AddPlayerToTeam(sSteam, team);
 }
 
 public void OnClientPostAdminCheck(int Client)
@@ -382,6 +441,7 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 
 public void UpdateMatchStatus()
 {
+	g_sMatchID = "";
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE match_id='%s'", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
