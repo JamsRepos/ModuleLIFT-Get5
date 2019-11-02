@@ -19,19 +19,19 @@ int g_iHeadshots[MAXPLAYERS + 1] = 0;
 
 char g_uuidString[64];
 
-bool g_bLoadMatchAvailable;
+//bool g_bLoadMatchAvailable;
 bool g_alreadySwapped;
 
 Handle g_hSocket;
 
-ConVar g_CVSiteURL;
+/*ConVar g_CVSiteURL;
 ConVar g_CVEmbedColour;
-ConVar g_CVEmbedAvatar;
+ConVar g_CVEmbedAvatar;*/
 ConVar g_CVServerIp;
 ConVar g_CVWebsocketPass;
 ConVar g_CVLeagueID;
 
-ArrayList ga_sWinningPlayers;
+//ArrayList ga_sWinningPlayers;
 ArrayList ga_iEndMatchVotesT;
 ArrayList ga_iEndMatchVotesCT;
 
@@ -68,16 +68,16 @@ public void OnPluginStart()
 	HookEvent("announce_phase_end", Event_HalfTime);
 
 	//ConVars
-	g_CVSiteURL = CreateConVar("sm_site_url", "", "Website url for viewing scores", FCVAR_PROTECTED);
+	/*g_CVSiteURL = CreateConVar("sm_site_url", "", "Website url for viewing scores", FCVAR_PROTECTED);
 	g_CVEmbedColour = CreateConVar("sm_embed_color", "16741688", "Color to use for webhook (Must be decimal value)", FCVAR_PROTECTED);
-	g_CVEmbedAvatar = CreateConVar("sm_embed_avatar", "https://i.imgur.com/Y0J4yzv.png", "Avatar to use for webhook", FCVAR_PROTECTED);
+	g_CVEmbedAvatar = CreateConVar("sm_embed_avatar", "https://i.imgur.com/Y0J4yzv.png", "Avatar to use for webhook", FCVAR_PROTECTED);*/
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
 	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "jf8u689shgfds", "pass for websocket");
 	g_CVLeagueID = CreateConVar("sqlmatch_leagueid", "", "League identifier used for renting purposes.", FCVAR_PROTECTED);
 
 	AutoExecConfig(true, "sqlmatch");
 	//Initalize ArrayLists
-	ga_sWinningPlayers = new ArrayList(64);
+	//ga_sWinningPlayers = new ArrayList(64);
 	ga_iEndMatchVotesT = new ArrayList();
 	ga_iEndMatchVotesCT = new ArrayList();
 	//Register Command
@@ -88,7 +88,7 @@ public void OnPluginStart()
 	//Set Socket Options
 	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
 	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
-	GenerateUUID(g_uuidString, sizeof(g_uuidString));
+	//GenerateUUID(g_uuidString, sizeof(g_uuidString));
 
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
@@ -114,6 +114,7 @@ public Action AttemptMySQLConnection(Handle timer)
 		LogError("Database Error: No Database Config Found! (%s/addons/sourcemod/configs/databases.cfg)", sFolder);
 }
 
+/*
 int GenerateUUID(char[] szBuffer, int iBufferLength) {
   return FormatEx(szBuffer, iBufferLength, "%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
     // 32 bits for "time_low"
@@ -135,6 +136,7 @@ int GenerateUUID(char[] szBuffer, int iBufferLength) {
     GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff)
   );
 }
+*/
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
@@ -219,7 +221,7 @@ public void ResetVars(int Client)
 	g_iHeadshots[Client] = 0;
 }
 
-/* This has changed */
+/* This has changed, again :D */
 public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 {
 	if(oldState == Get5State_GoingLive && newState == Get5State_Live)
@@ -230,30 +232,32 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		g_CVLeagueID.GetString(sLeagueID, sizeof(sLeagueID));
 		GetCurrentMap(sMap, sizeof(sMap));
 		for(int i = 1; i <= MaxClients; i++)
+		{
 			if(IsValidClient(i, true))
 				ResetVars(i);
-        
+		}
+
 		int teamIndex_T = -1, teamIndex_CT = -1;
-		
+
 		int index = -1;
-        while ((index = FindEntityByClassname(index, "cs_team_manager")) != -1)
-        {
-            int teamNum = GetEntProp(index, Prop_Send, "m_iTeamNum");
-            if (teamNum == CS_TEAM_T)
-            {
-                teamIndex_T = index;
-            }
-            else if (teamNum == CS_TEAM_CT)
-            {
-                teamIndex_CT = index;
-            }
-        }
-   
-        char teamName_T[32];
-        GetEntPropString(teamIndex_T, Prop_Send, "m_szClanTeamname", teamName_T, 32);
-        char teamName_CT[32];
-        GetEntPropString(teamIndex_CT, Prop_Send, "m_szClanTeamname", teamName_CT, 32);
-		
+		while ((index = FindEntityByClassname(index, "cs_team_manager")) != -1)
+		{
+			int teamNum = GetEntProp(index, Prop_Send, "m_iTeamNum");
+			if(teamNum == CS_TEAM_T)
+			{
+				teamIndex_T = index;
+			}
+			else if (teamNum == CS_TEAM_CT)
+			{
+				teamIndex_CT = index;
+			}
+		}
+
+		char teamName_T[32];
+		GetEntPropString(teamIndex_T, Prop_Send, "m_szClanTeamname", teamName_T, 32);
+		char teamName_CT[32];
+		GetEntPropString(teamIndex_CT, Prop_Send, "m_szClanTeamname", teamName_CT, 32);
+
 		int ip[4];
 		char pieces[4][8], sIP[32], sPort[32];
 		FindConVar("hostport").GetString(sPort, sizeof(sPort));
@@ -265,6 +269,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		IntToString(ip[3], pieces[3], sizeof(pieces[]));
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
+		Get5_GetMatchID(g_uuidString, sizeof(g_uuidString));
 		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 		UpdatePlayerStats();
