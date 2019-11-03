@@ -91,6 +91,7 @@ void HandleVotes() {
       EndKnifeRound(true);
       delete g_bSideVoteTimer;
     }
+  }
 
   if (Get5_GetGameState() == Get5State_GoingLive)
   {
@@ -160,33 +161,16 @@ public Action Command_VoteT(int client, int args) {
         Get5_Message(client, "%t", "TeamVoteT");
         HandleVotes();
       }
-
         return Plugin_Handled;
-
-      }
-
-      if (g_bVoteStart && !g_bPlayerCanVote[client]) 
-      {
-        Get5_Message(client, "%t", "VoteHasAlreadyCasted");
-      } 
-      else 
-      {
-        return Plugin_Stop;
-      }
-
-    } 
-
-    else 
-    {
-      return Plugin_Stop;
     }
-
-  } 
-  else 
-  {
-    return Plugin_Stop;
+    if (g_bVoteStart && !g_bPlayerCanVote[client]) 
+      Get5_Message(client, "%t", "VoteHasAlreadyCasted");
+    else 
+      return Plugin_Stop;
   }
-
+  else
+    return Plugin_Stop;
+  
   return Plugin_Handled;
 }
 
