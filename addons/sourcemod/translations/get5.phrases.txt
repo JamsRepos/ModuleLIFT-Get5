@@ -240,7 +240,7 @@
     "CurrentScoreInfoMessage"
     {
         "#format"       "{1:s},{2:d},{3:d},{4:s}"
-        "en"            "{LIGHT_BLUE}{1} {BLUE}{2} {NORMAL}- {BLUE}{3} {LIGHT_BLUE}{4}"
+        "en"            "{LIGHT_BLUE}{1} {DARK_BLUE}{2} {NORMAL}- {DARK_BLUE}{3} {LIGHT_BLUE}{4}"
     }
     "BackupLoadedInfoMessage"
     {
