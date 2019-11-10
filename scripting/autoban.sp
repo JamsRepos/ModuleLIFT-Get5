@@ -3,7 +3,6 @@
 #include <sdktools>
 #include <SteamWorks>
 #include <socket>
-#include <base64>
 #include <smjansson>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
@@ -288,7 +287,7 @@ public void BanPlayer(int Client)
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
 
-	char sData[512], sPort[16], sEncodedData[512], sPackageKey[128], sIP[32];
+	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
@@ -304,11 +303,10 @@ public void BanPlayer(int Client)
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
-	EncodeBase64(sEncodedData, sizeof(sEncodedData), sData);
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	SocketSend(g_hSocket, sEncodedData, sizeof(sEncodedData));
+	SocketSend(g_hSocket, sData, sizeof(sData));
 
 	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
 
@@ -393,7 +391,7 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 		}
 	}
 
-	char sData[1024], sPort[16], sEncodedData[1024], sPackageKey[128], sIP[32];
+	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
@@ -409,11 +407,10 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
-	EncodeBase64(sEncodedData, sizeof(sEncodedData), sData);
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	SocketSend(g_hSocket, sEncodedData, sizeof(sEncodedData));
+	SocketSend(g_hSocket, sData, sizeof(sData));
 
 	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
 
