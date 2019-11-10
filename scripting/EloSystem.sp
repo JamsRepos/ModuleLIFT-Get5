@@ -2,7 +2,7 @@
 
 bool DEBUG = false;
 
-#define PLUGIN_AUTHOR "SZOKOZ/EXE KL"
+#define PLUGIN_AUTHOR "DN.H | PandahChan"
 #define PLUGIN_VERSION "0.00"
 
 #include <sourcemod>
@@ -92,11 +92,11 @@ PlayerEloMap g_hPlayer[MAXPLAYERS];
 
 public Plugin myinfo = 
 {
-	name = "EloSystem",
+	name = "Elo System",
 	author = PLUGIN_AUTHOR,
 	description = "Ranking system for matchmaking.",
 	version = PLUGIN_VERSION,
-	url = ""
+	url = "DistrictNine.Host"
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)

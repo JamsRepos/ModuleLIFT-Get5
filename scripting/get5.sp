@@ -235,11 +235,11 @@ Handle g_bSideVoteTimer = null;
 
 // clang-format off
 public Plugin myinfo = {
-  name = "Get5",
-  author = "splewis",
+  name = "League",
+  author = "DN.H",
   description = "",
   version = PLUGIN_VERSION,
-  url = "https://github.com/splewis/get5"
+  url = "DistrictNine.Host"
 };
 // clang-format on
 

@@ -12,16 +12,6 @@ int g_DamageDone[MAXPLAYERS + 1][MAXPLAYERS + 1];
 int g_DamageDoneHits[MAXPLAYERS + 1][MAXPLAYERS + 1];
 bool g_GotKill[MAXPLAYERS + 1][MAXPLAYERS + 1];
 
-// clang-format off
-public Plugin myinfo = {
-    name = "CS:GO PugSetup: damage printer",
-    author = "splewis",
-    description = "Writes out player damage on round end or when .dmg is used",
-    version = PLUGIN_VERSION,
-    url = "https://github.com/splewis/csgo-pug-setup"
-};
-// clang-format on
-
 public void OnPluginStart() {
 	g_hMessageFormat = CreateConVar("tnn_damageprint_msg", "[\x0BDMG\x01] ({DMG_TO} dmg / {HITS_TO} hits) to ({DMG_FROM} dmg / {HITS_FROM} hits) from {NAME} ({HEALTH} HP)", "Damage Message");
 

@@ -2,7 +2,7 @@
 
 bool DEBUG = false;
 
-#define PLUGIN_AUTHOR "SZOKOZ/EXE KL & PandahChan"
+#define PLUGIN_AUTHOR "PandahChan"
 #define PLUGIN_VERSION "0.00"
 
 #include "BasicStatRecording.inc"
@@ -433,11 +433,11 @@ int g_RoundClutchingEnemyCount[MAXPLAYERS+1];
 
 public Plugin myinfo = 
 {
-	name = "Basic Player Stats", 
+	name = "Player Statistics", 
 	author = PLUGIN_AUTHOR, 
 	description = "Records stats of players during game play.", 
 	version = PLUGIN_VERSION, 
-	url = "szokoz.eu"
+	url = "DistrictNine.Host"
 };
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
