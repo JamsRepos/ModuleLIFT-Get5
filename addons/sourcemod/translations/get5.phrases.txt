@@ -2,24 +2,24 @@
 {
     "ReadyToVetoInfoMessage"
     {
-        "en"            "Type {GREEN}!ready {NORMAL}when your team is ready to veto."
+        "en"            "Type {LIGHT_BLUE}!ready {NORMAL}when your team is ready to veto."
     }
     "WaitingForCastersReadyInfoMessage"
     {
         "#format"       "{1:s}"
-        "en"            "Waiting for {1} to type {GREEN}!ready {NORMAL}to begin."
+        "en"            "Waiting for {1} to type {LIGHT_BLUE}!ready {NORMAL}to begin."
     }
     "ReadyToRestoreBackupInfoMessage"
     {
-        "en"            "Type {GREEN}!ready {NORMAL}when you are ready to restore the match backup."
+        "en"            "Type {LIGHT_BLUE}!ready {NORMAL}when you are ready to restore the match backup."
     }
     "ReadyToKnifeInfoMessage"
     {
-        "en"            "Type {GREEN}!ready {NORMAL}when you are ready to knife."
+        "en"            "Type {LIGHT_BLUE}!ready {NORMAL}when you are ready to knife."
     }
     "ReadyToStartInfoMessage"
     {
-        "en"            "Type {GREEN}!ready {NORMAL}when you are ready to begin."
+        "en"            "Type {LIGHT_BLUE}!ready {NORMAL}when you are ready to begin."
     }
     "YouAreReady"
     {
@@ -170,12 +170,12 @@
     "ForceReadyInfoMessage"
     {
         "#format"       "{1:d}"
-        "en"            "You may type {GREEN}!forceready {NORMAL}to force ready your team if you have less than {GREEN}{1}{NORMAL} players."
+        "en"            "You may type {LIGHT_BLUE}!forceready {NORMAL}to force ready your team if you have less than {LIGHT_BLUE}{1}{NORMAL} players."
     }
     "TeammateForceReadied"
     {
         "#format"       "{1:N}"
-        "en"            "Your team was force-readied by {GREEN}{1}"
+        "en"            "Your team was force-readied by {LIGHT_BLUE}{1}"
     }
     "AdminForceReadyInfoMessage"
     {
@@ -211,7 +211,7 @@
     "NextSeriesMapInfoMessage"
     {
         "#format"       "{1:s}"
-        "en"            "The next map in the series is {GREEN}{1}"
+        "en"            "The next map in the series is {LIGHT_BLUE}{1}"
     }
     "TeamWonMatchInfoMessage"
     {
@@ -240,7 +240,7 @@
     "CurrentScoreInfoMessage"
     {
         "#format"       "{1:s},{2:d},{3:d},{4:s}"
-        "en"            "{LIGHT_GREEN}{1} {GREEN}{2} {NORMAL}- {GREEN}{3} {LIGHT_GREEN}{4}"
+        "en"            "{LIGHT_BLUE}{1} {BLUE}{2} {NORMAL}- {BLUE}{3} {LIGHT_BLUE}{4}"
     }
     "BackupLoadedInfoMessage"
     {
@@ -282,7 +282,7 @@
     "ChangingMapInfoMessage"
     {
         "#format"       "{1:s}"
-        "en"            "Changing map to {GREEN}{1}..."
+        "en"            "Changing map to {LIGHT_BLUE}{1}..."
     }
     "MapDecidedInfoMessage"
     {
@@ -291,17 +291,17 @@
     "MapIsInfoMessage"
     {
         "#format"       "{1:d},{2:s}"
-        "en"            "Map {1}: {GREEN}{2}"
+        "en"            "Map {1}: {LIGHT_BLUE}{2}"
     }
     "TeamPickedMapInfoMessage"
     {
         "#format"       "{1:s},{2:s},{3:d}"
-        "en"            "{1} picked {GREEN}{2} {NORMAL}as map {3}"
+        "en"            "{1} picked {LIGHT_BLUE}{2} {NORMAL}as map {3}"
     }
     "TeamSelectSideInfoMessage"
     {
         "#format"       "{1:s},{2:s},{3:s}"
-        "en"            "{1} has selected to start on {GREEN}{2} {NORMAL}on {3}"
+        "en"            "{1} has selected to start on {LIGHT_BLUE}{2} {NORMAL}on {3}"
     }
     "TeamVetoedMapInfoMessage"
     {
@@ -314,7 +314,7 @@
     }
     "ReadyToResumeVetoInfoMessage"
     {
-        "en"            "Type {GREEN}!ready {NORMAL}when you are ready to resume the veto."
+        "en"            "Type {LIGHT_BLUE}!ready {NORMAL}when you are ready to resume the veto."
     }
     "MatchConfigLoadedInfoMessage"
     {
@@ -326,11 +326,11 @@
     }
     "ReadyTag"
     {
-        "en"            "[READY]"
+        "en"            "[Ready]"
     }
     "NotReadyTag"
     {
-        "en"            "[NOT READY]"
+        "en"            "[Not Ready]"
     }
     "MatchPoweredBy"
     {
@@ -375,7 +375,7 @@
     "VetoCountdown"
     {
         "#format"       "{1:i}"
-        "en"        "Veto commencing in {GREEN}{1} {NORMAL}seconds."
+        "en"        "Veto commencing in {LIGHT_BLUE}{1} {NORMAL}seconds."
     }
     "VoteHasAlreadyCasted"
     {

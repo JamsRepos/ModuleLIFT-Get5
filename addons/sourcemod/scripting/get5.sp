@@ -44,7 +44,7 @@
 #define TEAM1_STARTING_SIDE CS_TEAM_CT
 #define TEAM2_STARTING_SIDE CS_TEAM_T
 #define KNIFE_CONFIG "get5/knife.cfg"
-#define DEFAULT_TAG "[{YELLOW}Get5{NORMAL}]"
+#define DEFAULT_TAG "[{LIGHT_BLUE}NexusLeague.gg{NORMAL}]"
 
 #pragma semicolon 1
 #pragma newdecls required
