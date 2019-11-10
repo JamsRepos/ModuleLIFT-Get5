@@ -417,7 +417,7 @@ void UpdateMatchStats(bool duringMatch = false)
 	if(duringMatch && Get5_GetGameState() != Get5State_Live) return;
 
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id=LAST_INSERT_ID();", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live);
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live, g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
@@ -550,7 +550,7 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 	ServerCommand("tv_stoprecord");
 
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id=LAST_INSERT_ID();");
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s';", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 	return Plugin_Stop;
 }
@@ -612,7 +612,7 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
         teamNameNew_T = teamNameOld_CT;
         teamNameNew_CT = teamNameOld_T;
 
-        Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = LAST_INSERT_ID();", teamNameNew_T, teamNameNew_CT);
+        Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = '%s';", teamNameNew_T, teamNameNew_CT, g_uuidString);
         g_Database.Query(SQL_GenericQuery, sQuery);
         g_alreadySwapped = true;
     }
@@ -637,7 +637,7 @@ public void OnClientDisconnect(int Client)
 		{
 			char sQuery[1024], sSteamID[64];
 			GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
-			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id=LAST_INSERT_ID() AND steamid='%s'", sSteamID);
+			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
 			g_Database.Query(SQL_GenericQuery, sQuery);
 		}
 	}

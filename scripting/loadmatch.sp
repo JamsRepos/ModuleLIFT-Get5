@@ -15,9 +15,6 @@ bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
 int g_connectTimer = 300;
 
-Handle g_playerCountTimer = null;
-
-
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
 
@@ -48,11 +45,7 @@ public void OnPluginStart()
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-	g_playerCountTimer = CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
-}
-
-public void OnConfigsExecuted()
-{
+	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 }
 
@@ -154,7 +147,6 @@ public Action Timer_PlayerCount(Handle timer) {
 			PrintToChatAll("%s All players have connected. Match will start in 60 seconds.", ChatTag);
 			EndWarmup(60);
 			CreateTimer(55.0, Timer_StartMatch);
-			delete g_playerCountTimer;
 			return Plugin_Handled;
 		}
 		else
@@ -206,6 +198,12 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 
 public void CheckSetup()
 {
+	if(g_Database == null)
+	{
+		LogError("Database not connected.");
+		return;
+	}
+
 	int ip[4];
 	char sIP[32], sPort[32], sQuery[1024];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
