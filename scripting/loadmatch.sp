@@ -147,7 +147,7 @@ public Action Timer_PlayerCount(Handle timer) {
 			PrintToChatAll("%s All players have connected. Match will start in 60 seconds.", ChatTag);
 			EndWarmup(60);
 			CreateTimer(55.0, Timer_StartMatch);
-			return Plugin_Handled;
+			return Plugin_Stop;
 		}
 		else
 		{
