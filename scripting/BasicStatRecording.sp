@@ -18,8 +18,8 @@ bool DEBUG = false;
 #define ISEMPTY(%1) (%1[0] == '\0')
 
 char Q_INSERT_PLAYER[] = "INSERT INTO `statistics`"...
-" (`steamid`,`ip`,`name`,`lastconnect`)"...
-" VALUES ('%s','%s','%s',%d) ON DUPLICATE KEY UPDATE `ip`='%s', `name`='%s', `lastconnect`=%d, `region`='%s'";
+" (`steamid`,`ip`,`name`,`lastconnect`, `region`)"...
+" VALUES ('%s','%s','%s',%d,`%s`) ON DUPLICATE KEY UPDATE `ip`='%s', `name`='%s', `lastconnect`=%d, `region`='%s'";
 
 char Q_UPDATE_PLAYER[] = "UPDATE `statistics` SET `ip`='%s', `name`='%s', `kills`=kills+%d, `deaths`=deaths+%d,"...
 " `assists`=assists+%d, `mvps`=mvps+%d, `1v2`=1v2+%d, `1v3`=1v3+%d, `1v4`=1v4+%d, `1v5`=1v5+%d, `3k`=3k+%d, `4k`=4k+%d, `5k`=5k+%d, `shots`=shots+%d, `hits`=hits+%d, `headshots`=headshots+%d, "...
@@ -337,7 +337,7 @@ methodmap PlayerStatsTracker < StringMap
 		dp.WriteCell(close);
 		dp.WriteCell(this);
 		
-		g_hThreadedDb.Format(STRING(formattedQuery), Q_INSERT_PLAYER, id64, ipaddress, playername, lastconnect, 
+		g_hThreadedDb.Format(STRING(formattedQuery), Q_INSERT_PLAYER, id64, ipaddress, playername, lastconnect, region, 
 			ipaddress, playername, lastconnect, region);
 		g_hThreadedDb.Query(insertcb, formattedQuery, dp);
 	}
