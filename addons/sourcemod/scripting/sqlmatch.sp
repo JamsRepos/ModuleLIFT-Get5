@@ -272,6 +272,22 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Get5_GetMatchID(g_uuidString, sizeof(g_uuidString));
 		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
+
+		char sData[1024], sPass[128];
+		g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+		Handle jsonObj = json_object();
+		json_object_set_new(jsonObj, "type", json_integer(1));
+		json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
+		json_object_set_new(jsonObj, "pass", json_string(sPass));
+		json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+		CloseHandle(jsonObj);
+		
+		if(!SocketIsConnected(g_hSocket))
+			ConnectRelay();
+
+		SocketSend(g_hSocket, sData, sizeof(sData));
+
 		UpdatePlayerStats();
 	}
 }
@@ -298,24 +314,11 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	UpdateMatchStats();
 	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
-	char sData[1024], sPort[16], sQuery[1024], sIP[32], sPass[128];
+	char sPort[16], sQuery[1024], sIP[32];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-	
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	SocketSend(g_hSocket, sData, sizeof(sData));
 
 	/* {"type":1,"server":"ip:port","matchid": "135"} */
 
