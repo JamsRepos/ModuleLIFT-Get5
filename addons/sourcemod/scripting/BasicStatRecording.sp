@@ -926,6 +926,10 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		{
 			g_hPlayers[i].incrementMatchesLost();
 		}
+		else
+		{
+			g_hPlayers[i].incrementMatchesTied();
+		}
 		
 		g_hPlayers[i].addPoints(CS_GetClientContributionScore(i));
 		g_hPlayers[i].updateToDb(true);
