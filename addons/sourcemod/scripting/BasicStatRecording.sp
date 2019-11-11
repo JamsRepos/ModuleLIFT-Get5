@@ -315,7 +315,7 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("hits", 0);
 		this.SetValue("headshots", 0);
 		this.SetValue("points", 0);
-		this.SetValue("connectiontime", 0);
+		this.SetValue("totaltime", 0);
 		g_SetTeamClutching[CS_TEAM_CT] = false;
  		g_SetTeamClutching[CS_TEAM_T] = false;
 	}
