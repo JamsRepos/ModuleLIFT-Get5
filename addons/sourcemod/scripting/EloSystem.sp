@@ -357,17 +357,26 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			player.SetValue("currentelo", currentElo);
 			player.SetValue("matchesplayed", matchesPlayed);
 
+			LogMessage("Team value Loser: %s", seriesLoser);
+			LogMessage("Team value Winner: %s", seriesLoser);
+
 			if (team == seriesWinner)
 			{
+				LogMessage("[Loop value: %i] Series Winner if statement being called.");
 				winningTeamAvgElo += currentElo;
 				winningTeamCount++;
+				LogMessage("[Loop value: %i] Winning Team average elo is %i", i, winningTeamAvgElo);
 			}
 			else if (team == seriesLoser)
 			{
+				LogMessage("[Loop value: %i] Series Loser if statement being called.");
 				losingTeamAvgElo += currentElo;
 				losingTeamCount++;
+				LogMessage("[Loop value: %i] Losing Team average elo is %i", i, winningTeamAvgElo);
 			}
 		}
+		LogMessage("Winning Team average elo is %i", winningTeamAvgElo);
+		LogMessage("Losing Team average elo is %i", losingTeamAvgElo);
 		
 		winningTeamAvgElo /= winningTeamCount;
 		losingTeamAvgElo /= losingTeamCount;
