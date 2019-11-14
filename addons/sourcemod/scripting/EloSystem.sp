@@ -358,7 +358,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			player.SetValue("matchesplayed", matchesPlayed);
 
 			LogMessage("Team value Loser: %s", seriesLoser);
-			LogMessage("Team value Winner: %s", seriesLoser);
+			LogMessage("Team value Winner: %s", seriesWinner);
 
 			if (team == seriesWinner)
 			{
