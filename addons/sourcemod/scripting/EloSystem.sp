@@ -362,14 +362,14 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 
 			if (team == seriesWinner)
 			{
-				LogMessage("[Loop value: %i] Series Winner if statement being called.");
+				LogMessage("[Loop value: %i] Series Winner if statement being called.", i);
 				winningTeamAvgElo += currentElo;
 				winningTeamCount++;
 				LogMessage("[Loop value: %i] Winning Team average elo is %i", i, winningTeamAvgElo);
 			}
 			else if (team == seriesLoser)
 			{
-				LogMessage("[Loop value: %i] Series Loser if statement being called.");
+				LogMessage("[Loop value: %i] Series Loser if statement being called.", i);
 				losingTeamAvgElo += currentElo;
 				losingTeamCount++;
 				LogMessage("[Loop value: %i] Losing Team average elo is %i", i, winningTeamAvgElo);
