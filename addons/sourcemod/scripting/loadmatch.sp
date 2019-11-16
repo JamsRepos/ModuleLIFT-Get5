@@ -240,15 +240,11 @@ public void updateIPAddress(int Client)
 
 }
 
-public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
+public void OnClientAuthorized(int Client, const char[] auth)
 {
 	if(Get5_GetGameState() == Get5State_None)
 		CheckSetup();
-	return true;
-}
 
-public void OnClientAuthorized(int Client, const char[] auth)
-{
 	if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
 
 	if(StrEqual(g_sMatchID, ""))
