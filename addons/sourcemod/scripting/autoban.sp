@@ -363,7 +363,7 @@ public void OnClientDisconnect(int Client)
 		char sSteamID[64];
 		if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
 		{
-			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.");
+			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.", Client);
 			return;
 		}
 
