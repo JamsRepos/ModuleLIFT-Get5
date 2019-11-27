@@ -15,12 +15,12 @@ bool DEBUG = false;
 //bool g_bBSREnabled;
 char g_szSqlError[256];
 char g_sz_INSERT_PLAYER[] = "INSERT IGNORE INTO `player_elo`"...
-" (`steamid`) VALUES ('%s')";
+" (`steamid`, `elo`) VALUES ('%s', '%i')";
 char g_sz_UPDATE_PLAYER[] = "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'";
 char g_sz_GET_PLAYER[] = "SELECT * FROM `player_elo` WHERE `steamid` = '%s'";
 
 char g_sz_INSERT_PLAYER_PREP[] = "INSERT IGNORE INTO `player_elo`"...
-" (`steamid`) VALUES (?)";
+" (`steamid`, `elo`) VALUES (?,?)";
 char g_sz_UPDATE_PLAYER_PREP[] = "UPDATE `player_elo` SET `elo`=elo+?, `matches`=matches+1 WHERE `steamid` = ?";
 char g_sz_GET_PLAYER_PREP[] = "SELECT * FROM `player_elo` WHERE `steamid` = ?";
 
@@ -362,13 +362,21 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 
 			if (team == seriesWinner)
 			{
+				LogMessage("Series Winner is called.");
 				winningTeamAvgElo += currentElo;
+				LogMessage("WinningTeamAvgElo value %i", winningTeamAvgElo);
+				LogMessage("currentElo value %i", currentElo);
 				winningTeamCount++;
+				LogMessage("winningTeamCount value %i", winningTeamCount);
 			}
 			else if (team == seriesLoser)
 			{
+				LogMessage("Series Loser is called.");
 				losingTeamAvgElo += currentElo;
+				LogMessage("losingTeamAvgElo value %i", losingTeamAvgElo);
+				LogMessage("currentElo value %i", currentElo);
 				losingTeamCount++;
+				LogMessage("losingTeamCount value %i", losingTeamCount);
 			}
 		}
 		
@@ -537,7 +545,7 @@ void InsertPlayerToTable(const char[] auth)
 		DBResultSet hQuery;
 		static char query[1024];
 		
-		Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth);
+		Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth, g_cvDefaultElo.IntValue);
 		
 		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
 		{
@@ -551,6 +559,7 @@ void InsertPlayerToTable(const char[] auth)
 	}
 	
 	SQL_BindParamString(g_hInsertNewEntry, 0, auth, false);
+	SQL_BindParamInt(g_hInsertNewEntry, 1, g_cvDefaultElo.IntValue, false);
 	if (!SQL_Execute(g_hInsertNewEntry))
 	{
 		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
