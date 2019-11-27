@@ -240,11 +240,18 @@ public void updateIPAddress(int Client)
 
 }
 
+public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
+{
+		if(Get5_GetGameState() == Get5State_None)
+		{
+			CheckSetup();
+		}
+		return true;
+}
+
 public void OnClientAuthorized(int Client, const char[] auth)
 {
-	if(Get5_GetGameState() == Get5State_None)
-		CheckSetup();
-
+	LogMessage(g_sMatchID);
 	if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
 
 	if(StrEqual(g_sMatchID, ""))
@@ -435,7 +442,8 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 
 public void UpdateMatchStatus()
 {
-	g_sMatchID = "";
+	// Not sure why this is set?
+	// g_sMatchID = "";
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE match_id='%s'", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);

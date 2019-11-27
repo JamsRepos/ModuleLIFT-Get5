@@ -336,6 +336,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 	int losingTeamCount;
 	int winningTeamAvgElo;
 	int losingTeamAvgElo;
+	
 
 	if (!hasCalculated)
 	{
@@ -355,28 +356,21 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			int currentElo, matchesPlayed;
 			GetPlayerFromTable(auth, currentElo, matchesPlayed);
 			player.SetValue("currentelo", currentElo);
+			LogMessage("Value [%i] Players Elo is %i", i, currentElo);
 			player.SetValue("matchesplayed", matchesPlayed);
-
-			LogMessage("Team value Loser: %s", seriesLoser);
-			LogMessage("Team value Winner: %s", seriesWinner);
+			LogMessage("Value [%i] Players Elo is %i", i, matchesPlayed);
 
 			if (team == seriesWinner)
 			{
-				LogMessage("[Loop value: %i] Series Winner if statement being called.", i);
 				winningTeamAvgElo += currentElo;
 				winningTeamCount++;
-				LogMessage("[Loop value: %i] Winning Team average elo is %i", i, winningTeamAvgElo);
 			}
 			else if (team == seriesLoser)
 			{
-				LogMessage("[Loop value: %i] Series Loser if statement being called.", i);
 				losingTeamAvgElo += currentElo;
 				losingTeamCount++;
-				LogMessage("[Loop value: %i] Losing Team average elo is %i", i, winningTeamAvgElo);
 			}
 		}
-		LogMessage("Winning Team average elo is %i", winningTeamAvgElo);
-		LogMessage("Losing Team average elo is %i", losingTeamAvgElo);
 		
 		winningTeamAvgElo /= winningTeamCount;
 		losingTeamAvgElo /= losingTeamCount;
