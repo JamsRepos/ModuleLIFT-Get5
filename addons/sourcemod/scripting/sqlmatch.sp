@@ -282,13 +282,13 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		json_object_set_new(jsonObj, "pass", json_string(sPass));
 		json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 		CloseHandle(jsonObj);
-		
+
+		UpdatePlayerStats();
+
 		if(!SocketIsConnected(g_hSocket))
 			ConnectRelay();
 
 		SocketSend(g_hSocket, sData, sizeof(sData));
-
-		UpdatePlayerStats();
 	}
 }
 
@@ -319,8 +319,6 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-
-	/* {"type":1,"server":"ip:port","matchid": "135"} */
 
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
 	g_Database.Query(SQL_GenericQuery, sQuery);

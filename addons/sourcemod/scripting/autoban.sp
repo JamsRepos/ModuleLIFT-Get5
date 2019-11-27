@@ -32,6 +32,7 @@ ConVar g_hCVServerIp;
 ConVar g_hCVPackageKey;
 
 Handle g_hSocket;
+Handle g_hDisconnection[MAXPLAYERS + 1];
 
 public Plugin myinfo = 
 {
@@ -303,15 +304,13 @@ public void BanPlayer(int Client)
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
+	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
+	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
+
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
 	SocketSend(g_hSocket, sData, sizeof(sData));
-
-	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
-
-	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
-	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
 }
 
 public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError, DataPack data)
@@ -343,6 +342,9 @@ public void Get5_OnGoingLive(int mapNumber)
 
 public void OnClientPostAdminCheck(int Client)
 {
+	if (g_hDisconnection[Client] != null)
+		delete g_hDisconnection[Client];
+
 	SDKHook(Client, SDKHook_OnTakeDamage, OnTakeDamage);
 	CheckBanStatus(Client);
 }
@@ -367,7 +369,7 @@ public void OnClientDisconnect(int Client)
 
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
-		CreateTimer(60.0, Timer_DisconnectBan, disconnectPack);
+		g_hDisconnection[Client] = CreateTimer(60.0, Timer_DisconnectBan, disconnectPack);
 	}
 }
 
@@ -381,12 +383,12 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	{
 		if(!IsValidClient(i)) continue;
 
-		char sCurrentID[64];
 		if(!GetClientAuthId(i, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) continue;
 
-		if(StrEqual(sSteamID, sCurrentID))
+		if(g_hDisconnection[i] != null)
 		{
 			delete disconnectPack;
+			delete g_hDisconnection[i];
 			return Plugin_Stop;
 		}
 	}
@@ -407,16 +409,15 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
+	char sQuery[1024];
+	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', 'Automatic Left Match Ban', 1);", sSteamID);
+	g_Database.Query(SQL_InsertBan, sQuery, disconnectPack);
+
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
 	SocketSend(g_hSocket, sData, sizeof(sData));
-
-	/* {"type":2,"server":"ip:port","steamid":steamid64,"reason":"ban reason here", "pass": "package_key"} */
-
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', 'Automatic Left Match Ban', 1);", sSteamID);
-	g_Database.Query(SQL_InsertBan, sQuery, disconnectPack);
+	
 	return Plugin_Stop;
 }
 
