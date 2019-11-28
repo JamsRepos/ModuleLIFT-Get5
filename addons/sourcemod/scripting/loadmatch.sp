@@ -15,6 +15,8 @@ bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
 int g_connectTimer = 300;
 
+StringMap g_NameMap;
+
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
 
@@ -34,6 +36,9 @@ public void OnPluginStart()
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 
+	//debug remember to remove stupid dog
+	RegConsoleCmd("sm_test", Command_Test);
+
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
 
@@ -47,6 +52,15 @@ public void OnPluginStart()
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
+
+	g_NameMap = new StringMap();
+}
+
+//debug remember to remove stupid dog
+public Action Command_Test(int Client, int iArgs)
+{
+	g_sMatchID = "test";
+	LoadPlayerDiscordNames();
 }
 
 /* Core calculations */
@@ -310,6 +324,25 @@ public void SQL_PlayerCheck(Database db, DBResultSet results, const char[] sErro
 public void OnClientPostAdminCheck(int Client)
 {
 	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
+	
+	// Set player name to discord name if it isn't set already
+	char sSteam[64], sOldName[MAX_NAME_LENGTH], sName[64];
+	if(GetClientAuthId(Client, AuthId_SteamID64, sSteam, sizeof(sSteam)))
+	{
+		if(g_NameMap.GetString(sSteam, sName, sizeof(sName)))
+		{
+			if(GetClientName(Client, sOldName, sizeof(sOldName)))
+			{
+				if(!StrEqual(sOldName, sName))
+				{
+					//debug remember to remove stupid dog
+					LogMessage("%s, %s, %s", sSteam, sOldName, sName);
+					Get5_SetPlayerName(sSteam, sName);
+				}
+			}
+		}
+	}
+
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
 }
@@ -412,9 +445,47 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 	{
 		UpdateMatchStatus();
 		DeleteFile(sPath);
+		g_NameMap.Clear();
 	}
 	else
 		LogError("Failed to load match config from file.");
+
+	LoadPlayerDiscordNames();
+}
+
+public void LoadPlayerDiscordNames()
+{
+	char sQuery[256];
+	Format(sQuery, sizeof(sQuery), "SELECT p.steamid, c.name FROM discord_caching c INNER JOIN discord_auth a ON c.discordid = a.discordid INNER JOIN queue_players p ON a.steamid = p.steamid AND p.match_id='%s';", g_sMatchID);
+	g_Database.Query(SQL_LoadPlayerDiscordNamesCallback, sQuery);
+}
+
+public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
+
+	if(!results.FetchRow()) return;
+
+	int steamCol, nameCol;
+	results.FieldNameToNum("steamid", steamCol);
+	results.FieldNameToNum("name", nameCol);
+
+	char sSteam[64], sName[64];
+	do
+	{
+		results.FetchString(steamCol, sSteam, sizeof(sSteam));
+		results.FetchString(nameCol, sName, sizeof(sName));
+		Get5_SetPlayerName(sSteam, sName);
+		g_NameMap.SetString(sSteam, sName, true);
+		//debug remember to remove stupid dog
+		LogMessage("%s, %s", sSteam, sName);
+	}
+	while(results.FetchRow());
 }
 
 public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
