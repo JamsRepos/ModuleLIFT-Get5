@@ -33,6 +33,7 @@ public void OnPluginStart()
 {
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
+	HookEvent("player_changename", Event_NameChange);
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 
@@ -119,6 +120,30 @@ public bool IsEveryoneReady() {
 	}
 }
 
+public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
+{
+	int Client = GetClientOfUserId(event.GetInt("userid"));
+	char sSteam[64], sOldName[MAX_NAME_LENGTH], sName[64];
+
+	if(GetClientAuthId(Client, AuthId_SteamID64, sSteam, sizeof(sSteam)))
+	{
+		if(g_NameMap.GetString(sSteam, sName, sizeof(sName)))
+		{
+			if(GetClientName(Client, sOldName, sizeof(sOldName)))
+			{
+				if(!StrEqual(sOldName, sName))
+				{
+					UnhookEvent("player_changename", Event_NameChange);
+					SetClientName(Client, sSteam);
+					SetClientName(Client, sName);
+					HookEvent("player_changename", Event_NameChange);
+					return;
+				}
+			}
+		}
+	}
+}
+
 /* Connection Timer section */
 public Action Timer_ConnectionTimer(Handle timer) {
 	if (Get5_GetGameState() == Get5State_None) {
@@ -180,7 +205,7 @@ static void CheckWaitingTimes() {
 				}
 			}
 		} else if (timeLeft <= 300 && timeLeft % 60 == 0) {
-			Get5_MessageToAll("Time remaining to join the server: %i mins", timeLeft / 60);
+			Get5_MessageToAll("Time remaining to join the server: %i minutes.", timeLeft / 60);
 		}
 	}
 } 
@@ -324,7 +349,10 @@ public void OnClientPostAdminCheck(int Client)
 			if(GetClientName(Client, sOldName, sizeof(sOldName)))
 			{
 				if(!StrEqual(sOldName, sName))
-					Get5_SetPlayerName(sSteam, sName);
+				{
+					SetClientName(Client, sSteam);
+					SetClientName(Client, sName);
+				}
 			}
 		}
 	}
@@ -466,7 +494,7 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 	{
 		results.FetchString(steamCol, sSteam, sizeof(sSteam));
 		results.FetchString(nameCol, sName, sizeof(sName));
-		Get5_SetPlayerName(sSteam, sName);
+		// Get5_SetPlayerName(sSteam, sName);
 		g_NameMap.SetString(sSteam, sName, true);
 	}
 	while(results.FetchRow());
