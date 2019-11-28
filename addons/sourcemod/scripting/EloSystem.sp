@@ -158,6 +158,7 @@ public void OnConfigsExecuted()
 	
 	char query[1024];
 	Format(query, sizeof(query), CREATE_TABLE, g_cvDefaultElo.IntValue);
+	LogMessage("OnConfigsExecuted() Query: %s", query);
 	if (!SQL_FastQuery(g_hThreadedDb, query))
 	{
 		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
@@ -358,7 +359,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			player.SetValue("currentelo", currentElo);
 			LogMessage("Value [%i] Players Elo is %i", i, currentElo);
 			player.SetValue("matchesplayed", matchesPlayed);
-			LogMessage("Value [%i] Players Elo is %i", i, matchesPlayed);
+			LogMessage("Value [%i] Players matches is %i", i, matchesPlayed);
 
 			if (team == seriesWinner)
 			{
@@ -394,16 +395,20 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			MatchTeam team = player.GetTeam();
 			int playerElo, playerMatches;
 			player.GetValue("currentelo", playerElo);
+			LogMessage("Value [%i] Players Elo is %i", i, currentElo);
 			player.GetValue("matchesplayed", playerMatches);
+			LogMessage("Value [%i] Players matches is %i", i, playerMatches);
 
 			if (team == seriesWinner)
 			{
 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 				{
+					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue)
 					player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
 				}
 				else
 				{
+					LogMessage("No player should be here. This is after 10 games.")
 					player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 				}
 			}
@@ -411,12 +416,15 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			{
 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 				{
+					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue)
 					player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
 				}
 				else
 				{
 					int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
+					LogMessage("eloValue %i", eloValue);
 					int playerNewElo = playerElo - eloValue;
+					LogMessage("playerNewElo %i", playerNewElo);
 					if (playerNewElo < 0)
 					{
 						player.SetValue("currentelo", 0);
@@ -572,7 +580,9 @@ void UpdatePlayerInTable(PlayerEloMap player)
 	char auth[32];
 	player.GetId64(auth, sizeof(auth));
 	int eloGain = player.GetEloGain();
+	LogMessage("eloGain %i", eloGain);
 	int playerElo = player.GetValue("currentelo", playerElo);
+	LogMessage("playerElo %i", playerElo);
 
 	if (g_hUpdateElo == null)
 	{
