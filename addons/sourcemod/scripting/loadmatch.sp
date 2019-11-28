@@ -36,9 +36,6 @@ public void OnPluginStart()
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 
-	//debug remember to remove stupid dog
-	RegConsoleCmd("sm_test", Command_Test);
-
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
 
@@ -54,13 +51,6 @@ public void OnPluginStart()
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
-}
-
-//debug remember to remove stupid dog
-public Action Command_Test(int Client, int iArgs)
-{
-	g_sMatchID = "test";
-	LoadPlayerDiscordNames();
 }
 
 /* Core calculations */
@@ -334,11 +324,7 @@ public void OnClientPostAdminCheck(int Client)
 			if(GetClientName(Client, sOldName, sizeof(sOldName)))
 			{
 				if(!StrEqual(sOldName, sName))
-				{
-					//debug remember to remove stupid dog
-					LogMessage("%s, %s, %s", sSteam, sOldName, sName);
 					Get5_SetPlayerName(sSteam, sName);
-				}
 			}
 		}
 	}
@@ -482,8 +468,6 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 		results.FetchString(nameCol, sName, sizeof(sName));
 		Get5_SetPlayerName(sSteam, sName);
 		g_NameMap.SetString(sSteam, sName, true);
-		//debug remember to remove stupid dog
-		LogMessage("%s, %s", sSteam, sName);
 	}
 	while(results.FetchRow());
 }
