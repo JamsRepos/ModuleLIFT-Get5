@@ -322,6 +322,21 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
 	g_Database.Query(SQL_GenericQuery, sQuery);
+
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	SocketSend(g_hSocket, sData, sizeof(sData));
 }
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
