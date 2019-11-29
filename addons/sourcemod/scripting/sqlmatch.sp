@@ -278,7 +278,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 
 		Handle jsonObj = json_object();
 		json_object_set_new(jsonObj, "type", json_integer(1));
-		json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
+		json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
 		json_object_set_new(jsonObj, "pass", json_string(sPass));
 		json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 		CloseHandle(jsonObj);
@@ -328,7 +328,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "matchid", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
 	json_object_set_new(jsonObj, "pass", json_string(sPass));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
