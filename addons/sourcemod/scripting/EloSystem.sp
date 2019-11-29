@@ -395,7 +395,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			MatchTeam team = player.GetTeam();
 			int playerElo, playerMatches;
 			player.GetValue("currentelo", playerElo);
-			LogMessage("Value [%i] Players Elo is %i", i, currentElo);
+			LogMessage("Value [%i] Players Elo is %i", i, playerElo);
 			player.GetValue("matchesplayed", playerMatches);
 			LogMessage("Value [%i] Players matches is %i", i, playerMatches);
 
@@ -403,12 +403,12 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			{
 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 				{
-					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue)
+					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue);
 					player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
 				}
 				else
 				{
-					LogMessage("No player should be here. This is after 10 games.")
+					LogMessage("No player should be here. This is after 10 games.");
 					player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 				}
 			}
@@ -416,7 +416,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			{
 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 				{
-					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue)
+					LogMessage("g_cvPreliminaryMatchCount value %i", g_cvPreliminaryMatchCount.IntValue);
 					player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
 				}
 				else
