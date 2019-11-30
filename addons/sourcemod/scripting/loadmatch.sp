@@ -36,6 +36,7 @@ public void OnPluginStart()
 	HookEvent("player_changename", Event_NameChange);
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
+	HookEvent("round_end", Event_RoundEnd);
 
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
@@ -142,6 +143,12 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 			}
 		}
 	}
+}
+
+public void Event_RoundEnd(Event event, char[] name, bool dontBroadcast)
+{
+	LoadPlayerDiscordNames();
+	FireNameChangeEvent(true);
 }
 
 /* Connection Timer section */
@@ -340,6 +347,7 @@ public void OnClientPostAdminCheck(int Client)
 {
 	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	
+	/*
 	// Set player name to discord name if it isn't set already
 	char sSteam[64], sOldName[MAX_NAME_LENGTH], sName[64];
 	if(GetClientAuthId(Client, AuthId_SteamID64, sSteam, sizeof(sSteam)))
@@ -356,9 +364,47 @@ public void OnClientPostAdminCheck(int Client)
 			}
 		}
 	}
+	*/
+
+	// Thought of a better way to do this lmao
+	FireNameChangeEvent(_, GetClientUserId(Client));
 
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
+}
+
+void FireNameChangeEvent(bool allPlayers = false, int userid = -1)
+{
+	if(allPlayers)
+	{
+		for(int i = 1; i <= MaxClients; i++)
+		{
+			if(!IsValidClient(i)) continue;
+
+			Event hSetNameEvent = CreateEvent("player_changename");
+			if(hSetNameEvent == INVALID_HANDLE)
+			{
+				LogError("Failed to create name change event: Event isn't being hooked.");
+				return;
+			}
+
+			hSetNameEvent.SetInt("userid", GetClientUserId(i));
+			hSetNameEvent.Fire();
+		}
+		return;
+	}
+
+	if(userid == -1) return;
+
+	Event hSetNameEvent = CreateEvent("player_changename");
+	if(hSetNameEvent == INVALID_HANDLE)
+	{
+		LogError("Failed to create name change event: Event isn't being hooked.");
+		return;
+	}
+
+	hSetNameEvent.SetInt("userid", userid);
+	hSetNameEvent.Fire();
 }
 
 public void OnClientDisconnect(int Client) {
