@@ -88,11 +88,16 @@ public void OnPluginStart()
 	//Set Socket Options
 	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
 	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
+	SocketSetOption(g_hSocket, DebugMode, 1); // Put socket into debug mode
 	//GenerateUUID(g_uuidString, sizeof(g_uuidString));
 
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
+
+	/* Debug commands for testing socket */
+	RegConsoleCmd("sm_test", Command_Test);
+	RegConsoleCmd("sm_test2", Command_Test2);
 }
 
 public Action AttemptMySQLConnection(Handle timer)
@@ -196,7 +201,7 @@ public int OnSocketError(Handle socket, int errorType, int errorNum, any ary)
 
 public int OnSocketConnected(Handle socket, any arg)
 {	
-	PrintToServer("Successfully Connected");
+	PrintToServer("Socket Successfully Connected");
 }
 
 public int OnSocketReceive(Handle socket, const char[] receiveData, int dataSize, any arg)
@@ -289,7 +294,32 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 			ConnectRelay();
 
 		SocketSend(g_hSocket, sData, sizeof(sData));
+		LogMessage("Socket sending message: %s", sData);
 	}
+}
+
+/* Debug command for start message testing */
+public Action Command_Test(int client, int arg)
+{
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	UpdatePlayerStats();
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting start message send....");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
+	return Plugin_Handled;
 }
 
 // To be rewritten for UUIDs
@@ -337,6 +367,29 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 		ConnectRelay();
 
 	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
+}
+
+/* Debug command for end message testing */
+public Action Command_Test2(int client, int args)
+{
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting end message send...");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
+	return Plugin_Handled;
 }
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
