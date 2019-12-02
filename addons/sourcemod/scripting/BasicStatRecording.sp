@@ -33,7 +33,8 @@ ArrayList g_hQueuedQueries = null;
 Database g_hThreadedDb = null;
 
 char g_iNextHitgroup[MAXPLAYERS+1];
-int g_iPlayTime[MAXPLAYERS+1] = 0;
+float g_fJoinTime[MAXPLAYERS+1];
+
 
 ConVar g_serverRegion;
 
@@ -386,7 +387,7 @@ methodmap PlayerStatsTracker < StringMap
 		{
 			if (client != INVALID_ENT_REFERENCE && !(StrContains(id64, "BOT") != -1 || StrContains(id64, "INVALID") != -1))
 			{
-				time = g_iPlayTime[client];
+				time = RoundToFloor(GetEngineTime() - g_fJoinTime[client]);
 				PrintToServer("Time on server: %i", time);
 			}
 		}
@@ -499,15 +500,7 @@ public void OnClientPostAdminCheck(int client)
 	
 	g_hPlayers[client] = new PlayerStatsTracker(client);
 	g_hPlayers[client].insertToDb(false);
-	CreateTimer(1.0, PlayTimeTimer, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
-}
-
-public Action PlayTimeTimer(Handle timer) {
-	for (int i = 1; i <= MaxClients; i++) {
-		if (IsClientInGame(i)){
-			++g_iPlayTime[i];
-		}
-	}
+	g_fJoinTime[client] = GetEngineTime();
 }
 
 public void OnClientDisconnect(int client)
