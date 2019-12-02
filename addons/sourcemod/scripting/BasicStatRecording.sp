@@ -35,6 +35,8 @@ Database g_hThreadedDb = null;
 char g_iNextHitgroup[MAXPLAYERS+1];
 float g_fJoinTime[MAXPLAYERS+1];
 
+// Scrappy fix before I modify get5_endmatch
+bool hasCalculated = false;
 
 ConVar g_serverRegion;
 
@@ -892,40 +894,44 @@ public void FireBulletsPost(int client, int shots, const char[] weaponname)
 public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1Score, int team2Score, int mapNumber)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-	for (int i = 1; i <= MaxClients; i++)
+	if (!hasCalculated)
 	{
-		if (!VALIDPLAYER(i) && !DEBUG)
+		for (int i = 1; i <= MaxClients; i++)
 		{
-			continue;
+			if (!VALIDPLAYER(i) && !DEBUG)
+			{
+				continue;
+			}
+			
+			if (g_hPlayers[i] == null)
+			{
+				continue;
+			}
+			
+			char auth[32];
+			if (!g_hPlayers[i].GetString("id64", STRING(auth)))
+			{
+				continue;
+			}
+			
+			MatchTeam team = Get5_GetPlayerTeam(auth);
+			if (team == seriesWinner)
+			{
+				g_hPlayers[i].incrementMatchesWon();
+			}
+			else if (team == seriesLoser)
+			{
+				g_hPlayers[i].incrementMatchesLost();
+			}
+			else
+			{
+				g_hPlayers[i].incrementMatchesTied();
+			}
+			
+			g_hPlayers[i].addPoints(CS_GetClientContributionScore(i));
+			g_hPlayers[i].updateToDb(true);
+			hasCalculated = true;
 		}
-		
-		if (g_hPlayers[i] == null)
-		{
-			continue;
-		}
-		
-		char auth[32];
-		if (!g_hPlayers[i].GetString("id64", STRING(auth)))
-		{
-			continue;
-		}
-		
-		MatchTeam team = Get5_GetPlayerTeam(auth);
-		if (team == seriesWinner)
-		{
-			g_hPlayers[i].incrementMatchesWon();
-		}
-		else if (team == seriesLoser)
-		{
-			g_hPlayers[i].incrementMatchesLost();
-		}
-		else
-		{
-			g_hPlayers[i].incrementMatchesTied();
-		}
-		
-		g_hPlayers[i].addPoints(CS_GetClientContributionScore(i));
-		g_hPlayers[i].updateToDb(true);
 	}
 }
 
