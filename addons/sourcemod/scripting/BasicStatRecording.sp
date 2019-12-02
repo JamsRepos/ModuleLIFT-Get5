@@ -896,7 +896,7 @@ public void FireBulletsPost(int client, int shots, const char[] weaponname)
 	// 	}
 	// }
 
-public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
+public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	for (int i = 1; i <= MaxClients; i++)
