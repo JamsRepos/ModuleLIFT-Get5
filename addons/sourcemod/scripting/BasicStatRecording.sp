@@ -896,6 +896,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	if (!hasCalculated)
 	{
+		LogMessage("Get5_OnMapResult() called.");
 		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (!VALIDPLAYER(i) && !DEBUG)
@@ -918,14 +919,21 @@ public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1
 			if (team == seriesWinner)
 			{
 				g_hPlayers[i].incrementMatchesWon();
+				LogMessage("Value of i is: %i", i);
+				LogMessage("Increment matches won called.");
+
 			}
 			else if (team == seriesLoser)
 			{
 				g_hPlayers[i].incrementMatchesLost();
+				LogMessage("Value of i is: %i", i);
+				LogMessage("Increment matches lost called.");
 			}
 			else
 			{
 				g_hPlayers[i].incrementMatchesTied();
+				LogMessage("Value of i is: %i", i);
+				LogMessage("Increment matches tied called.");
 			}
 			
 			g_hPlayers[i].addPoints(CS_GetClientContributionScore(i));
