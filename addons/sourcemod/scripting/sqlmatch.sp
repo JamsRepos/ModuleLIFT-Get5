@@ -5,6 +5,7 @@
 #include <smjansson>
 #include <get5>
 #include <socket>
+#include <loadmatch>
 
 #pragma semicolon 1
 #pragma newdecls required
@@ -96,8 +97,8 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	/* Debug commands for testing socket */
-	RegConsoleCmd("sm_test", Command_Test);
-	RegConsoleCmd("sm_test2", Command_Test2);
+	RegAdminCmd("sm_test", Command_Test, ADMFLAG_ROOT);
+	RegAdminCmd("sm_test2", Command_Test2, ADMFLAG_ROOT);
 }
 
 public Action AttemptMySQLConnection(Handle timer)
@@ -274,7 +275,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		IntToString(ip[3], pieces[3], sizeof(pieces[]));
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
-		Get5_GetMatchID(g_uuidString, sizeof(g_uuidString));
+		GetCurrentMatchId(g_uuidString);
 		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 
@@ -293,6 +294,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		if(!SocketIsConnected(g_hSocket))
 			ConnectRelay();
 
+		LogMessage("Socket starting start message send...");
 		SocketSend(g_hSocket, sData, sizeof(sData));
 		LogMessage("Socket sending message: %s", sData);
 	}
@@ -366,6 +368,7 @@ public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Sco
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
+	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
 }
