@@ -257,6 +257,7 @@ public void CheckSetup()
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	CreateNative("Get5_GetTeamName", Native_Get5_GetTeamName);
+	CreateNative("GetCurrentMatchId", Native_GetCurrentMatchId);
 	return APLRes_Success;
 }
 
@@ -609,5 +610,14 @@ public int Native_Get5_GetTeamName(Handle plugin, int numParams)
 	Format(sName, maxLen, "%s", g_sTeamName[team]);
 
 	SetNativeString(2, sName, maxLen);
+	return 1;
+}
+
+public int Native_GetCurrentMatchId(Handle plugin, int numParams)
+{
+	if(StrEqual(g_sMatchID, ""))
+		return ThrowNativeError(SP_ERROR_NATIVE, "Match ID is not set.");
+
+	SetNativeString(1, g_sMatchID, sizeof(g_sMatchID));
 	return 1;
 }
