@@ -1027,17 +1027,17 @@ public Action Event_MatchOver(Event event, const char[] name, bool dontBroadcast
     } else if (t2maps == g_MapsToWin) {
       // Team 2 won
       SeriesEndMessage(MatchTeam_Team2);
-      DelayFunction(minDelay, EndSeries);
+      EndSeries();
 
     } else if (t1maps == t2maps && t1maps + tiedMaps == g_MapsToWin) {
       // The whole series was a tie
       SeriesEndMessage(MatchTeam_TeamNone);
-      DelayFunction(minDelay, EndSeries);
+      EndSeries();
 
     } else if (g_BO2Match && GetMapNumber() == 2) {
       // It was a bo2, and none of the teams got to 2
       SeriesEndMessage(MatchTeam_TeamNone);
-      DelayFunction(minDelay, EndSeries);
+      EndSeries();
 
     } else {
       if (t1maps > t2maps) {
