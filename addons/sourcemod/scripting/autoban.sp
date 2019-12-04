@@ -337,6 +337,7 @@ public void Get5_OnGoingLive(int mapNumber)
 	{
 		if(!IsValidClient(i)) continue;
 		g_iButtonTime[i] = GetTime();
+		LogMessage("Get5_OnGoingLive - %N's button time = %i", i, g_iButtonTime[i]);
 	}
 }
 
@@ -431,6 +432,7 @@ public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 
 		if(GetTime() - g_iButtonTime[i] >= 180)
 		{
+			LogMessage("Event_RoundStart - %N is about to be banned for having %i button time. GetTime() - g_iButtonTime = %i", i, g_iButtonTime[i], GetTime() - g_iButtonTime[i]);
 			g_eBanReason[i] = REASON_AFK;
 			BanPlayer(i);
 		}
