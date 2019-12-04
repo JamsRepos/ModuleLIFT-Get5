@@ -40,7 +40,8 @@ bool hasCalculated = false;
 
 ConVar g_serverRegion;
 
-bool g_SetTeamClutching[4];
+int g_iClutchFor;
+int g_iOpponents; 
 
 methodmap QueuedQuery < StringMap
 {
@@ -194,22 +195,6 @@ methodmap PlayerStatsTracker < StringMap
 		int kills = 0;
 		this.GetValue("kills", kills);
 		this.SetValue("kills", ++kills);
-		// switch(kills)
-		// {
-		// 	case 2:
-		// 	{
-		// 		this.setTripleKill();
-		// 	}
-		// 	case 3:
-		// 	{
-		// 		this.setQuadraKill();
-		// 	}
-		// 	case 4:
-		// 	{
-		// 		this.setPentaKill();
-		// 	}
-			
-		// }
 	}
 	
 	public void incrementDeaths()
@@ -319,8 +304,6 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("headshots", 0);
 		this.SetValue("points", 0);
 		this.SetValue("totaltime", 0);
-		g_SetTeamClutching[CS_TEAM_CT] = false;
- 		g_SetTeamClutching[CS_TEAM_T] = false;
 	}
 	
 	public void insertToDb(bool close)
@@ -662,18 +645,6 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int tCount = CountAlivePlayersOnTeam(CS_TEAM_T);
 	int ctCount = CountAlivePlayersOnTeam(CS_TEAM_CT);
 
-	if (tCount == 1 && !g_SetTeamClutching[CS_TEAM_T]) {
-		g_SetTeamClutching[CS_TEAM_T] = true;
-		int clutcher = GetClutchingClient(CS_TEAM_T);
-		g_RoundClutchingEnemyCount[clutcher] = ctCount;
-	}
-
-	if (ctCount == 1 && !g_SetTeamClutching[CS_TEAM_CT]) {
-		g_SetTeamClutching[CS_TEAM_CT] = true;
-		int clutcher = GetClutchingClient(CS_TEAM_CT);
-		g_RoundClutchingEnemyCount[clutcher] = tCount;
-	}
-
 	if (attacker == 0 || victim == attacker)
 	{
 		return Plugin_Handled;
@@ -726,6 +697,21 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		}
 		
 	}
+
+	if (g_iClutchFor > 0) return;
+
+	if (tCount == 1 && ctCount > 5) {
+		g_iClutchFor = CS_TEAM_T;
+		int clutcher = GetClutchingClient(CS_TEAM_T);
+		g_iOpponents = ctCount;
+		g_RoundClutchingEnemyCount[clutcher] = g_iOpponents;
+	}
+	else if (ctCount == 1 && tCount > 5) {
+		g_iClutchFor = CS_TEAM_CT;
+		int clutcher = GetClutchingClient(CS_TEAM_CT);
+		g_iOpponents = tCount;
+		g_RoundClutchingEnemyCount[clutcher] = g_iOpponents;
+	}
 	
 	return Plugin_Continue;
 }
@@ -740,7 +726,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 	Call_StartForward(g_hOnRoundLost);
 	Call_PushCell(otherTeam);
 	Call_Finish();
-	LogMessage("???????");
+	LogMessage("Round has ended.");
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (!VALIDPLAYER(i) && !DEBUG)
