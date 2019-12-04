@@ -698,7 +698,10 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		
 	}
 
-	if (g_iClutchFor > 0) return;
+	if (g_iClutchFor > 0)
+	{
+		return Plugin_Handled;
+	}
 
 	if (tCount == 1 && ctCount > 5) {
 		g_iClutchFor = CS_TEAM_T;
@@ -741,7 +744,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 
 		
 		int clientteam;
-		LogMessage("g_RoundClutchingEnemyCount %i", g_RoundClutchingEnemyCount[i]);
 		if ((clientteam = GetClientTeam(i)) == team)
 		{
 			switch (g_RoundKills[i]) {
@@ -813,6 +815,8 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		}
 		g_hPlayers[i].updateToDb(false);
 		g_hPlayers[i].resetStats();
+		g_iClutchFor = 0;
+		g_iOpponents = 0;
 	}
 	return Plugin_Continue;
 }
