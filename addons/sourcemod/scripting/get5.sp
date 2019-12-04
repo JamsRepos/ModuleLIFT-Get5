@@ -1105,10 +1105,9 @@ public Action Timer_NextMatchMap(Handle timer) {
 }
 
 public void KickClientsOnEnd() {
-    for (int i = 1; i <= MaxClients; i++) {
-      if (IsPlayer(i)) {
-        KickClient(i, "%t", "Thanks for playing!\nView the match on our website for statistics");
-      }
+  for (int i = 1; i <= MaxClients; i++) {
+    if (IsPlayer(i)) {
+      KickClient(i, "%t", "Thanks for playing!\nView the match on our website for statistics");
     }
   }
 }
