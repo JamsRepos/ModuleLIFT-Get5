@@ -891,12 +891,12 @@ public void FireBulletsPost(int client, int shots, const char[] weaponname)
 	// 	}
 	// }
 
-public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1Score, int team2Score, int mapNumber)
+public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	if (!hasCalculated)
 	{
-		LogMessage("Get5_OnMapResult() called.");
+		LogMessage("Get5_OnSeriesResult() called.");
 		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (!VALIDPLAYER(i) && !DEBUG)

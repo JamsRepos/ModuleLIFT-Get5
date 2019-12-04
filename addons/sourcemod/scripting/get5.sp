@@ -815,26 +815,26 @@ public Action Command_EndMatch(int client, int args) {
   Call_PushCell(GetMapNumber() - 1);
   Call_Finish();
 
-  // LogDebug("Calling Get5_OnSeriesResult(winner=%d, team1_series_score=%d, team2_series_score=%d)",
-  //          MatchTeam_TeamNone, g_TeamSeriesScores[MatchTeam_Team1],
-  //          g_TeamSeriesScores[MatchTeam_Team2]);
-  // Call_StartForward(g_OnSeriesResult);
-  // if (team1score > team2score)
-  // {
-  //   Call_PushCell(MatchTeam_Team1);
-  // }
-  // else if (team2score > team1score)
-  // {
-  //   Call_PushCell(MatchTeam_Team2);
-  // }
-  // else
-  // {
-  //   Call_PushCell(MatchTeam_TeamNone);
-  // }
+  LogDebug("Calling Get5_OnSeriesResult(winner=%d, team1_series_score=%d, team2_series_score=%d)",
+           MatchTeam_TeamNone, g_TeamSeriesScores[MatchTeam_Team1],
+           g_TeamSeriesScores[MatchTeam_Team2]);
+  Call_StartForward(g_OnSeriesResult);
+  if (team1score > team2score)
+  {
+    Call_PushCell(MatchTeam_Team1);
+  }
+  else if (team2score > team1score)
+  {
+    Call_PushCell(MatchTeam_Team2);
+  }
+  else
+  {
+    Call_PushCell(MatchTeam_TeamNone);
+  }
   
-  // Call_PushCell(g_TeamSeriesScores[MatchTeam_Team1]);
-  // Call_PushCell(g_TeamSeriesScores[MatchTeam_Team2]);
-  // Call_Finish();
+  Call_PushCell(g_TeamSeriesScores[MatchTeam_Team1]);
+  Call_PushCell(g_TeamSeriesScores[MatchTeam_Team2]);
+  Call_Finish();
 
   UpdateClanTags();
   ChangeState(Get5State_None);
@@ -1021,7 +1021,8 @@ public Action Event_MatchOver(Event event, const char[] name, bool dontBroadcast
     if (t1maps == g_MapsToWin) {
       // Team 1 won
       SeriesEndMessage(MatchTeam_Team1);
-      DelayFunction(minDelay, EndSeries);
+      EndSeries();
+      // DelayFunction(minDelay, EndSeries);
 
     } else if (t2maps == g_MapsToWin) {
       // Team 2 won
@@ -1119,30 +1120,30 @@ public void EndSeries() {
   DelayFunction(10.0, KickClientsOnEnd);
   StopRecording();
 
-  // // Figure out who won
-  // int t1maps = g_TeamSeriesScores[MatchTeam_Team1];
-  // int t2maps = g_TeamSeriesScores[MatchTeam_Team2];
+  // Figure out who won
+  int t1maps = g_TeamSeriesScores[MatchTeam_Team1];
+  int t2maps = g_TeamSeriesScores[MatchTeam_Team2];
 
-  // MatchTeam winningTeam = MatchTeam_TeamNone;
-  // if (t1maps > t2maps) {
-  //   winningTeam = MatchTeam_Team1;
-  // } else if (t2maps > t1maps) {
-  //   winningTeam = MatchTeam_Team2;
-  // }
+  MatchTeam winningTeam = MatchTeam_TeamNone;
+  if (t1maps > t2maps) {
+    winningTeam = MatchTeam_Team1;
+  } else if (t2maps > t1maps) {
+    winningTeam = MatchTeam_Team2;
+  }
 
-  // if (g_ForceWinnerSignal) {
-  //   winningTeam = g_ForcedWinner;
-  // }
+  if (g_ForceWinnerSignal) {
+    winningTeam = g_ForcedWinner;
+  }
 
-  // Stats_SeriesEnd(winningTeam);
-  // EventLogger_SeriesEnd(winningTeam, t1maps, t2maps);
+  Stats_SeriesEnd(winningTeam);
+  EventLogger_SeriesEnd(winningTeam, t1maps, t2maps);
 
-  // LogDebug("Calling Get5_OnSeriesResult(winner=%d, t1maps=%d, t2maps=%d)", winningTeam, t1maps, t2maps);
-  // Call_StartForward(g_OnSeriesResult);
-  // Call_PushCell(winningTeam);
-  // Call_PushCell(t1maps);
-  // Call_PushCell(t2maps);
-  // Call_Finish();
+  LogDebug("Calling Get5_OnSeriesResult(winner=%d, t1maps=%d, t2maps=%d)", winningTeam, t1maps, t2maps);
+  Call_StartForward(g_OnSeriesResult);
+  Call_PushCell(winningTeam);
+  Call_PushCell(t1maps);
+  Call_PushCell(t2maps);
+  Call_Finish();
 
   RestoreCvars(g_MatchConfigChangedCvars);
   ChangeState(Get5State_None);

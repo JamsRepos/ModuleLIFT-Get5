@@ -547,7 +547,7 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 	while(results.FetchRow());
 }
 
-public void Get5_OnMapResult(const char[] map, MatchTeam mapWinner, int team1Score, int team2Score, int mapNumber)
+public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	UpdateMatchStatus();
 }

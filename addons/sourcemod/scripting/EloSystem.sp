@@ -330,7 +330,7 @@ public void Get5_OnGoingLive(int mapNumber)
 	}	
 }
 
-public void Get5_OnMapResult(const char[] map, MatchTeam seriesWinner, int team1MapScore, int team2MapScore, int mapNumber)
+public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	int winningTeamCount;
