@@ -1105,12 +1105,9 @@ public Action Timer_NextMatchMap(Handle timer) {
 }
 
 public void KickClientsOnEnd() {
-  if (g_KickClientsWithNoMatchCvar.BoolValue) {
     for (int i = 1; i <= MaxClients; i++) {
-      if (IsPlayer(i) &&
-          !(g_KickClientImmunity.BoolValue &&
-            CheckCommandAccess(i, "get5_kickcheck", ADMFLAG_CHANGEMAP))) {
-        KickClient(i, "%t", "MatchFinishedInfoMessage");
+      if (IsPlayer(i)) {
+        KickClient(i, "%t", "Thanks for playing!\nView the match on our website for statistics");
       }
     }
   }
