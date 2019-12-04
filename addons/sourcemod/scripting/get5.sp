@@ -628,6 +628,7 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
   // TODO: consider adding a forfeit if a full team disconnects.
   if (g_EndMatchOnEmptyServerCvar.BoolValue && g_GameState >= Get5State_Warmup &&
       g_GameState < Get5State_PostGame && GetRealClientCount() == 0 && !g_MapChangePending) {
+    LogMessage("Oops this code is running. Yikes.");
     g_TeamSeriesScores[MatchTeam_Team1] = 0;
     g_TeamSeriesScores[MatchTeam_Team2] = 0;
     EndSeries();
@@ -1107,7 +1108,7 @@ public Action Timer_NextMatchMap(Handle timer) {
 public void KickClientsOnEnd() {
   for (int i = 1; i <= MaxClients; i++) {
     if (IsPlayer(i)) {
-      KickClient(i, "%t", "Thanks for playing!\nView the match on our website for statistics");
+      KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
     }
   }
 }

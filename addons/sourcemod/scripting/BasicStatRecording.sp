@@ -521,7 +521,10 @@ public void OnClientDisconnect(int client)
 	{
 		return;
 	}
-	g_hPlayers[client].updateToDb(true);
+	if (!hasCalculated)
+	{
+		g_hPlayers[client].updateToDb(true);
+	}
 	if (Get5_GetGameState() != Get5State_Live)
 	{
 		delete g_hPlayers[client];
