@@ -32,7 +32,6 @@ ConVar g_hCVServerIp;
 ConVar g_hCVPackageKey;
 
 Handle g_hSocket;
-Handle g_hDisconnection[MAXPLAYERS + 1];
 
 public Plugin myinfo = 
 {
@@ -343,9 +342,6 @@ public void Get5_OnGoingLive(int mapNumber)
 
 public void OnClientPostAdminCheck(int Client)
 {
-	if (g_hDisconnection[Client] != null)
-		delete g_hDisconnection[Client];
-
 	SDKHook(Client, SDKHook_OnTakeDamage, OnTakeDamage);
 	CheckBanStatus(Client);
 }
@@ -370,28 +366,24 @@ public void OnClientDisconnect(int Client)
 
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
-		g_hDisconnection[Client] = CreateTimer(60.0, Timer_DisconnectBan, disconnectPack);
+		CreateTimer(60.0, Timer_DisconnectBan, disconnectPack);
 	}
 }
 
 public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 {
-	char sSteamID[64];
+	char sSteamID[64], sCompareId[64];
 	disconnectPack.Reset();
 	disconnectPack.ReadString(sSteamID, sizeof(sSteamID));
+	delete disconnectPack;
 
 	for(int i = 1; i <= MaxClients; i++)
 	{
 		if(!IsValidClient(i)) continue;
 
-		if(!GetClientAuthId(i, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) continue;
+		if(!GetClientAuthId(i, AuthId_SteamID64, sCompareId, sizeof(sCompareId))) continue;
 
-		if(g_hDisconnection[i] != null)
-		{
-			delete disconnectPack;
-			delete g_hDisconnection[i];
-			return Plugin_Stop;
-		}
+		if(StrEqual(sSteamID, sCompareId)) return Plugin_Stop;
 	}
 
 	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
