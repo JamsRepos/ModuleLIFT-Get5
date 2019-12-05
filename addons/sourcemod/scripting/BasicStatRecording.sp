@@ -703,13 +703,13 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 		return Plugin_Handled;
 	}
 
-	if (tCount == 1 && ctCount > 5) {
+	if (tCount == 1 && ctCount >= 5) {
 		g_iClutchFor = CS_TEAM_T;
 		int clutcher = GetClutchingClient(CS_TEAM_T);
 		g_iOpponents = ctCount;
 		g_RoundClutchingEnemyCount[clutcher] = g_iOpponents;
 	}
-	else if (ctCount == 1 && tCount > 5) {
+	else if (ctCount == 1 && tCount >= 5) {
 		g_iClutchFor = CS_TEAM_CT;
 		int clutcher = GetClutchingClient(CS_TEAM_CT);
 		g_iOpponents = tCount;
