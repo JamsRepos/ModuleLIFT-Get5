@@ -67,9 +67,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	//Create Timer
-	CreateTimer(1.0, AttemptMySQLConnection);
-
 	//Hook Event
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
