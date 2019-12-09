@@ -514,6 +514,8 @@ public void OnClientDisconnect(int client)
 	}
 }
 
+
+
 // This works fine.
 public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadcast)
 {
@@ -597,6 +599,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 	int assister = GetClientOfUserId(assisterid);
 
 	int hitgroup = GetEventInt(event, "hitgroup");
+	int idamage = event.GetInt("dmg_health");
 
 	if (attacker && (VALIDPLAYER(attacker) || DEBUG))
 	{
@@ -607,7 +610,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 			Call_StartForward(g_hOnPlayerHit);
 			Call_PushCell(victim);
 			Call_PushCell(attacker);
-			//Call_PushFloat(damage);
+			Call_PushCell(idamage);
 			Call_Finish();
 			
 			if (DEBUG)
