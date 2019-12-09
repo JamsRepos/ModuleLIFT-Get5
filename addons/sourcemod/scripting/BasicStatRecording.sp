@@ -22,7 +22,7 @@ char Q_INSERT_PLAYER[] = "INSERT INTO `statistics`"...
 " VALUES ('%s','%s','%s',%d,'%s') ON DUPLICATE KEY UPDATE `ip`='%s', `name`='%s', `lastconnect`=%d, `region`='%s'";
 
 char Q_UPDATE_PLAYER[] = "UPDATE `statistics` SET `ip`='%s', `name`='%s', `kills`=kills+%d, `deaths`=deaths+%d,"...
-" `assists`=assists+%d, `mvps`=mvps+%d, `1v2`=1v2+%d, `1v3`=1v3+%d, `1v4`=1v4+%d, `1v5`=1v5+%d, `3k`=3k+%d, `4k`=4k+%d, `5k`=5k+%d, `shots`=shots+%d, `hits`=hits+%d, `headshots`=headshots+%d, "...
+" `assists`=assists+%d, `mvps`=mvps+%d, `1v2`=1v2+%d, `1v3`=1v3+%d, `1v4`=1v4+%d, `1v5`=1v5+%d, `3k`=3k+%d, `4k`=4k+%d, `5k`=5k+%d, `shots`=shots+%d, `hits`=hits+%d, `damage`=damage+%d, `headshots`=headshots+%d, "...
 "`roundswon`=roundswon+%d, `roundslost`=roundslost+%d,"...
 " `wins`=wins+%d, `losses`=losses+%d, `ties`=ties+%d, "...
 "`points`=points+%d, `lastconnect`=%d, `totaltime`=totaltime+%d WHERE `steamid` = '%s'";
@@ -126,6 +126,7 @@ methodmap PlayerStatsTracker < StringMap
 		playerstats.SetValue("matchestied", 0);
 		playerstats.SetValue("shots", 0);
 		playerstats.SetValue("hits", 0);
+		playerstats.SetValue("damage", 0);
 		playerstats.SetValue("headshots", 0);
 		playerstats.SetValue("points", 0);
 		playerstats.SetValue("lastconnect", GetTime());
@@ -252,6 +253,13 @@ methodmap PlayerStatsTracker < StringMap
 		this.GetValue("shots", shots);
 		this.SetValue("shots", shots+shotsFired);
 	}
+
+	public void incrementDamage(int damageDealt)
+	{
+		int damage = 0;
+		this.GetValue("damage", damage);
+		this.SetValue("damage", damage+damageDealt);
+	}
 	
 	public void incrementHits()
 	{
@@ -301,6 +309,7 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("matchestied", 0);
 		this.SetValue("shots", 0);
 		this.SetValue("hits", 0);
+		this.SetValue("damage", 0);
 		this.SetValue("headshots", 0);
 		this.SetValue("points", 0);
 		this.SetValue("totaltime", 0);
@@ -335,7 +344,7 @@ methodmap PlayerStatsTracker < StringMap
 		char ipaddress[32];
 		char playername[32];
 		int kills, deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, roundswon, roundslost, matcheswon, matcheslost, matchestied, shots, hits, headshots, 
-		points, lastconnect, time;
+		points, lastconnect, time, damage;
 		DataPack dp = new DataPack();
 		this.GetString("id64", STRING(id64));
 		this.GetString("ip", STRING(ipaddress));
@@ -358,6 +367,7 @@ methodmap PlayerStatsTracker < StringMap
 		this.GetValue("matchestied", matchestied);
 		this.GetValue("shots", shots);
 		this.GetValue("hits", hits);
+		this.GetValue("damage", damage);
 		this.GetValue("headshots", headshots);
 		this.GetValue("points", points);
 		this.GetValue("lastconnect", lastconnect);
@@ -378,7 +388,7 @@ methodmap PlayerStatsTracker < StringMap
 		}
 		
 		g_hThreadedDb.Format(STRING(formattedQuery), Q_UPDATE_PLAYER, ipaddress, playername, kills, 
-			deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, shots, hits, headshots, 
+			deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, shots, hits, damage, headshots, 
 			roundswon, roundslost, matcheswon, matcheslost, matchestied, points, lastconnect, time, id64);
 		PrintToServer("%s", formattedQuery);
 		g_hThreadedDb.Query(updatecb, formattedQuery, dp);
@@ -529,6 +539,7 @@ public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadca
 		if (g_hPlayers[client] != null && g_hPlayers[client].isPlayersStats(uid))
 		{
 			g_hPlayers[client].incrementShots(1);
+			
 			Call_StartForward(g_hOnShotFired);
 			Call_PushCell(client);
 			Call_PushCell(1);
@@ -607,6 +618,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 		if (g_hPlayers[attacker] != null && g_hPlayers[attacker].isPlayersStats(aid))
 		{
 			g_hPlayers[attacker].incrementHits();
+			g_hPlayers[attacker].incrementDamage(idamage);
 			Call_StartForward(g_hOnPlayerHit);
 			Call_PushCell(victim);
 			Call_PushCell(attacker);
