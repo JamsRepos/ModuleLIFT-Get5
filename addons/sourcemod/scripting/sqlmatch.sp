@@ -686,8 +686,38 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
 
         Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = '%s';", teamNameNew_T, teamNameNew_CT, g_uuidString);
         g_Database.Query(SQL_GenericQuery, sQuery);
+
+        // Swap team in database for disconnected players
+        Format(sQuery, sizeof(sQuery), "SELECT steamid, team FROM sql_matches WHERE match_id = '%s' AND disconnected=1;", g_uuidString);
+        g_Database.Query(SQL_HalfTimeSwap, sQuery);
+
         g_alreadySwapped = true;
     }
+}
+
+public void SQL_HalfTimeSwap(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
+
+	if(!results.FetchRow()) return;
+
+	int teamCol, steamCol, team;
+	char sSteamID[64], sQuery[256];
+	results.FieldNameToNum("team", teamCol);
+	results.FieldNameToNum("steamid", steamCol);
+
+	do
+	{
+		team = results.FetchInt(teamCol);
+		results.FetchString(steamCol, sSteamID, sizeof(sSteamID));
+		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET team=%i WHERE steamid='%s';", team == 2 ? 3 : 2, sSteamID);
+		g_Database.Query(SQL_GenericQuery, sQuery);
+	} while(results.FetchRow());
 }
 
 public void OnClientDisconnect(int Client)
