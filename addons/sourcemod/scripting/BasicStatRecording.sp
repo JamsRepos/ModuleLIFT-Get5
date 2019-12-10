@@ -1,6 +1,6 @@
 #pragma semicolon 1
 
-bool DEBUG = false;
+bool DEBUG = true;
 
 #define PLUGIN_AUTHOR "PandahChan"
 #define PLUGIN_VERSION "0.00"
@@ -449,7 +449,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	g_hOnRoundLost = CreateGlobalForward("OnRoundLost", ET_Ignore, Param_Cell);
 	g_hOnPlayerRoundLost = CreateGlobalForward("OnPlayerRoundLost", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnShotFired = CreateGlobalForward("OnShotFired", ET_Ignore, Param_Cell, Param_Cell, Param_String);
-	g_hOnPlayerHit = CreateGlobalForward("OnPlayerHit", ET_Ignore, Param_Cell, Param_Cell, Param_Float);
+	g_hOnPlayerHit = CreateGlobalForward("OnPlayerHit", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnHeadShot = CreateGlobalForward("OnHeadShot", ET_Ignore, Param_Cell, Param_Cell);
 	
 	return APLRes_Success;
@@ -1054,13 +1054,21 @@ public void importcb(Database db, DBResultSet results, const char[] error, any d
 
 bool VALIDPLAYER(int client)
 {
-	if (0 < client <= MaxClients)
-	{
-		if (IsClientInGame(client) && !IsClientReplay(client) && !IsClientSourceTV(client) && !IsFakeClient(client))
-		{
-			return true;
-		}
-	}
+	if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) ) 
+        return false; 
+     
+    return true; 
+}
+
+// bool VALIDPLAYER(int client)
+// {
+// 	if (0 < client <= MaxClients)
+// 	{
+// 		if (IsClientInGame(client) && !IsClientReplay(client) && !IsClientSourceTV(client) && !IsFakeClient(client))
+// 		{
+// 			return true;
+// 		}
+// 	}
 	
-	return false;
-} 
+// 	return false;
+// } 
