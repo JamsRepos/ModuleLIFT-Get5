@@ -1,6 +1,6 @@
 #pragma semicolon 1
 
-bool DEBUG = true;
+bool DEBUG = false;
 
 #define PLUGIN_AUTHOR "PandahChan"
 #define PLUGIN_VERSION "0.00"
