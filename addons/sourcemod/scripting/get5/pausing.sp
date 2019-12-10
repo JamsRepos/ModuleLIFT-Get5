@@ -73,7 +73,7 @@ public Action Command_Pause(int client, int args)
 
     char teamName[32];
     GetEntPropString(teamIndex, Prop_Send, "m_szClanTeamname", teamName, 32);
-    Get5_MessageToAll("%s has %imin%isec left for pauses", teamName, minutes, seconds);
+    Get5_MessageToAll("%s has %imin %isec left for pauses", teamName, minutes, seconds);
 
     pauseTimerHandler = CreateTimer(1.0, Timer_PauseTimeCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 

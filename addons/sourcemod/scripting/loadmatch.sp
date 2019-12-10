@@ -13,6 +13,8 @@ char g_sTeamName[4][128];
 Database g_Database;
 bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
+ConVar g_MatchType;
+
 int g_connectTimer = 300;
 
 StringMap g_NameMap;
@@ -48,6 +50,8 @@ public void OnPluginStart()
 	AddCommandListener(Listener_Stop, "kill");
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
+	g_MatchType = CreateConVar("sm_matchtype", "5v5", "The match type which we are loading and checking the connection for.");
+	AutoExecConfig(true, "loadmatch");
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
@@ -113,12 +117,36 @@ public void SetClientReady(int client, bool ready) {
   g_ClientReady[client] = ready;
 }
 
+stock int GetRealTeamCount(int team)
+{
+    int number = 0;
+    for (int i=1; i<=MaxClients; i++)
+    {
+        if (IsPlayer(i) && GetClientTeam(i) == team) 
+            number++;
+    }
+    return number;
+}  
+
 public bool IsEveryoneReady() {
-	if (GetTeamClientCount(CS_TEAM_CT) == 5 && GetTeamClientCount(CS_TEAM_T) == 5){// Debug
-		return true;
-	} else {
-		return false;
+	char matchtype[32];
+	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
+	if (StrEqual(matchtype, "5v5"))
+	{
+		if (GetRealTeamCount(CS_TEAM_CT) == 5 && GetRealTeamCount(CS_TEAM_T) == 5) return true;	
 	}
+
+	else if (StrEqual(matchtype, "1v1"))
+	{
+		if (GetRealTeamCount(CS_TEAM_CT) == 1 && GetRealTeamCount(CS_TEAM_T) == 1) return true;
+	}
+
+	else if (StrEqual(matchtype, "2v2"))
+	{
+		if (GetRealTeamCount(CS_TEAM_CT) == 2 && GetRealTeamCount(CS_TEAM_T) == 2) return true; 
+	}
+	
+	return false;
 }
 
 public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
@@ -176,6 +204,9 @@ public Action Timer_PlayerCount(Handle timer) {
 		return Plugin_Continue;
 	}
 
+	char matchtype[32];
+	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
+
 	if (Get5_GetGameState() == Get5State_Warmup)
 	{
 		if (IsEveryoneReady()) 
@@ -187,11 +218,24 @@ public Action Timer_PlayerCount(Handle timer) {
 		}
 		else
 		{
-			int playersonTerrorist = GetTeamClientCount(CS_TEAM_T);
-			int playersOnCT = GetTeamClientCount(CS_TEAM_CT);
+			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
+			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
 			int playersOnServer = playersonTerrorist+playersOnCT; 
 			LogMessage("The amount of players in server are Terrorist: %i and CT: %i", playersonTerrorist, playersOnCT);
-			PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
+			if (StrEqual(matchtype, "5v5"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
+			}
+
+			if (StrEqual(matchtype, "2v2"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 4 - playersOnServer);
+			}
+
+			if (StrEqual(matchtype, "1v1"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 2 - playersOnServer);
+			}
 		}
 	}
 	return Plugin_Continue;
