@@ -344,7 +344,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
-	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
+	CreateTimer(20.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
 	char sPort[16], sQuery[1024], sIP[32];
 	int ip[4];
