@@ -7,13 +7,15 @@
 
 float g_fTeamDamage[MAXPLAYERS + 1];
 
-int g_iButtonTime[MAXPLAYERS + 1];
+int g_iAfkTime[MAXPLAYERS + 1];
 int g_iTeamKills[MAXPLAYERS + 1];
 int g_iRetryTimes[MAXPLAYERS + 1];
 int g_iMatchStartTime;
+int g_iLastButtons[MAXPLAYERS + 1];
 
 bool g_bLate;
 bool g_bBanned[MAXPLAYERS + 1];
+bool g_bPlayerAfk[MAXPLAYERS + 1];
 
 Database g_Database = null;
 
@@ -45,11 +47,12 @@ public Plugin myinfo =
 public void ResetVars(int Client)
 {
 	g_fTeamDamage[Client] = 0.0;
-	g_iButtonTime[Client] = 0;
+	g_iAfkTime[Client] = 0;
 	g_iTeamKills[Client] = 0;
 	g_iRetryTimes[Client] = 0;
 	g_bBanned[Client] = false;
 	g_eBanReason[Client] = REASON_OTHER;
+	g_iLastButtons[Client] = 0;
 }
 
 public void OnMapStart()
@@ -68,7 +71,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
 	//Hook Event
-	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_death", Event_PlayerDeath);
 
 	//Create ConVar
@@ -86,6 +88,22 @@ public void OnPluginStart()
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
+
+	CreateTimer(1.0, GlobalSecondTimer, _, TIMER_REPEAT);
+}
+
+public Action GlobalSecondTimer(Handle hTimer)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i)) continue;
+
+		if(g_bPlayerAfk[i])
+			g_iAfkTime[i]++;
+		else
+			g_iAfkTime[i] = 0;
+	}
+	return Plugin_Continue;
 }
 
 void ConnectRelay()
@@ -329,12 +347,6 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 public void Get5_OnGoingLive(int mapNumber)
 {
 	g_iMatchStartTime = GetTime();
-	for(int i = 1; i <= MaxClients; i++)
-	{
-		if(!IsValidClient(i)) continue;
-		g_iButtonTime[i] = GetTime();
-		LogMessage("Get5_OnGoingLive - %N's button time = %i", i, g_iButtonTime[i]);
-	}
 }
 
 public void OnClientPostAdminCheck(int Client)
@@ -411,23 +423,6 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	return Plugin_Stop;
 }
 
-public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
-{
-	if(Get5_GetGameState() <= Get5State_GoingLive) return;
-
-	for(int i = 1; i <= MaxClients; i++)
-	{
-		if(!IsValidClient(i) || g_bBanned[i]) continue;
-
-		if(GetTime() - g_iButtonTime[i] >= 180)
-		{
-			LogMessage("Event_RoundStart - %N is about to be banned for having %i button time. GetTime() - g_iButtonTime = %i", i, g_iButtonTime[i], GetTime() - g_iButtonTime[i]);
-			g_eBanReason[i] = REASON_AFK;
-			BanPlayer(i);
-		}
-	}
-}
-
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	if(Get5_GetGameState() <= Get5State_GoingLive) return;
@@ -452,8 +447,22 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
-	if(Get5_GetGameState() <= Get5State_GoingLive || buttons <= 0) return Plugin_Continue;
-	g_iButtonTime[client] = GetTime();
+	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client]) return Plugin_Continue;
+
+	if(g_iAfkTime[client] >= 180)
+	{
+		g_iAfkTime[client] = 0;
+		g_eBanReason[client] = REASON_AFK;
+		BanPlayer(client);
+		return Plugin_Continue;
+	}
+	
+	if(g_iLastButtons[client] == buttons || (mouse[0] == 0 && mouse[1] == 0))
+		g_bPlayerAfk[client] = true;
+	else
+		g_bPlayerAfk[client] = false;
+
+	g_iLastButtons[client] = buttons;
 	return Plugin_Continue;
 }
 
