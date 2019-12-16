@@ -312,7 +312,6 @@ methodmap PlayerStatsTracker < StringMap
 		this.SetValue("damage", 0);
 		this.SetValue("headshots", 0);
 		this.SetValue("points", 0);
-		this.SetValue("totaltime", 0);
 	}
 	
 	public void insertToDb(bool close)
@@ -390,7 +389,7 @@ methodmap PlayerStatsTracker < StringMap
 		g_hThreadedDb.Format(STRING(formattedQuery), Q_UPDATE_PLAYER, ipaddress, playername, kills, 
 			deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, shots, hits, damage, headshots, 
 			roundswon, roundslost, matcheswon, matcheslost, matchestied, points, lastconnect, time, id64);
-		PrintToServer("%s", formattedQuery);
+		LogMessage("%s", formattedQuery);
 		g_hThreadedDb.Query(updatecb, formattedQuery, dp);
 	}
 	
@@ -410,6 +409,7 @@ methodmap PlayerStatsTracker < StringMap
 }
 
 bool g_bDbReady;
+bool g_bGatherStats = false;
 
 Handle g_hOnKill;
 Handle g_hOnDeath;
@@ -467,6 +467,14 @@ public void OnPluginStart()
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("round_mvp", Event_RoundMVP);
+}
+
+/* Enable Or Disable Points In Warmup */
+public void OnGameFrame()
+{
+	//In Warmup
+	if(GameRules_GetProp("m_bWarmupPeriod") == 1) g_bGatherStats = false;
+	else g_bGatherStats = true;	
 }
 
 public void OnDbConnect(Database db, const char[] error, any data)
@@ -533,6 +541,26 @@ public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadca
 	int client = GetClientOfUserId(userid);
 	char weaponname[32];
 	event.GetString("weapon", STRING(weaponname));
+	if (!g_bGatherStats) return Plugin_Handled;
+	if (StrContains(weaponname, "knife") != -1 || 
+		StrEqual(weaponname, "bayonet") || 
+		StrEqual(weaponname, "melee") || 
+		StrEqual(weaponname, "axe") || 
+		StrEqual(weaponname, "hammer") || 
+		StrEqual(weaponname, "spanner") || 
+		StrEqual(weaponname, "fists") || 
+		StrEqual(weaponname, "hegrenade") || 
+		StrEqual(weaponname, "flashbang") || 
+		StrEqual(weaponname, "smokegrenade") || 
+		StrEqual(weaponname, "inferno") || 
+		StrEqual(weaponname, "molotov") || 
+		StrEqual(weaponname, "incgrenade") ||
+		StrContains(weaponname, "decoy") != -1 ||
+		StrEqual(weaponname, "firebomb") ||
+		StrEqual(weaponname, "diversion") ||
+		StrContains(weaponname, "breachcharge") != -1)
+	return Plugin_Handled; 
+	
 	if (client && (VALIDPLAYER(client) || DEBUG))
 	{
 		int uid = GetClientUserId(client);
@@ -553,13 +581,15 @@ public Action Event_PlayerShoot(Event event, const char[] name, bool dontBroadca
 			
 		}
 	}
-	return Plugin_Continue;
 }
 
 public Action Event_RoundMVP(Event event, const char[] name, bool dontBroadcast)
 {
 	int userid = event.GetInt("userid");
 	int client = GetClientOfUserId(userid);
+
+	if (!g_bGatherStats) return Plugin_Handled;
+
 	if (client && (VALIDPLAYER(client) || DEBUG))
 	{
 		int uid = GetClientUserId(client);
@@ -612,6 +642,8 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 	int hitgroup = GetEventInt(event, "hitgroup");
 	int idamage = event.GetInt("dmg_health");
 
+	if (!g_bGatherStats) return Plugin_Handled;
+
 	if (attacker && (VALIDPLAYER(attacker) || DEBUG))
 	{
 		int aid = GetClientUserId(attacker);
@@ -646,6 +678,8 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 			}
 		}
 	}
+
+	return Plugin_Continue;
 }
 
 public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -657,13 +691,12 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 	int attacker = GetClientOfUserId(attackerid);
 	int assister = GetClientOfUserId(assisterid);
 
+	if (attacker != 0 && (IsFakeClient(victim)) || IsFakeClient(attacker) || victim == attacker || attacker == 0) return Plugin_Handled;
+
 	int tCount = CountAlivePlayersOnTeam(CS_TEAM_T);
 	int ctCount = CountAlivePlayersOnTeam(CS_TEAM_CT);
 
-	if (attacker == 0 || victim == attacker)
-	{
-		return Plugin_Handled;
-	}
+	if (!g_bGatherStats) return Plugin_Handled;
 	
 	if (victim && (VALIDPLAYER(victim) || DEBUG) && g_hPlayers[victim] != null && g_hPlayers[victim].isPlayersStats(victimid))
 	{
@@ -736,6 +769,8 @@ public Action Event_PlayerDeath(Event event, const char[] name, bool dontBroadca
 
 public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
+	if (!g_bGatherStats) return Plugin_Handled;
+
 	int team = event.GetInt("winner");
 	int otherTeam = (team == 2) ? 3 : 2;
 	Call_StartForward(g_hOnRoundWon);

@@ -59,6 +59,8 @@ public void OnPluginStart()
 	g_NameMap = new StringMap();
 }
 
+
+
 /* Core calculations */
 
 public int FloatToInt(float fValue) {

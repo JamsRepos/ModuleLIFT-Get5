@@ -14,7 +14,7 @@ forward void OnPlayerRoundWon(int client, int team, int enemyRemaining);
 forward void OnRoundLost(int team);
 forward void OnPlayerRoundLost(int client, int team, int enemyRemaining);
 forward void OnShotFired(int client, int shots, const char[] weaponName);
-forward void OnPlayerHit(int victim, int attacker, float damage);
+forward void OnPlayerHit(int victim, int attacker, int damage);
 forward void OnHeadShot(int victim, int attacker);
 
 
