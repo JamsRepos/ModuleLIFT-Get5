@@ -619,7 +619,7 @@ public void UpdateMatchStatus()
 	// Not sure why this is set?
 	// g_sMatchID = "";
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=1 WHERE match_id='%s'", g_sMatchID);
+	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=0 WHERE match_id='%s'", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 

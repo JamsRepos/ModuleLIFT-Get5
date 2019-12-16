@@ -344,7 +344,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
-	CreateTimer(10.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 
 	char sPort[16], sQuery[1024], sIP[32];
 	int ip[4];
@@ -353,6 +352,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
 
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
+	LogMessage("Query information: %s", sQuery);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
 	char sData[1024], sPass[128];
@@ -371,6 +371,9 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
+
+	// Close the socket then kick people might be the fix.
+	CreateTimer(20.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 }
 
 /* Debug command for end message testing */
