@@ -449,7 +449,7 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 	g_hOnRoundLost = CreateGlobalForward("OnRoundLost", ET_Ignore, Param_Cell);
 	g_hOnPlayerRoundLost = CreateGlobalForward("OnPlayerRoundLost", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
 	g_hOnShotFired = CreateGlobalForward("OnShotFired", ET_Ignore, Param_Cell, Param_Cell, Param_String);
-	g_hOnPlayerHit = CreateGlobalForward("OnPlayerHit", ET_Ignore, Param_Cell, Param_Cell, Param_Cell);
+	g_hOnPlayerHit = CreateGlobalForward("OnPlayerHit", ET_Ignore, Param_Cell, Param_Cell);
 	g_hOnHeadShot = CreateGlobalForward("OnHeadShot", ET_Ignore, Param_Cell, Param_Cell);
 	
 	return APLRes_Success;
@@ -622,7 +622,7 @@ public Action Event_PlayerHurt(Event event, const char[] name, bool dontBroadcas
 			Call_StartForward(g_hOnPlayerHit);
 			Call_PushCell(victim);
 			Call_PushCell(attacker);
-			Call_PushCell(idamage);
+			// Call_PushCell(idamage); // This line is causing issues.
 			Call_Finish();
 			
 			if (DEBUG)
