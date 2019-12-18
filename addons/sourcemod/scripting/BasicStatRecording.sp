@@ -473,7 +473,7 @@ public void OnPluginStart()
 public void OnGameFrame()
 {
 	//In Warmup
-	if(GameRules_GetProp("m_bWarmupPeriod") == 1) g_bGatherStats = false;
+	if(GameRules_GetProp("m_bWarmupPeriod") == 1 || Get5_GetGameState() != Get5State_Live) g_bGatherStats = false;
 	else g_bGatherStats = true;	
 }
 
