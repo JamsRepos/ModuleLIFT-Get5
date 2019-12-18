@@ -457,7 +457,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		return Plugin_Continue;
 	}
 	
-	if(g_iLastButtons[client] == buttons || (mouse[0] == 0 && mouse[1] == 0))
+	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0))
 		g_bPlayerAfk[client] = true;
 	else
 		g_bPlayerAfk[client] = false;
