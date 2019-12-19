@@ -97,7 +97,6 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	/* Debug commands for testing socket */
-	RegAdminCmd("sm_test", Command_Test, ADMFLAG_ROOT);
 	RegAdminCmd("sm_test2", Command_Test2, ADMFLAG_ROOT);
 }
 
@@ -279,49 +278,8 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 
-		char sData[1024], sPass[128];
-		g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-		Handle jsonObj = json_object();
-		json_object_set_new(jsonObj, "type", json_integer(1));
-		json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-		json_object_set_new(jsonObj, "pass", json_string(sPass));
-		json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-		CloseHandle(jsonObj);
-
 		UpdatePlayerStats();
-
-		if(!SocketIsConnected(g_hSocket))
-			ConnectRelay();
-
-		LogMessage("Socket starting start message send...");
-		SocketSend(g_hSocket, sData, sizeof(sData));
-		LogMessage("Socket sending message: %s", sData);
 	}
-}
-
-/* Debug command for start message testing */
-public Action Command_Test(int client, int arg)
-{
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
-	UpdatePlayerStats();
-
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	LogMessage("Socket starting start message send....");
-	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
-	return Plugin_Handled;
 }
 
 // To be rewritten for UUIDs
