@@ -469,7 +469,7 @@ public void OnPluginStart()
 	HookEvent("round_mvp", Event_RoundMVP);
 }
 
-/* Enable Or Disable Points In Warmup */
+/* Enable Or Disable Points In Warmup and Knife Round */
 public void OnGameFrame()
 {
 	//In Warmup
