@@ -302,6 +302,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
+	CreateTimer(40.0, Timer_KickEveryoneEnd); 
 
 	char sPort[16], sQuery[1024], sIP[32];
 	int ip[4];
@@ -329,9 +330,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
-
-	// Close the socket then kick people might be the fix.
-	CreateTimer(20.0, Timer_KickEveryoneEnd); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 }
 
 /* Debug command for end message testing */
