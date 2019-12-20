@@ -435,18 +435,27 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 					}
 				}
 			}
-			int len = 0;
-			len += Format(sQuery[len], sizeof(sQuery) - len, "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
+			Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
 			txn_UpdateElo.AddQuery(sQuery);
 			// UpdatePlayerInTable(player);
 			hasCalculated = true;
 		}
-		g_hThreadedDb.Execute(txn_UpdateElo);
+		g_hThreadedDb.Execute(txn_UpdateElo, SQL_TranSuccess, SQL_TranFailure);
 	}
 	else
 	{
 		return;
 	}
+}
+
+public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] results, any[] queryData)
+{
+	PrintToServer("Transaction Successful");
+}
+
+public void SQL_TranFailure(Database db, any data, int numQueries, const char[] sError, int failIndex, any[] queryData)
+{
+	LogError("Transaction Failed! Error: %s. During Query: %i", sError, failIndex);
 }
 
 void InsertPlayerToTable(const char[] auth)
