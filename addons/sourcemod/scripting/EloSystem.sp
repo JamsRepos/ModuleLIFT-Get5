@@ -333,11 +333,8 @@ public void Get5_OnGoingLive(int mapNumber)
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-	int winningTeamCount;
-	int losingTeamCount;
-	int winningTeamAvgElo;
-	int losingTeamAvgElo;
-	
+	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
+	char sQuery[1024];
 
 	if (!hasCalculated)
 	{
@@ -383,10 +380,13 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		
 		winningTeamAvgElo /= winningTeamCount;
 		losingTeamAvgElo /= losingTeamCount;
-		
+		Transaction txn_UpdateElo = new Transaction();
+
 		for (int i = 1; i <= MaxClients; i++)
 		{
 			PlayerEloMap player = g_hPlayer[i];
+			char auth[32];
+			player.GetId64(auth, sizeof(auth));
 			if (player == null)
 			{
 				continue;
@@ -435,116 +435,19 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 					}
 				}
 			}
-			
-			UpdatePlayerInTable(player);
+			int len = 0;
+			len += Format(sQuery[len], sizeof(sQuery) - len, "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
+			txn_UpdateElo.AddQuery(sQuery);
+			// UpdatePlayerInTable(player);
 			hasCalculated = true;
 		}
+		g_hThreadedDb.Execute(txn_UpdateElo);
 	}
 	else
 	{
 		return;
 	}
 }
-
-// public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
-// {
-// 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-
-// 	int winningTeamCount;
-// 	int losingTeamCount;
-// 	int winningTeamAvgElo;
-// 	int losingTeamAvgElo;
-
-// 	if (!hasCalculated)
-// 	{
-	
-// 		for (int i = 1; i <= MaxClients; i++)
-// 		{
-// 			PlayerEloMap player = g_hPlayer[i];
-// 			if (player == null)
-// 			{
-// 				continue;
-// 			}
-			
-// 			char auth[32];
-// 			player.GetId64(auth, sizeof(auth));
-// 			MatchTeam team = player.GetTeam();
-			
-// 			int currentElo, matchesPlayed;
-// 			GetPlayerFromTable(auth, currentElo, matchesPlayed);
-// 			player.SetValue("currentelo", currentElo);
-// 			player.SetValue("matchesplayed", matchesPlayed);
-
-// 			if (team == seriesWinner)
-// 			{
-// 				winningTeamAvgElo += currentElo;
-// 				winningTeamCount++;
-// 			}
-// 			else if (team == seriesLoser)
-// 			{
-// 				losingTeamAvgElo += currentElo;
-// 				losingTeamCount++;
-// 			}
-// 		}
-		
-// 		winningTeamAvgElo /= winningTeamCount;
-// 		losingTeamAvgElo /= losingTeamCount;
-		
-// 		for (int i = 1; i <= MaxClients; i++)
-// 		{
-// 			PlayerEloMap player = g_hPlayer[i];
-// 			if (player == null)
-// 			{
-// 				continue;
-// 			}
-			
-// 			MatchTeam team = player.GetTeam();
-// 			int playerElo, playerMatches;
-// 			player.GetValue("currentelo", playerElo);
-// 			player.GetValue("matchesplayed", playerMatches);
-
-// 			if (team == seriesWinner)
-// 			{
-// 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-// 				{
-// 					player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
-// 				}
-// 				else
-// 				{
-// 					int eloValue = calculateEloGain(playerElo, winningTeamAvgElo, true);
-// 					player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
-// 				}
-// 			}
-// 			else if (team == seriesLoser)
-// 			{
-// 				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-// 				{
-// 					player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
-// 				}
-// 				else
-// 				{
-// 					int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
-// 					int playerNewElo = playerElo - eloValue;
-// 					if (playerNewElo < 0)
-// 					{
-// 						player.SetValue("currentelo", 0);
-// 					}
-// 					else
-// 					{
-// 						player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
-// 					}
-// 				}
-// 			}
-			
-// 			UpdatePlayerInTable(player);
-// 			hasCalculated = true;
-// 		}
-// 	}
-// 	else
-// 	{
-// 		return;
-// 	}
-// }
 
 void InsertPlayerToTable(const char[] auth)
 {
