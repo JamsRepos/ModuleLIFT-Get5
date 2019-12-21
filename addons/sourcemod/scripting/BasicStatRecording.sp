@@ -389,7 +389,6 @@ methodmap PlayerStatsTracker < StringMap
 		g_hThreadedDb.Format(STRING(formattedQuery), Q_UPDATE_PLAYER, ipaddress, playername, kills, 
 			deaths, assists, mvps, onevstwo, onevsthree, onevsfour, onevsfive, triplekill, quadrakill, pentakill, shots, hits, damage, headshots, 
 			roundswon, roundslost, matcheswon, matcheslost, matchestied, points, lastconnect, time, id64);
-		LogMessage("%s", formattedQuery);
 		g_hThreadedDb.Query(updatecb, formattedQuery, dp);
 	}
 	
@@ -779,7 +778,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 	Call_StartForward(g_hOnRoundLost);
 	Call_PushCell(otherTeam);
 	Call_Finish();
-	LogMessage("Round has ended.");
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (!VALIDPLAYER(i) && !DEBUG)
@@ -939,7 +937,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	if (!hasCalculated)
 	{
-		LogMessage("Get5_OnSeriesResult() called.");
 		for (int i = 1; i <= MaxClients; i++)
 		{
 			if (!VALIDPLAYER(i) && !DEBUG)
@@ -962,21 +959,15 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 			if (team == seriesWinner)
 			{
 				g_hPlayers[i].incrementMatchesWon();
-				LogMessage("Value of i is: %i", i);
-				LogMessage("Increment matches won called.");
 
 			}
 			else if (team == seriesLoser)
 			{
 				g_hPlayers[i].incrementMatchesLost();
-				LogMessage("Value of i is: %i", i);
-				LogMessage("Increment matches lost called.");
 			}
 			else
 			{
 				g_hPlayers[i].incrementMatchesTied();
-				LogMessage("Value of i is: %i", i);
-				LogMessage("Increment matches tied called.");
 			}
 			
 			g_hPlayers[i].addPoints(CS_GetClientContributionScore(i));

@@ -338,7 +338,6 @@ public void EndMatchSocket()
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
 
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
-	LogMessage("Query information: %s", sQuery);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
 	char sData[1024], sPass[128];
@@ -429,8 +428,7 @@ public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
 }
 
 public void OnClientAuthorized(int Client, const char[] auth)
-{
-	LogMessage(g_sMatchID);
+{;
 	if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
 
 	if(StrEqual(g_sMatchID, ""))
