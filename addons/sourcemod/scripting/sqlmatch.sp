@@ -584,6 +584,33 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s';", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
+
+	char sPort[16], sQuery[1024], sIP[32];
+	int ip[4];
+	FindConVar("hostport").GetString(sPort, sizeof(sPort));
+	SteamWorks_GetPublicIP(ip);
+	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
+	LogMessage("Query information: %s", sQuery);
+	g_Database.Query(SQL_GenericQuery, sQuery);
+
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting end message send...");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
 	return Plugin_Stop;
 }
 
@@ -591,6 +618,33 @@ public Action Timer_KickEveryoneEnd(Handle timer)
 {
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
 	ServerCommand("tv_stoprecord");
+
+	char sPort[16], sQuery[1024], sIP[32];
+	int ip[4];
+	FindConVar("hostport").GetString(sPort, sizeof(sPort));
+	SteamWorks_GetPublicIP(ip);
+	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
+	LogMessage("Query information: %s", sQuery);
+	g_Database.Query(SQL_GenericQuery, sQuery);
+
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting end message send...");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
 	return Plugin_Stop;
 }
 

@@ -4,7 +4,7 @@
 #include <smjansson>
 #include <cstrike>
 #include <sdktools>
-
+#include <socket>
 
 char g_sMatchID[38];
 //ArrayList g_Players;
@@ -14,6 +14,11 @@ Database g_Database;
 bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 
 ConVar g_MatchType;
+
+Handle g_hSocket;
+ConVar g_CVServerIp;
+ConVar g_CVWebsocketPass;
+ConVar g_CVLeagueID;
 
 int g_connectTimer = 300;
 
@@ -50,8 +55,21 @@ public void OnPluginStart()
 	AddCommandListener(Listener_Stop, "kill");
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
+	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
+	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "jf8u689shgfds", "pass for websocket");
 	g_MatchType = CreateConVar("sm_matchtype", "5v5", "The match type which we are loading and checking the connection for.");
 	AutoExecConfig(true, "loadmatch");
+
+	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
+
+	//Set Socket Options
+	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
+	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
+	SocketSetOption(g_hSocket, DebugMode, 1); // Put socket into debug mode
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
@@ -59,7 +77,54 @@ public void OnPluginStart()
 	g_NameMap = new StringMap();
 }
 
+void ConnectRelay()
+{	
+	if (!SocketIsConnected(g_hSocket))
+	{
+		char sHost[32];
+		g_CVServerIp.GetString(sHost, sizeof(sHost));
+		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, 8888);
+	}
+	else
+		PrintToServer("Socket is already connected?");
+}
 
+public Action Timer_Reconnect(Handle timer)
+{
+	ConnectRelay();
+}
+
+void StartReconnectTimer()
+{
+	if (SocketIsConnected(g_hSocket))
+		SocketDisconnect(g_hSocket);
+		
+	CreateTimer(10.0, Timer_Reconnect);
+}
+
+public int OnSocketDisconnected(Handle socket, any arg)
+{	
+	StartReconnectTimer();
+	
+	PrintToServer("Socket disconnected");
+}
+
+public int OnSocketError(Handle socket, int errorType, int errorNum, any ary)
+{
+	StartReconnectTimer();
+	
+	LogError("Socket error %i (errno %i)", errorType, errorNum);
+}
+
+public int OnSocketConnected(Handle socket, any arg)
+{	
+	PrintToServer("Socket Successfully Connected");
+}
+
+public int OnSocketReceive(Handle socket, const char[] receiveData, int dataSize, any arg)
+{
+	PrintToServer(receiveData);
+}
 
 /* Core calculations */
 
@@ -255,6 +320,7 @@ static void CheckWaitingTimes() {
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
 					KickClient(i, "Players did not connect in time. Match has been cancelled");
+					EndMatchSocket();
 				}
 			}
 		} else if (timeLeft <= 300 && timeLeft % 60 == 0) {
@@ -262,6 +328,36 @@ static void CheckWaitingTimes() {
 		}
 	}
 } 
+
+public void EndMatchSocket()
+{
+	char sPort[16], sQuery[1024], sIP[32];
+	int ip[4];
+	FindConVar("hostport").GetString(sPort, sizeof(sPort));
+	SteamWorks_GetPublicIP(ip);
+	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
+	LogMessage("Query information: %s", sQuery);
+	g_Database.Query(SQL_GenericQuery, sQuery);
+
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_sMatchID));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting end message send...");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
+}
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {

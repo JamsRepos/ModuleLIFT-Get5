@@ -445,9 +445,13 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	}
 }
 
+stock bool IsPaused() {
+    return GameRules_GetProp("m_bMatchWaitingForResume") != 0;
+}  
+
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
-	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client]) return Plugin_Continue;
+	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused()) return Plugin_Continue;
 
 	if(g_iAfkTime[client] >= 180)
 	{
@@ -468,7 +472,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
 public Action OnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
-	if(!IsValidClient(victim) || !IsValidClient(attacker) || Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[attacker]) return Plugin_Continue;
+	if(!IsValidClient(victim) || !IsValidClient(attacker) || Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[attacker] || IsPaused()) return Plugin_Continue;
 
 	if(GetClientTeam(victim) == GetClientTeam(attacker))
 	{
