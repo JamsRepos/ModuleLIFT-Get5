@@ -303,32 +303,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	UpdatePlayerStats();
 	UpdateMatchStats();
 	CreateTimer(40.0, Timer_KickEveryoneEnd); 
-
-	char sPort[16], sQuery[1024], sIP[32];
-	int ip[4];
-	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-	SteamWorks_GetPublicIP(ip);
-	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
-	g_Database.Query(SQL_GenericQuery, sQuery);
-
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	LogMessage("Socket starting end message send...");
-	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
 }
 
 /* Debug command for end message testing */
