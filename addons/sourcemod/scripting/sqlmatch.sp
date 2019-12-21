@@ -95,9 +95,6 @@ public void OnPluginStart()
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
-
-	/* Debug commands for testing socket */
-	RegAdminCmd("sm_test2", Command_Test2, ADMFLAG_ROOT);
 }
 
 public Action AttemptMySQLConnection(Handle timer)
