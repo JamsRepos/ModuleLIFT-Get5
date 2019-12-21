@@ -581,10 +581,6 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
 
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s';", g_uuidString);
-	g_Database.Query(SQL_GenericQuery, sQuery);
-
 	char sPort[16], sQuery[1024], sIP[32];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
