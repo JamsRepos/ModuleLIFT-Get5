@@ -488,7 +488,7 @@ public void OnClientPostAdminCheck(int Client)
 {
 	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
 	
-	/*
+	
 	// Set player name to discord name if it isn't set already
 	char sSteam[64], sOldName[MAX_NAME_LENGTH], sName[64];
 	if(GetClientAuthId(Client, AuthId_SteamID64, sSteam, sizeof(sSteam)))
@@ -505,11 +505,8 @@ public void OnClientPostAdminCheck(int Client)
 			}
 		}
 	}
-	*/
 
-	// Thought of a better way to do this lmao
-	FireNameChangeEvent(_, GetClientUserId(Client));
-
+	
 	updateIPAddress(Client);
 	SetClientReady(Client, true);
 }

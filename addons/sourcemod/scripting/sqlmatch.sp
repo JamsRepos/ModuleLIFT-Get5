@@ -305,28 +305,6 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	CreateTimer(40.0, Timer_KickEveryoneEnd); 
 }
 
-/* Debug command for end message testing */
-public Action Command_Test2(int client, int args)
-{
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	LogMessage("Socket starting end message send...");
-	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
-	return Plugin_Handled;
-}
-
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	UpdatePlayerStats(false, GetClientOfUserId(event.GetInt("userid")));
