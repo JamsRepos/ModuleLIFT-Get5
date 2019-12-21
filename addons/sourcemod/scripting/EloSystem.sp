@@ -13,16 +13,10 @@ bool DEBUG = false;
 #pragma newdecls required
 
 //bool g_bBSREnabled;
-char g_szSqlError[256];
 char g_sz_INSERT_PLAYER[] = "INSERT IGNORE INTO `player_elo`"...
 " (`steamid`, `elo`) VALUES ('%s', '%i')";
 char g_sz_UPDATE_PLAYER[] = "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'";
 char g_sz_GET_PLAYER[] = "SELECT * FROM `player_elo` WHERE `steamid` = '%s'";
-
-char g_sz_INSERT_PLAYER_PREP[] = "INSERT IGNORE INTO `player_elo`"...
-" (`steamid`, `elo`) VALUES (?,?)";
-char g_sz_UPDATE_PLAYER_PREP[] = "UPDATE `player_elo` SET `elo`=elo+?, `matches`=matches+1 WHERE `steamid` = ?";
-char g_sz_GET_PLAYER_PREP[] = "SELECT * FROM `player_elo` WHERE `steamid` = ?";
 
 ConVar g_cvDefaultElo;
 ConVar g_cvEloPerKill;
@@ -39,9 +33,6 @@ ConVar g_cvEloPerOneVsThree;
 ConVar g_cvEloPerOneVsFour;
 ConVar g_cvEloPerOneVsFive;
 Database g_hThreadedDb;
-DBStatement g_hInsertNewEntry;
-DBStatement g_hUpdateElo;
-DBStatement g_hGetElo;
 
 // Scrappy fix before I modify get5_endmatch
 bool hasCalculated = false;
@@ -99,18 +90,15 @@ public Plugin myinfo =
 	url = "DistrictNine.Host"
 };
 
-public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
-{
+// literally doing nothing
+// public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+// {
 	
-}
+// }
 	
 public void OnPluginStart()
 {
-	g_hThreadedDb = SQL_Connect("EloSys", true, g_szSqlError, sizeof(g_szSqlError));
-	if (g_hThreadedDb == null)
-	{
-		SetFailState(g_szSqlError);
-	}
+	Database.Connect(SQL_OnConnect, "EloSys");
 	
 	g_cvDefaultElo = CreateConVar("EloSys_DefaultElo", "600", "Default elo new players start with.");
 	g_cvEloPerKill = CreateConVar("EloSys_EloPerKill", "2", "Elo gained per kill.");
@@ -127,22 +115,17 @@ public void OnPluginStart()
 	g_cvPreliminaryMatchCount = CreateConVar("EloSys_PreliminaryMatchCount", "10", "Preliminary matches to play until a player is ranked.");
 	g_cvPreliminaryMatchEloGain = CreateConVar("EloSys_PrelimMatchEloGain", "125", "Elo amount gained or lost per preliminary match.");
 	
-	g_hInsertNewEntry = SQL_PrepareQuery(g_hThreadedDb, g_sz_INSERT_PLAYER_PREP, g_szSqlError, sizeof(g_szSqlError));
-	if (g_hInsertNewEntry == null)
-	{
-		LogError("%s", g_szSqlError);
-	}
-	g_hUpdateElo = SQL_PrepareQuery(g_hThreadedDb, g_sz_UPDATE_PLAYER_PREP, g_szSqlError, sizeof(g_szSqlError));
-	if (g_hUpdateElo == null)
-	{
-		LogError("%s", g_szSqlError);
-	}
-	g_hGetElo = SQL_PrepareQuery(g_hThreadedDb, g_sz_GET_PLAYER_PREP, g_szSqlError, sizeof(g_szSqlError));
-	if (g_hGetElo == null)
-	{
-		LogError("%s", g_szSqlError);
-	}
 	AutoExecConfig(true);
+}
+
+public void SQL_OnConnect(Database db, const char[] error, any data)
+{
+	if(db == null)
+	{
+		SetFailState("Database Connection Error: %s", error);
+	}
+
+	g_hThreadedDb = db;
 }
 
 public void OnConfigsExecuted()
@@ -157,12 +140,8 @@ public void OnConfigsExecuted()
 	"ENGINE = InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;";
 	
 	char query[1024];
-	Format(query, sizeof(query), CREATE_TABLE, g_cvDefaultElo.IntValue);
-	if (!SQL_FastQuery(g_hThreadedDb, query))
-	{
-		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
-		LogError("%s", g_szSqlError);
-	}
+	g_hThreadedDb.Format(query, sizeof(query), CREATE_TABLE, g_cvDefaultElo.IntValue);
+	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
 
 public void OnClientPostAdminCheck(int client)
@@ -331,142 +310,30 @@ public void Get5_OnGoingLive(int mapNumber)
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
-	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
-	char sQuery[1024];
-
-	if (!hasCalculated)
+	for(int i = 1; i <= MaxClients; i++)
 	{
-	
-		for (int i = 1; i <= MaxClients; i++)
+		DataPack pack = new DataPack();
+		pack.WriteCell(GetClientUserId(i));
+		pack.WriteCell(seriesWinner);
+
+		char sQuery[1024], auth[32];
+		PlayerEloMap player = g_hPlayer[i];
+		if (player == null)
 		{
-			PlayerEloMap player = g_hPlayer[i];
-			if (player == null)
-			{
-				continue;
-			}
-			
-			char auth[32];
-			player.GetId64(auth, sizeof(auth));
-			MatchTeam team = player.GetTeam();
-			
-			int currentElo, matchesPlayed;
-			GetPlayerFromTable(auth, currentElo, matchesPlayed);
-			player.SetValue("currentelo", currentElo);
-			player.SetValue("matchesplayed", matchesPlayed);
-
-			if (team == seriesWinner)
-			{
-				winningTeamAvgElo += currentElo;
-				winningTeamCount++;
-			}
-			else if (team == seriesLoser)
-			{
-				losingTeamAvgElo += currentElo;
-				losingTeamCount++;
-			}
+			continue;
 		}
-		
-		winningTeamAvgElo /= winningTeamCount;
-		losingTeamAvgElo /= losingTeamCount;
-		Transaction txn_UpdateElo = new Transaction();
+		player.GetId64(auth, sizeof(auth));
 
-		for (int i = 1; i <= MaxClients; i++)
-		{
-			PlayerEloMap player = g_hPlayer[i];
-			char auth[32];
-			player.GetId64(auth, sizeof(auth));
-			if (player == null)
-			{
-				continue;
-			}
-			
-			MatchTeam team = player.GetTeam();
-			int playerElo, playerMatches;
-			player.GetValue("currentelo", playerElo);
-			player.GetValue("matchesplayed", playerMatches);
-
-			if (team == seriesWinner)
-			{
-				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-				{
-					player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
-				}
-				else
-				{
-					player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
-				}
-			}
-			else if (team == seriesLoser)
-			{
-				if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
-				{
-					player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
-				}
-				else
-				{
-					int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
-					int playerNewElo = playerElo - eloValue;
-					if (playerNewElo < 0)
-					{
-						player.SetValue("currentelo", 0);
-					}
-					else
-					{
-						player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
-					}
-				}
-			}
-			Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
-			txn_UpdateElo.AddQuery(sQuery);
-			// UpdatePlayerInTable(player);
-			hasCalculated = true;
-		}
-		g_hThreadedDb.Execute(txn_UpdateElo, SQL_TranSuccess, SQL_TranFailure);
+		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
+		g_hThreadedDb.Query(SQL_GetPlayerFromTable, sQuery, pack);
 	}
-	else
-	{
-		return;
-	}
-}
-
-public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] results, any[] queryData)
-{
-	PrintToServer("Transaction Successful");
-}
-
-public void SQL_TranFailure(Database db, any data, int numQueries, const char[] sError, int failIndex, any[] queryData)
-{
-	LogError("Transaction Failed! Error: %s. During Query: %i", sError, failIndex);
 }
 
 void InsertPlayerToTable(const char[] auth)
 {
-	if (g_hInsertNewEntry == null)
-	{
-		DBResultSet hQuery;
-		static char query[1024];
-		
-		Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth, g_cvDefaultElo.IntValue);
-		
-		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
-		{
-			SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
-			LogMessage("Debug[INSERT]: %s",g_szSqlError);
-			return;
-		}
-		
-		delete hQuery;
-		return;
-	}
-	
-	SQL_BindParamString(g_hInsertNewEntry, 0, auth, false);
-	SQL_BindParamInt(g_hInsertNewEntry, 1, g_cvDefaultElo.IntValue, false);
-	if (!SQL_Execute(g_hInsertNewEntry))
-	{
-		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
-		LogMessage("Debug[INSERT]: %s",g_szSqlError);
-	}
+	char query[1024];
+	g_hThreadedDb.Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth, g_cvDefaultElo.IntValue);
+	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
 
 void UpdatePlayerInTable(PlayerEloMap player)
@@ -474,116 +341,114 @@ void UpdatePlayerInTable(PlayerEloMap player)
 	char auth[32];
 	player.GetId64(auth, sizeof(auth));
 	int eloGain = player.GetEloGain();
-	int playerElo = player.GetValue("currentelo", playerElo);
+	// int playerElo = player.GetValue("currentelo", playerElo); this isnt being used for anything, not sure why its defined
 
-	if (g_hUpdateElo == null)
-	{
-		DBResultSet hQuery;
-		static char query[1024];
-		
-		Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
-		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
-		{
-			SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
-			LogMessage("Debug[UPDATE]: %s",g_szSqlError);
-			return;
-		}
-
-		delete hQuery;
-		return;
-	}
-	
-	SQL_BindParamInt(g_hUpdateElo, 0, eloGain);
-	SQL_BindParamString(g_hUpdateElo, 1, auth, false);
-	if (!SQL_Execute(g_hUpdateElo))
-	{
-		SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError));
-		LogMessage("Debug[UPDATE]: %s", g_szSqlError);
-	}
-
-	
-
+	char query[1024];
+	g_hThreadedDb.Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
+	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
 
-void GetPlayerFromTable(const char[] auth, int &elo, int &matches)
+public void SQL_GetPlayerFromTable(Database db, DBResultSet results, const char[] sError, DataPack pack)
 {
-	if (g_hGetElo == null)
+	pack.Reset();
+	int Client = GetClientOfUserId(pack.ReadCell());
+	if(!VALIDPLAYER(Client)) return;
+
+	MatchTeam seriesWinner = view_as<MatchTeam>(pack.ReadCell());
+	delete pack;
+
+	if(results == null)
 	{
-		DBResultSet hQuery;
-		static char query[1024];
-		
-		Format(query, sizeof(query), g_sz_GET_PLAYER, auth);
-		
-		if ((hQuery = SQL_Query(g_hThreadedDb, query)) == null)
-		{
-			if (SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError)))
-			{
-				LogError("[GET]%s", g_szSqlError);
-			}
-			else
-			{
-				LogError("[GET]Unspecified error occured.");
-			}
-			elo = g_cvDefaultElo.IntValue;
-			matches = 0;
-			return;
-		}
-		
-		if (!SQL_FetchRow(hQuery))
-		{
-			if (SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError)))
-			{
-				LogError("[GET]%s", g_szSqlError);
-			}
-			else
-			{
-				LogError("[GET] Unspecified error occured. Rows deleted by outside actors?");
-			}
-			
-			elo = g_cvDefaultElo.IntValue;
-			matches = 0;
-			return;
-		}
-		
-		elo = SQL_FetchInt(hQuery, 1);
-		matches = SQL_FetchInt(hQuery, 2);
-		delete hQuery;
-		return;
-	}
-	
-	SQL_BindParamString(g_hGetElo, 0, auth, false);
-	if (!SQL_Execute(g_hGetElo))
-	{
-		if (SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError)))
-		{
-			LogError("[GET]%s", g_szSqlError);
-		}
-		else
-		{
-			LogError("[GET] Unspecified error occured.");
-		}
-		elo = g_cvDefaultElo.IntValue;
-		matches = 0;
-	}
-	
-	if (!SQL_FetchRow(g_hGetElo))
-	{
-		if (SQL_GetError(g_hThreadedDb, g_szSqlError, sizeof(g_szSqlError)))
-		{
-			LogError("[GET]%s", g_szSqlError);
-		}
-		else
-		{
-			LogError("[GET] Unspecified error occured. Rows deleted by outside actors?");
-		}
-		
-		elo = g_cvDefaultElo.IntValue;
-		matches = 0;
+		LogError("MySQL Query Failed: %s", sError);
 		return;
 	}
 
-	elo = SQL_FetchInt(g_hGetElo, 1);
-	matches = SQL_FetchInt(g_hGetElo, 2);
+	if(!results.FetchRow()) return;
+
+	int eloCol, matchesCol;
+	results.FieldNameToNum("elo", eloCol);
+	results.FieldNameToNum("matches", matchesCol);
+
+	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
+	static int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
+
+	if (!hasCalculated)
+	{
+		PlayerEloMap player = g_hPlayer[Client];
+		if (player == null)
+		{
+			return;
+		}
+		
+		MatchTeam team = player.GetTeam();
+		
+		int currentElo = results.FetchInt(eloCol);
+		int matchesPlayed = results.FetchInt(matchesCol);
+		player.SetValue("currentelo", currentElo);
+		player.SetValue("matchesplayed", matchesPlayed);
+
+		if (team == seriesWinner)
+		{
+			winningTeamAvgElo += currentElo;
+			winningTeamCount++;
+		}
+		else if (team == seriesLoser)
+		{
+			losingTeamAvgElo += currentElo;
+			losingTeamCount++;
+		}
+	
+		winningTeamAvgElo /= winningTeamCount;
+		losingTeamAvgElo /= losingTeamCount;
+
+		char auth[32];
+		player.GetId64(auth, sizeof(auth));
+		
+		int playerElo, playerMatches;
+		player.GetValue("currentelo", playerElo);
+		player.GetValue("matchesplayed", playerMatches);
+
+		if (team == seriesWinner)
+		{
+			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
+			{
+				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
+			}
+			else
+			{
+				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
+			}
+		}
+		else if (team == seriesLoser)
+		{
+			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
+			{
+				player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
+			}
+			else
+			{
+				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
+				int playerNewElo = playerElo - eloValue;
+				if (playerNewElo < 0)
+				{
+					player.SetValue("currentelo", 0);
+				}
+				else
+				{
+					player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
+				}
+			}
+		}
+		char sQuery[1024];
+		g_hThreadedDb.Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
+		g_hThreadedDb.Query(SQL_GenericQuery, sQuery);
+		// UpdatePlayerInTable(player);
+		hasCalculated = true;
+	}
+	else
+	{
+		return;
+	}
 }
 
 bool VALIDPLAYER(int client)
@@ -692,4 +557,12 @@ int calculateEloGain(int playerElo, int otherTeamAvgElo, bool playerWon)
 	}
 	
 	return 0;
-} 
+}
+
+public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		LogError("MySQL Query Failed: %s", sError);
+	}
+}
