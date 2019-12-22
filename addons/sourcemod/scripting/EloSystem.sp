@@ -310,13 +310,14 @@ public void Get5_OnGoingLive(int mapNumber)
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
+	if(hasCalculated) return;
+
+	Transaction txn_SelectElo = new Transaction();
+	char sQuery[1024]; 
+
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		DataPack pack = new DataPack();
-		pack.WriteCell(GetClientUserId(i));
-		pack.WriteCell(seriesWinner);
-
-		char sQuery[1024], auth[32];
+		char auth[32];
 		PlayerEloMap player = g_hPlayer[i];
 		if (player == null)
 		{
@@ -325,65 +326,45 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		player.GetId64(auth, sizeof(auth));
 
 		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
-		g_hThreadedDb.Query(SQL_GetPlayerFromTable, sQuery, pack);
+		txn_SelectElo.AddQuery(sQuery, i);
 	}
+	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccessSelect, SQL_TranFailure, seriesWinner);
 }
 
-void InsertPlayerToTable(const char[] auth)
+public void SQL_TranFailure(Database db, any data, int numQueries, const char[] sError, int failIndex, any[] queryData)
 {
-	char query[1024];
-	g_hThreadedDb.Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth, g_cvDefaultElo.IntValue);
-	g_hThreadedDb.Query(SQL_GenericQuery, query);
+	LogError("Transaction Failed! Error: %s. During Query: %i", sError, failIndex);
 }
 
-void UpdatePlayerInTable(PlayerEloMap player)
+public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] results, any[] queryData)
 {
-	char auth[32];
-	player.GetId64(auth, sizeof(auth));
-	int eloGain = player.GetEloGain();
-	// int playerElo = player.GetValue("currentelo", playerElo); this isnt being used for anything, not sure why its defined
-
-	char query[1024];
-	g_hThreadedDb.Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
-	g_hThreadedDb.Query(SQL_GenericQuery, query);
+	PrintToServer("Transaction Successful");
 }
 
-public void SQL_GetPlayerFromTable(Database db, DBResultSet results, const char[] sError, DataPack pack)
+public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQueries, DBResultSet[] results, any[] queryData)
 {
-	pack.Reset();
-	int Client = GetClientOfUserId(pack.ReadCell());
-	if(!VALIDPLAYER(Client)) return;
-
-	MatchTeam seriesWinner = view_as<MatchTeam>(pack.ReadCell());
-	delete pack;
-
-	if(results == null)
-	{
-		LogError("MySQL Query Failed: %s", sError);
-		return;
-	}
-
-	if(!results.FetchRow()) return;
-
-	int eloCol, matchesCol;
-	results.FieldNameToNum("elo", eloCol);
-	results.FieldNameToNum("matches", matchesCol);
+	if(hasCalculated) return;
 
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-	static int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
+	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
+	char sQuery[1024];
 
-	if (!hasCalculated)
+	for(int i = 0; i < numQueries; i++)
 	{
-		PlayerEloMap player = g_hPlayer[Client];
-		if (player == null)
-		{
-			return;
-		}
-		
+		PlayerEloMap player = g_hPlayer[queryData[i]];
+		if(player == null)
+			continue;
+
+		if(!results[i].FetchRow()) continue;
+
+		int eloCol, matchesCol;
+		results[i].FieldNameToNum("elo", eloCol);
+		results[i].FieldNameToNum("matches", matchesCol);
+
 		MatchTeam team = player.GetTeam();
-		
-		int currentElo = results.FetchInt(eloCol);
-		int matchesPlayed = results.FetchInt(matchesCol);
+
+		int currentElo = results[i].FetchInt(eloCol);
+		int matchesPlayed = results[i].FetchInt(matchesCol);
 		player.SetValue("currentelo", currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
 
@@ -397,13 +378,23 @@ public void SQL_GetPlayerFromTable(Database db, DBResultSet results, const char[
 			losingTeamAvgElo += currentElo;
 			losingTeamCount++;
 		}
-	
-		winningTeamAvgElo /= winningTeamCount;
-		losingTeamAvgElo /= losingTeamCount;
+	}
 
+	winningTeamAvgElo /= winningTeamCount;
+	losingTeamAvgElo /= losingTeamCount;
+	Transaction txn_UpdateElo = new Transaction();
+
+	for (int i = 1; i <= MaxClients; i++)
+	{
+		PlayerEloMap player = g_hPlayer[i];
+		if (player == null)
+		{
+			continue;
+		}
 		char auth[32];
 		player.GetId64(auth, sizeof(auth));
-		
+			
+		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
 		player.GetValue("matchesplayed", playerMatches);
@@ -439,16 +430,31 @@ public void SQL_GetPlayerFromTable(Database db, DBResultSet results, const char[
 				}
 			}
 		}
-		char sQuery[1024];
-		g_hThreadedDb.Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
-		g_hThreadedDb.Query(SQL_GenericQuery, sQuery);
+		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", playerElo, auth);
+		txn_UpdateElo.AddQuery(sQuery);
 		// UpdatePlayerInTable(player);
 		hasCalculated = true;
 	}
-	else
-	{
-		return;
-	}
+	g_hThreadedDb.Execute(txn_UpdateElo, SQL_TranSuccess, SQL_TranFailure);
+}
+
+void InsertPlayerToTable(const char[] auth)
+{
+	char query[1024];
+	g_hThreadedDb.Format(query, sizeof(query), g_sz_INSERT_PLAYER, auth, g_cvDefaultElo.IntValue);
+	g_hThreadedDb.Query(SQL_GenericQuery, query);
+}
+
+void UpdatePlayerInTable(PlayerEloMap player)
+{
+	char auth[32];
+	player.GetId64(auth, sizeof(auth));
+	int eloGain = player.GetEloGain();
+	// int playerElo = player.GetValue("currentelo", playerElo); this isnt being used for anything, not sure why its defined
+
+	char query[1024];
+	g_hThreadedDb.Format(query, sizeof(query), g_sz_UPDATE_PLAYER, eloGain, auth);
+	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
 
 bool VALIDPLAYER(int client)
