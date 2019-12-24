@@ -29,10 +29,8 @@ char Q_UPDATE_PLAYER[] = "UPDATE `statistics` SET `ip`='%s', `name`='%s', `kills
 
 char Q_GET_PLAYER[] = "SELECT * FROM `statistics` WHERE `steamid` = '%s'";
 
-ArrayList g_hQueuedQueries = null;
 Database g_hThreadedDb = null;
 
-char g_iNextHitgroup[MAXPLAYERS+1];
 float g_fJoinTime[MAXPLAYERS+1];
 
 // Scrappy fix before I modify get5_endmatch
@@ -456,7 +454,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	g_hQueuedQueries = new ArrayList();
 	Database.Connect(OnDbConnect, "BasicPlayerStats");
 
 	g_serverRegion = CreateConVar("sm_region", "N/A", "Which region the players are playing on. NA = North America, EU= Europe, OCE = Ocenaic");
@@ -977,10 +974,11 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 	}
 }
 
-public Action Timer_ClosePlayerStats(Handle timer, any data)
-{
-	//delete view_as<Handle>(data);
-}
+// This is useless.
+// public Action Timer_ClosePlayerStats(Handle timer, any data)
+// {
+// 	//delete view_as<Handle>(data);
+// }
 
 public void createtablecb(Database db, DBResultSet results, const char[] error, any data)
 {
@@ -993,6 +991,8 @@ public void createtablecb(Database db, DBResultSet results, const char[] error, 
 	g_bDbReady = true;
 }
 
+
+// WTF IS THIS METHOD? - Can someone define this for me?
 public void insertcb(Database db, DBResultSet results, const char[] error, any data)
 {
 	DataPack dp = view_as<DataPack>(data);
@@ -1008,7 +1008,7 @@ public void insertcb(Database db, DBResultSet results, const char[] error, any d
 	
 	if (close)
 	{
-		CreateTimer(1.0, Timer_ClosePlayerStats, ps);
+		// CreateTimer(1.0, Timer_ClosePlayerStats, ps);
 	}
 }
 
@@ -1027,7 +1027,7 @@ public void updatecb(Database db, DBResultSet results, const char[] error, any d
 	
 	if (close)
 	{
-		CreateTimer(1.0, Timer_ClosePlayerStats, ps);
+		// CreateTimer(1.0, Timer_ClosePlayerStats, ps);
 	}
 }
 
@@ -1036,17 +1036,17 @@ public void importcb(Database db, DBResultSet results, const char[] error, any d
 	DataPack dp = view_as<DataPack>(data);
 	dp.Reset();
 	
-	bool close = view_as<bool>(dp.ReadCell());
+	// bool close = view_as<bool>(dp.ReadCell());
 	PlayerStatsTracker ps = view_as<PlayerStatsTracker>(dp.ReadCell());
 	
 	if (!ISEMPTY(error))
 	{
 		LogError(error);
-		if (close)
-		{
-			CreateTimer(1.0, Timer_ClosePlayerStats, ps);
-			return;
-		}
+		// if (close)
+		// {
+		// 	CreateTimer(1.0, Timer_ClosePlayerStats, ps);
+		// 	return;
+		// }
 	}
 		 
 	if (results == null)
@@ -1072,18 +1072,16 @@ public void importcb(Database db, DBResultSet results, const char[] error, any d
 			PrintToServer("Imported results from db.");
 		}
 	}
-	if (close)
-	{
-		CreateTimer(1.0, Timer_ClosePlayerStats, ps);
-	}
+	// if (close)
+	// {
+	// 	CreateTimer(1.0, Timer_ClosePlayerStats, ps);
+	// }
 }
 
 bool VALIDPLAYER(int client)
 {
-	if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) ) 
-        return false; 
-     
-    return true; 
+	if ( !( 1 <= client <= MaxClients ) || !IsClientInGame(client) ) return false; 
+    else return true; 
 }
 
 // bool VALIDPLAYER(int client)
