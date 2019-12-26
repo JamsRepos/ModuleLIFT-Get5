@@ -331,13 +331,7 @@ static void CheckWaitingTimes() {
 
 public void EndMatchSocket()
 {
-	char sPort[16], sQuery[1024], sIP[32];
-	int ip[4];
-	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-	SteamWorks_GetPublicIP(ip);
-	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE server='%s' AND live=1;", sIP);
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
 	char sData[1024], sPass[128];
