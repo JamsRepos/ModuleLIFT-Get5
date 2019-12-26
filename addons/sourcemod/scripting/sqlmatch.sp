@@ -526,9 +526,10 @@ public void CheckSurrenderVotes()
 
 public Action Timer_KickEveryoneSurrender(Handle timer)
 {
+	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
-	
+
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
 
@@ -553,6 +554,7 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 
 public Action Timer_KickEveryoneEnd(Handle timer)
 {
+	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 

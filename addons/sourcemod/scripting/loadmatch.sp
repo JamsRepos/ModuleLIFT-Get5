@@ -44,6 +44,7 @@ public void OnPluginStart()
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 	HookEvent("round_end", Event_RoundEnd);
+	HookEvent("player_connect_full", Event_PlayerConnect);
 
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
@@ -75,6 +76,63 @@ public void OnPluginStart()
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
+}
+
+public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
+{
+	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
+}
+
+public void CheckPlayerCount()
+{
+	if (Get5_GetGameState() == Get5State_None) {
+		return;
+	}
+
+	char matchtype[32];
+	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
+
+	if (Get5_GetGameState() == Get5State_Warmup)
+	{
+		if (IsEveryoneReady()) 
+		{
+			PrintToChatAll("%s All players have connected. Match will start in 15 seconds.", ChatTag);
+			EndWarmup(15);
+			CreateTimer(10.0, Timer_StartMatch);
+			return;
+		}
+		else
+		{
+			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
+			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
+			int playersOnServer = playersonTerrorist+playersOnCT; 
+			LogMessage("The amount of players in server are Terrorist: %i and CT: %i", playersonTerrorist, playersOnCT);
+			if (StrEqual(matchtype, "5v5"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
+			}
+
+			if (StrEqual(matchtype, "2v2"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 4 - playersOnServer);
+			}
+
+			if (StrEqual(matchtype, "1v1"))
+			{
+				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 2 - playersOnServer);
+			}
+		}
+	}
+	return;
+}
+
+public void Frame_PlayerConnect(any data)
+{
+	int client = GetClientOfUserId(view_as<int>(data));
+	if (client)
+	{
+		CheckPlayerCount();
+	}
 }
 
 void ConnectRelay()
@@ -331,6 +389,7 @@ static void CheckWaitingTimes() {
 
 public void EndMatchSocket()
 {
+	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
