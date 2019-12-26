@@ -32,8 +32,6 @@ public Action Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadc
 {
 	int victim = GetClientOfUserId(event.GetInt("userid"));
 	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	int hitgroup = event.GetInt("hitgroup");
-	int dmg = event.GetInt("dmg_health");
 	
 	if (GetClientTeam(attacker) == GetClientTeam(victim))
 	{
