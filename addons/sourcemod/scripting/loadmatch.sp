@@ -278,9 +278,9 @@ public Action Timer_PlayerCount(Handle timer) {
 	{
 		if (IsEveryoneReady()) 
 		{
-			PrintToChatAll("%s All players have connected. Match will start in 60 seconds.", ChatTag);
-			EndWarmup(60);
-			CreateTimer(55.0, Timer_StartMatch);
+			PrintToChatAll("%s All players have connected. Match will start in 15 seconds.", ChatTag);
+			EndWarmup(15);
+			CreateTimer(10.0, Timer_StartMatch);
 			return Plugin_Stop;
 		}
 		else
