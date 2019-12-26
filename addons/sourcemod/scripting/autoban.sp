@@ -96,7 +96,7 @@ public Action GlobalSecondTimer(Handle hTimer)
 {
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(!IsValidClient(i)) continue;
+		if(!IsValidClient(i) && !IsPlayerAlive(i)) continue;
 
 		if(g_bPlayerAfk[i])
 			g_iAfkTime[i]++;
