@@ -96,12 +96,8 @@ public Action GlobalSecondTimer(Handle hTimer)
 {
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(!IsValidClient(i) && !IsPlayerAlive(i)) continue;
-
-		if(g_bPlayerAfk[i])
-			g_iAfkTime[i]++;
-		else
-			g_iAfkTime[i] = 0;
+		if(IsValidClient(i) && IsPlayerAlive(i))
+			g_iAfkTime[i] = g_bPlayerAfk[i] ? ++g_iAfkTime[i] : 0;
 	}
 	return Plugin_Continue;
 }
