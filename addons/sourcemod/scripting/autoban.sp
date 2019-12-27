@@ -32,6 +32,7 @@ BanReason g_eBanReason[MAXPLAYERS + 1];
 ConVar g_hCVFallbackTime;
 ConVar g_hCVServerIp;
 ConVar g_hCVPackageKey;
+ConVar g_hCVGracePeriod;
 
 Handle g_hSocket;
 
@@ -77,6 +78,7 @@ public void OnPluginStart()
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
 	g_hCVServerIp = CreateConVar("sm_autoban_websocket_ip", "127.0.0.1", "IP to connect to for sending ban messages.");
 	g_hCVPackageKey = CreateConVar("sm_autoban_package_key", "idk something", "a package key or something idk ward doesnt tell me anything :(");
+	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "300", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
 
 	//Create Socket
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
@@ -333,6 +335,7 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 		char sSteamID[64];
 		data.Reset();
 		data.ReadString(sSteamID, sizeof(sSteamID));
+		delete data;
 		LogError("SQL_InsertBan(): Failed to insert ban for SteamID %s, trying to ban via SM natives instead.", sSteamID);
 		if(!BanIdentity(sSteamID, g_hCVFallbackTime.IntValue, BANFLAG_AUTHID, "Fallback ban"))
 			LogError("SQL_InsertBan(): Failed to ban SteamID %s via SM natives :(", sSteamID);
@@ -371,7 +374,7 @@ public void OnClientDisconnect(int Client)
 
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
-		CreateTimer(60.0, Timer_DisconnectBan, disconnectPack);
+		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_DisconnectBan, disconnectPack);
 	}
 }
 
@@ -380,11 +383,10 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	char sSteamID[64], sCompareId[64];
 	disconnectPack.Reset();
 	disconnectPack.ReadString(sSteamID, sizeof(sSteamID));
-	delete disconnectPack;
 
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(!IsValidClient(i)) continue;
+		if(!IsValidClient(i) || g_bBanned[i]) continue;
 
 		if(!GetClientAuthId(i, AuthId_SteamID64, sCompareId, sizeof(sCompareId))) continue;
 
@@ -409,6 +411,49 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', 'Automatic Left Match Ban', 1);", sSteamID);
+	g_Database.Query(SQL_InsertBan, sQuery, disconnectPack);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	
+	return Plugin_Stop;
+}
+
+public Action Timer_AfkBan(Handle hTimer, DataPack disconnectPack)
+{
+	char sSteamID[64], sCompareId[64];
+	disconnectPack.Reset();
+	disconnectPack.ReadString(sSteamID, sizeof(sSteamID));
+
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsValidClient(i) || g_bBanned[i]) continue;
+
+		if(!GetClientAuthId(i, AuthId_SteamID64, sCompareId, sizeof(sCompareId))) continue;
+
+		if(StrEqual(sSteamID, sCompareId)) return Plugin_Stop;
+	}
+
+	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
+	int ip[4];
+	FindConVar("hostport").GetString(sPort, sizeof(sPort));
+	SteamWorks_GetPublicIP(ip);
+	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+	g_hCVPackageKey.GetString(sPackageKey, sizeof(sPackageKey));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(2));
+	json_object_set_new(jsonObj, "server", json_string(sIP));
+	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
+	json_object_set_new(jsonObj, "reason", json_string("Automatic AFK Ban"));
+	json_object_set_new(jsonObj, "pass", json_string(sPackageKey));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	char sQuery[1024];
+	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', 'Automatic AFK Ban', 1);", sSteamID);
 	g_Database.Query(SQL_InsertBan, sQuery, disconnectPack);
 
 	if(!SocketIsConnected(g_hSocket))
@@ -452,8 +497,18 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 	if(g_iAfkTime[client] >= 180)
 	{
 		g_iAfkTime[client] = 0;
-		g_eBanReason[client] = REASON_AFK;
-		BanPlayer(client);
+
+		char sSteamID[64];
+		if(!GetClientAuthId(client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
+		{
+			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.", client);
+			return Plugin_Continue;
+		}
+
+		DataPack disconnectPack = new DataPack();
+		disconnectPack.WriteString(sSteamID);
+		KickClient(client, "You have %i seconds to rejoin before you are banned for being AFK", g_hCVGracePeriod.IntValue);
+		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_AfkBan, disconnectPack);
 		return Plugin_Continue;
 	}
 	
