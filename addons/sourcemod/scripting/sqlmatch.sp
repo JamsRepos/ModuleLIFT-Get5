@@ -97,6 +97,27 @@ public void OnPluginStart()
 		ConnectRelay();
 }
 
+public void OnPluginEnd()
+{
+	// We really shouldn't be running a game when the plugin has ended.
+	char sData[1024], sPass[128];
+	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(1));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
+
+	if(!SocketIsConnected(g_hSocket))
+		ConnectRelay();
+
+	LogMessage("Socket starting end message send...");
+	SocketSend(g_hSocket, sData, sizeof(sData));
+	LogMessage("Socket sending message: %s", sData);
+}
+
 public Action AttemptMySQLConnection(Handle timer)
 {
 	if (g_Database != null)
@@ -530,9 +551,6 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
-	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
-	ServerCommand("tv_stoprecord");
-
 	char sData[1024], sPass[128];
 	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
 
@@ -549,6 +567,9 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
+
+	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
+	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
 }
 
@@ -558,9 +579,6 @@ public Action Timer_KickEveryoneEnd(Handle timer)
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
-	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
-	ServerCommand("tv_stoprecord");
-
 	char sData[1024], sPass[128];
 	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
 
@@ -577,6 +595,9 @@ public Action Timer_KickEveryoneEnd(Handle timer)
 	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
+
+	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
+	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
 }
 
