@@ -22,9 +22,8 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 	if ((damagetype & DMG_BURN) == DMG_BURN)
 		return Plugin_Continue;
 	
-	if ((client>=1) && (client<=MaxClients) && (attacker>=1) && (attacker<=MaxClients) && (attacker==inflictor)) 
+	if ((victim>=1) && (victim<=MaxClients) && (attacker>=1) && (attacker<=MaxClients) && (attacker==inflictor)) 
 		SetEntPropFloat(victim, Prop_Send, "m_flVelocityModifier", 1.0); 
-		return Plugin_Handled;
 	
 	damage = 0.0;
 	return Plugin_Changed;
