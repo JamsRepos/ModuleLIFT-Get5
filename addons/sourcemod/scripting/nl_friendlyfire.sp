@@ -12,7 +12,6 @@ public void OnPluginStart()
 public void OnClientPutInServer(int client)
 {
     SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
-	HookEvent("player_hurt", Event_OnPlayerHurt);
 }
 
 public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3])
@@ -23,23 +22,10 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 	if ((damagetype & DMG_BURN) == DMG_BURN)
 		return Plugin_Continue;
 	
+	if ((client>=1) && (client<=MaxClients) && (attacker>=1) && (attacker<=MaxClients) && (attacker==inflictor)) 
+		SetEntPropFloat(victim, Prop_Send, "m_flVelocityModifier", 1.0); 
+		return Plugin_Handled;
+	
 	damage = 0.0;
 	return Plugin_Changed;
-}
-
-// This should fix team attack slow down. Go away griefers.
-public Action Event_OnPlayerHurt(Event event, const char[] name, bool dontBroadcast)
-{
-	int victim = GetClientOfUserId(event.GetInt("userid"));
-	int attacker = GetClientOfUserId(event.GetInt("attacker"));
-	
-	if (GetClientTeam(attacker) == GetClientTeam(victim))
-	{
-		if (GetEntPropFloat(victim, Prop_Send, "m_flVelocityModifier") < 0.6) 
-		{
-			SetEntPropFloat(victim, Prop_Send, "m_flVelocityModifier", 0.6);
-			return Plugin_Handled;
-		}
-		return Plugin_Continue;		
-	}
 }
