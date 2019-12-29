@@ -58,6 +58,13 @@ methodmap PlayerEloMap < StringMap
 		this.GetValue("elogain", eloGain);
 		return eloGain;
 	}
+
+	public int GetMatchesPlayed()
+	{
+		int matchesplayed;
+		this.GetValue("matchesplayed", matchesplayed);
+		return matchesplayed;
+	}
 	
 	public void addToEloGain(int elo)
 	{
@@ -179,6 +186,11 @@ public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 		return;
 	}
 
+	if (g_hPlayer[client].GetMatchesPlayed() < 10)
+	{
+		return;
+	}
+
 	// Untested code (but shouldn't have issues as it's just a clean up.)
 	switch (enemyRemaining)
 	{
@@ -213,6 +225,12 @@ public void OnKill(int killer, int victim, bool headshot)
 		
 		return;
 	}
+
+	if (g_hPlayer[killer].GetMatchesPlayed() < 10)
+	{
+		LogMessage("I have been hit. 10 matches haven't been played.");
+		return;
+	}
 	
 	if (headshot)
 	{
@@ -232,6 +250,12 @@ public void OnRoundMVP(int client)
 		return;
 	}
 
+	if (g_hPlayer[client].GetMatchesPlayed() < 10)
+	{
+		LogMessage("I have been hit. 10 matches haven't been played.");
+		return;
+	}
+
 	g_hPlayer[client].addToEloGain(g_cvEloPerMVP.IntValue);
 }
 
@@ -244,17 +268,30 @@ public void OnDeath(int victim, int killer, int assister)
 		
 		return;
 	}
+
+	if (g_hPlayer[victim].GetMatchesPlayed() < 10)
+	{
+		LogMessage("I have been hit. 10 matches haven't been played.");
+		return;
+	}
 	
 	g_hPlayer[victim].addToEloGain(g_cvEloPerDeath.IntValue);
 }
 
 public void OnAssist(int assister, int victim)
 {
+
 	if (g_hPlayer[assister] == null)
 	{
 		if (DEBUG)
 		PrintToServer("Client %d does not have an elo map.", assister);
 		
+		return;
+	}
+
+	if (g_hPlayer[assister].GetMatchesPlayed() < 10)
+	{
+		LogMessage("I have been hit. 10 matches haven't been played.");
 		return;
 	}
 	
