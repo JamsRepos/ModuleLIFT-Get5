@@ -359,8 +359,8 @@ void UpdateMatchStats(bool duringMatch = false)
 	if(duringMatch && Get5_GetGameState() != Get5State_Live) return;
 
 	char sQuery[1024];
-	if (G)
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live, g_uuidString);
+	if (Get5_GetGameState == Get5State_PostGame || Get5_GetGameState == Get5State_None) Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), 0, g_uuidString);
+	else Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live, g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
@@ -490,10 +490,6 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 
 public void CloseMatchSocket()
 {
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
-	g_Database.Query(SQL_GenericQuery, sQuery);
-
 	char sData[1024], sPass[128];
 	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
 
