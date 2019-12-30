@@ -72,6 +72,7 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
