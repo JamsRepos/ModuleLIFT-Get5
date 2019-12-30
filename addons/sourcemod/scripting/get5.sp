@@ -838,7 +838,7 @@ public Action Command_EndMatch(int client, int args) {
   Call_Finish();
 
   UpdateClanTags();
-  ChangeState(Get5State_None);
+  ChangeState(Get5State_PostGame);
 
   Get5_MessageToAll("%t", "AdminForceEndInfoMessage");
   RestoreCvars(g_MatchConfigChangedCvars);
