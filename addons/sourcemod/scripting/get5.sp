@@ -1143,7 +1143,7 @@ public void EndSeries() {
   Call_Finish();
 
   RestoreCvars(g_MatchConfigChangedCvars);
-  ChangeState(Get5State_None);
+  ChangeState(Get5State_PostGame);
 }
 
 public Action Event_RoundPreStart(Event event, const char[] name, bool dontBroadcast) {
