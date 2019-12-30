@@ -36,17 +36,6 @@ ConVar g_CVLeagueID;
 ArrayList ga_iEndMatchVotesT;
 ArrayList ga_iEndMatchVotesCT;
 
-/*enum AllowedTeamStatus
-{
-	NOT_AUTHORIZED = 0,
-	TEAM_SPEC,
-	TEAM_T,
-	TEAM_CT,
-	TEAM_ANY
-};
-
-AllowedTeamStatus g_eAllowedTeam[MAXPLAYERS + 1] = NOT_AUTHORIZED;*/
-
 public Plugin myinfo = 
 {
 	name = "SQL Matches",
@@ -78,7 +67,6 @@ public void OnPluginStart()
 
 	AutoExecConfig(true, "sqlmatch");
 	//Initalize ArrayLists
-	//ga_sWinningPlayers = new ArrayList(64);
 	ga_iEndMatchVotesT = new ArrayList();
 	ga_iEndMatchVotesCT = new ArrayList();
 	//Register Command
@@ -90,32 +78,10 @@ public void OnPluginStart()
 	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
 	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
 	SocketSetOption(g_hSocket, DebugMode, 1); // Put socket into debug mode
-	//GenerateUUID(g_uuidString, sizeof(g_uuidString));
 
 	//Connect Socket
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
-}
-
-public void OnPluginEnd()
-{
-	// We really shouldn't be running a game when the plugin has ended.
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	LogMessage("Socket starting end message send...");
-	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
 }
 
 public Action AttemptMySQLConnection(Handle timer)
@@ -136,30 +102,6 @@ public Action AttemptMySQLConnection(Handle timer)
 	else
 		LogError("Database Error: No Database Config Found! (%s/addons/sourcemod/configs/databases.cfg)", sFolder);
 }
-
-/*
-int GenerateUUID(char[] szBuffer, int iBufferLength) {
-  return FormatEx(szBuffer, iBufferLength, "%04x%04x-%04x-%04x-%04x-%04x%04x%04x",
-    // 32 bits for "time_low"
-    GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff),
-
-    // 16 bits for "time_mid"
-    GetRandomInt(0, 0xffff),
-
-    // 16 bits for "time_hi_and_version"
-    // four most significant bits holds version number 4
-    (GetRandomInt(0, 0x0fff) | 0x4000),
-
-    // 16 bits, 8 bits for "clk_seq_hi_res",
-    // 8 bits for "clk_seq_low",
-    // two most significant bits holds zero and one for variant DCE1.1
-    (GetRandomInt(0, 0x3fff) | 0x8000),
-
-    // 48 bits for node
-    GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff), GetRandomInt(0, 0xffff)
-  );
-}
-*/
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
@@ -421,14 +363,6 @@ void UpdateMatchStats(bool duringMatch = false)
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
-// public Action Command_Surrender(int client, it args) {
-// 	if (IsSurrenderAvailable()) {
-// 		FakeClientCommandEx(client, "callvote Surrender");
-// 	} else {
-// 		Get5_Message(client, "Surrender is currently unavailable. You need to be 8 rounds behind.");
-// 	}
-// }
-
 public Action Command_EndMatch(int Client, int iArgs)
 {
 	if(!IsValidClient(Client, true) || Get5_GetGameState() != Get5State_Live) return Plugin_Handled;
@@ -547,33 +481,13 @@ public void CheckSurrenderVotes()
 
 public Action Timer_KickEveryoneSurrender(Handle timer)
 {
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
-	g_Database.Query(SQL_GenericQuery, sQuery);
-
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
-	if(!SocketIsConnected(g_hSocket))
-		ConnectRelay();
-
-	LogMessage("Socket starting end message send...");
-	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
-
+	CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
-	return Plugin_Stop;
+	return Plugin_Handled;
 }
 
-public Action Timer_KickEveryoneEnd(Handle timer)
+public void CloseMatchSocket()
 {
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_uuidString);
@@ -595,10 +509,14 @@ public Action Timer_KickEveryoneEnd(Handle timer)
 	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
 	LogMessage("Socket sending message: %s", sData);
+}
 
+public Action Timer_KickEveryoneEnd(Handle timer)
+{
+	CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
 	ServerCommand("tv_stoprecord");
-	return Plugin_Stop;
+	return Plugin_Handled;
 }
 
 public void Event_WeaponFired(Event event, const char[] name, bool dontBroadcast)

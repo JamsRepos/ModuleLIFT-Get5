@@ -304,7 +304,7 @@ public void Event_RoundEnd(Event event, char[] name, bool dontBroadcast)
 	FireNameChangeEvent(true);
 }
 
-/* Connection Timer section */
+// Need to look at merging Timer_ConnectionTimer and Timer_PlayerCount.
 public Action Timer_ConnectionTimer(Handle timer) {
 	if (Get5_GetGameState() == Get5State_None) {
 		return Plugin_Continue;
@@ -324,11 +324,8 @@ public Action Timer_ConnectionTimer(Handle timer) {
 	return Plugin_Continue;
 }
 
+// Need to look at this.
 public Action Timer_PlayerCount(Handle timer) {
-	if (Get5_GetGameState() == Get5State_None) {
-		return Plugin_Continue;
-	}
-
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
 
@@ -762,8 +759,6 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 
 public void UpdateMatchStatus()
 {
-	// Not sure why this is set?
-	// g_sMatchID = "";
 	char sQuery[1024];
 	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=0 WHERE match_id='%s'", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
