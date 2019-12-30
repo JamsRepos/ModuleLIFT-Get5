@@ -6,6 +6,8 @@
 #include <smjansson>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
+float g_fPosition[MAXPLAYERS + 1][3];
+float g_fAngles[MAXPLAYERS + 1][3];
 
 int g_iAfkTime[MAXPLAYERS + 1];
 int g_iTeamKills[MAXPLAYERS + 1];
@@ -54,6 +56,8 @@ public void ResetVars(int Client)
 	g_bBanned[Client] = false;
 	g_eBanReason[Client] = REASON_OTHER;
 	g_iLastButtons[Client] = 0;
+	g_fAngles[Client] = view_as<float>({0.0, 0.0, 0.0});
+	g_fPosition[Client] = view_as<float>({0.0, 0.0, 0.0});
 }
 
 public void OnMapStart()
@@ -73,6 +77,7 @@ public void OnPluginStart()
 {
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
+	HookEvent("round_start", Event_RoundStart);
 
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
@@ -92,6 +97,18 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	CreateTimer(1.0, GlobalSecondTimer, _, TIMER_REPEAT);
+}
+
+public void Round_Start(Handle event, const char[] name, bool dB)
+{
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(IsValidClient(i, true))
+		{
+			GetClientAbsOrigin(i, g_fPosition[i]);
+			GetClientEyeAngles(i, g_fAngles[i]);
+		}
+	}
 }
 
 public Action GlobalSecondTimer(Handle hTimer)
@@ -511,14 +528,19 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_AfkBan, disconnectPack);
 		return Plugin_Continue;
 	}
-	
-	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0))
+
+	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0) && bVectorsEqual(fPosition, g_fPosition[i]) && bVectorsEqual(fAngles, g_fAngles[i]))
 		g_bPlayerAfk[client] = true;
 	else
 		g_bPlayerAfk[client] = false;
 
 	g_iLastButtons[client] = buttons;
 	return Plugin_Continue;
+}
+
+stock bool bVectorsEqual(float[3] v1, float[3] v2)
+{
+	return (v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2]);
 }
 
 public Action OnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
