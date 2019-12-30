@@ -99,11 +99,11 @@ public void OnPluginStart()
 	CreateTimer(1.0, GlobalSecondTimer, _, TIMER_REPEAT);
 }
 
-public void Round_Start(Handle event, const char[] name, bool dB)
+public void Event_RoundStart(Handle event, const char[] name, bool dB)
 {
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(IsValidClient(i, true))
+		if(IsValidClient(i))
 		{
 			GetClientAbsOrigin(i, g_fPosition[i]);
 			GetClientEyeAngles(i, g_fAngles[i]);
@@ -529,7 +529,14 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		return Plugin_Continue;
 	}
 
-	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0) && bVectorsEqual(fPosition, g_fPosition[i]) && bVectorsEqual(fAngles, g_fAngles[i]))
+	float fPosition[3];
+	GetClientAbsOrigin(client, fPosition);
+
+	float fAngles[3];
+	GetClientEyeAngles(client, fAngles);
+
+
+	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0) && bVectorsEqual(fPosition, g_fPosition[client]) && bVectorsEqual(fAngles, g_fAngles[client]))
 		g_bPlayerAfk[client] = true;
 	else
 		g_bPlayerAfk[client] = false;
