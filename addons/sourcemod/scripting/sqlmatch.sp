@@ -187,6 +187,13 @@ public void ResetVars(int Client)
 	g_iHeadshots[Client] = 0;
 }
 
+public int IsMatchLive()
+{
+	if (Get5_GetGameState == Get5State_Live) return 1;
+	else return 0;
+}
+
+
 /* This has changed, again :D */
 public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 {
@@ -236,7 +243,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
 		GetCurrentMatchId(g_uuidString);
-		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
+		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', %i, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, IsMatchLive(), sIP);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 
 		UpdatePlayerStats();
@@ -360,8 +367,7 @@ void UpdateMatchStats(bool duringMatch = false)
 	if(duringMatch && Get5_GetGameState() != Get5State_Live) return;
 
 	char sQuery[1024];
-	if (Get5_GetGameState == Get5State_PostGame) Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), 0, g_uuidString);
-	else Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), Get5_GetGameState() == Get5State_Live, g_uuidString);
+	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), IsMatchLive(), g_uuidString);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
