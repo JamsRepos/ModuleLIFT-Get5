@@ -6,8 +6,6 @@
 #include <smjansson>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
-float g_fPosition[MAXPLAYERS + 1][3];
-float g_fAngles[MAXPLAYERS + 1][3];
 
 int g_iAfkTime[MAXPLAYERS + 1];
 int g_iTeamKills[MAXPLAYERS + 1];
@@ -18,6 +16,8 @@ int g_iLastButtons[MAXPLAYERS + 1];
 bool g_bLate;
 bool g_bBanned[MAXPLAYERS + 1];
 bool g_bPlayerAfk[MAXPLAYERS + 1];
+
+float g_fLastPos[MAXPLAYERS + 1][3];
 
 Database g_Database = null;
 
@@ -56,8 +56,6 @@ public void ResetVars(int Client)
 	g_bBanned[Client] = false;
 	g_eBanReason[Client] = REASON_OTHER;
 	g_iLastButtons[Client] = 0;
-	g_fAngles[Client] = view_as<float>({0.0, 0.0, 0.0});
-	g_fPosition[Client] = view_as<float>({0.0, 0.0, 0.0});
 }
 
 public void OnMapStart()
@@ -77,7 +75,6 @@ public void OnPluginStart()
 {
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
-	HookEvent("round_start", Event_RoundStart);
 
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
@@ -99,24 +96,16 @@ public void OnPluginStart()
 	CreateTimer(1.0, GlobalSecondTimer, _, TIMER_REPEAT);
 }
 
-public void Event_RoundStart(Handle event, const char[] name, bool dB)
-{
-	for(int i = 1; i <= MaxClients; i++)
-	{
-		if(IsValidClient(i))
-		{
-			GetClientAbsOrigin(i, g_fPosition[i]);
-			GetClientEyeAngles(i, g_fAngles[i]);
-		}
-	}
-}
-
 public Action GlobalSecondTimer(Handle hTimer)
 {
 	for(int i = 1; i <= MaxClients; i++)
 	{
 		if(IsValidClient(i) && IsPlayerAlive(i))
+		{
+			LogMessage("g_bPlayerAfk[i] %i", g_bPlayerAfk[i]);
 			g_iAfkTime[i] = g_bPlayerAfk[i] ? ++g_iAfkTime[i] : 0;
+			LogMessage("g_iAfkTime[i] %i", g_iAfkTime[i]);
+		}
 	}
 	return Plugin_Continue;
 }
@@ -510,7 +499,7 @@ stock bool IsPaused() {
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
 	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused()) return Plugin_Continue;
-
+	g_bPlayerAfk[client] = true;
 	if(g_iAfkTime[client] >= 180)
 	{
 		g_iAfkTime[client] = 0;
@@ -529,25 +518,24 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		return Plugin_Continue;
 	}
 
-	float fPosition[3];
-	GetClientAbsOrigin(client, fPosition);
+	if(IsPlayerAlive(client) && !IsFakeClient(client))
+	{
+		if (g_iLastButtons[client] != buttons)
+		{
+			g_bPlayerAfk[client] = false;
+			g_iLastButtons[client] = buttons;
+			return Plugin_Continue;
+		}
 
-	float fAngles[3];
-	GetClientEyeAngles(client, fAngles);
-
-
-	if(g_iLastButtons[client] == buttons && (mouse[0] == 0 && mouse[1] == 0) && bVectorsEqual(fPosition, g_fPosition[client]) && bVectorsEqual(fAngles, g_fAngles[client]))
-		g_bPlayerAfk[client] = true;
-	else
-		g_bPlayerAfk[client] = false;
-
-	g_iLastButtons[client] = buttons;
+		if ((mouse[0] != 0) || (mouse[1] != 0))
+		{
+			g_iLastButtons[client] = buttons;
+			g_bPlayerAfk[client] = false;
+			return Plugin_Continue;
+		}
+	}
+	
 	return Plugin_Continue;
-}
-
-stock bool bVectorsEqual(float[3] v1, float[3] v2)
-{
-	return (v1[0] == v2[0] && v1[1] == v2[1] && v1[2] == v2[2]);
 }
 
 public Action OnTakeDamage(int victim, int& attacker, int& inflictor, float& damage, int& damagetype, int& weapon, float damageForce[3], float damagePosition[3], int damagecustom)
