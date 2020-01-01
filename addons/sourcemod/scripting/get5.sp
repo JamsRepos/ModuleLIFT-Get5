@@ -789,6 +789,7 @@ public Action Command_EndMatch(int client, int args) {
 
   // Call game-ending forwards.
   g_MapChangePending = false;
+  ChangeState(Get5State_PostGame);
   char mapName[PLATFORM_MAX_PATH];
   GetCleanMapName(mapName, sizeof(mapName));
   int team1score = CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team1));
@@ -1017,22 +1018,22 @@ public Action Event_MatchOver(Event event, const char[] name, bool dontBroadcast
     int t2maps = g_TeamSeriesScores[MatchTeam_Team2];
     int tiedMaps = g_TeamSeriesScores[MatchTeam_TeamNone];
 
-    float minDelay = float(GetTvDelay()) + MATCH_END_DELAY_AFTER_TV;
-
     if (t1maps == g_MapsToWin) {
       // Team 1 won
       SeriesEndMessage(MatchTeam_Team1);
+      ChangeState(Get5State_PostGame);
       EndSeries();
-      // DelayFunction(minDelay, EndSeries);
 
     } else if (t2maps == g_MapsToWin) {
       // Team 2 won
       SeriesEndMessage(MatchTeam_Team2);
+      ChangeState(Get5State_PostGame);
       EndSeries();
 
     } else if (t1maps == t2maps && t1maps + tiedMaps == g_MapsToWin) {
       // The whole series was a tie
       SeriesEndMessage(MatchTeam_TeamNone);
+      ChangeState(Get5State_PostGame);
       EndSeries();
 
     } else if (g_BO2Match && GetMapNumber() == 2) {
@@ -1060,7 +1061,7 @@ public Action Event_MatchOver(Event event, const char[] name, bool dontBroadcast
       g_MapChangePending = true;
       Get5_MessageToAll("%t", "NextSeriesMapInfoMessage", nextMap);
       ChangeState(Get5State_PostGame);
-      CreateTimer(minDelay, Timer_NextMatchMap);
+      NextMatchMap();
     }
   }
 
@@ -1089,7 +1090,7 @@ static void SeriesEndMessage(MatchTeam team) {
   }
 }
 
-public Action Timer_NextMatchMap(Handle timer) {
+public void NextMatchMap() {
   if (g_GameState >= Get5State_Live)
     StopRecording();
 
@@ -1098,8 +1099,7 @@ public Action Timer_NextMatchMap(Handle timer) {
   g_MapsToPlay.GetString(index, map, sizeof(map));
 
   if (!g_SkipVeto && g_DisplayGotvVeto.BoolValue && index == 0) {
-    float minDelay = float(GetTvDelay()) + MATCH_END_DELAY_AFTER_TV;
-    ChangeMap(map, minDelay);
+    ChangeMap(map);
   } else {
     ChangeMap(map);
   }
@@ -1141,9 +1141,9 @@ public void EndSeries() {
   Call_PushCell(t1maps);
   Call_PushCell(t2maps);
   Call_Finish();
+  ChangeState(Get5State_PostGame);
 
   RestoreCvars(g_MatchConfigChangedCvars);
-  ChangeState(Get5State_PostGame);
 }
 
 public Action Event_RoundPreStart(Event event, const char[] name, bool dontBroadcast) {

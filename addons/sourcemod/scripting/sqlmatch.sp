@@ -36,6 +36,8 @@ ConVar g_CVLeagueID;
 ArrayList ga_iEndMatchVotesT;
 ArrayList ga_iEndMatchVotesCT;
 
+Get5State currentMatchState;
+
 public Plugin myinfo = 
 {
 	name = "SQL Matches",
@@ -187,16 +189,12 @@ public void ResetVars(int Client)
 	g_iHeadshots[Client] = 0;
 }
 
-public int IsMatchLive()
-{
-	if (Get5_GetGameState == Get5State_Live) return 1;
-	else return 0;
-}
-
 
 /* This has changed, again :D */
 public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 {
+	currentMatchState = newState;
+	LogMessage("Get5_OnGameStateChanged: %s", currentMatchState);
 	if(oldState == Get5State_GoingLive && newState == Get5State_Live)
 	{
 		char sQuery[1024], sMap[64];
@@ -243,10 +241,17 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		Format(sIP, sizeof(sIP), "%s.%s.%s.%s:%s", pieces[0], pieces[1], pieces[2], pieces[3], sPort);
 
 		GetCurrentMatchId(g_uuidString);
-		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', %i, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, IsMatchLive(), sIP);
+		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
+		LogMessage("Get5_OnGameStateChanged: %s", sQuery);
+		PrintToServer("Get5_OnGameStateChanged: %s", sQuery);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 
 		UpdatePlayerStats();
+	}
+
+	if (newState == Get5State_PostGame)
+	{
+		LogMessage("Im a horse fucker and a weeb.");
 	}
 }
 
@@ -280,9 +285,12 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 
 public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 {
-	UpdateMatchStats(true);
-	UpdatePlayerStats();
-	CheckSurrenderVotes();
+	if (Get5_GetGameState() == Get5State_Live)
+	{
+		UpdateMatchStats();
+		UpdatePlayerStats();
+		CheckSurrenderVotes();
+	}
 }
 
 void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
@@ -362,12 +370,25 @@ public void SQL_TranFailure(Database db, any data, int numQueries, const char[] 
 	LogError("Transaction Failed! Error: %s. During Query: %i", sError, failIndex);
 }
 
-void UpdateMatchStats(bool duringMatch = false)
+void UpdateMatchStats()
 {
-	if(duringMatch && Get5_GetGameState() != Get5State_Live) return;
-
 	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=%i WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), IsMatchLive(), g_uuidString);
+	if (Get5_GetGameState() == Get5State_Live)
+	{
+		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=1 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		LogMessage("UpdateMatchStats: %s", sQuery);
+		PrintToServer("UpdateMatchStats: %s", sQuery);
+	}
+	else if (Get5_GetGameState() == Get5State_PostGame)
+	{
+		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		LogMessage("UpdateMatchStats: %s", sQuery);
+		PrintToServer("UpdateMatchStats: %s", sQuery);
+	}
+	else
+	{
+		return;
+	}
 	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
