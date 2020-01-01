@@ -507,6 +507,7 @@ public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 }
 
 stock bool IsPaused() {
+	g_bPlayerAfk[client] = false;
     return GameRules_GetProp("m_bMatchWaitingForResume") != 0;
 }  
 
