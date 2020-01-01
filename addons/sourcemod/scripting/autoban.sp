@@ -103,7 +103,7 @@ public Action GlobalSecondTimer(Handle hTimer)
 {
 	for(int i = 1; i <= MaxClients; i++)
 	{
-		if(IsValidClient(i) && IsPlayerAlive(i) && !IsPaused())
+		if(IsValidClient(i) && IsPlayerAlive(i) && !(IsPaused() || InFreezeTime()))
 		{
 			g_iAfkTime[i] = g_bPlayerAfk[i] ? ++g_iAfkTime[i] : 0;
 		}
@@ -510,9 +510,14 @@ stock bool IsPaused() {
     return GameRules_GetProp("m_bMatchWaitingForResume") != 0;
 }  
 
+stock bool InFreezeTime()
+{
+	return GameRules_GetProp("m_bFreezePeriod") != 0;
+}
+
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
-	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused()) return Plugin_Continue;
+	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused() || InFreezeTime()) return Plugin_Continue;
 
 	if (IsClientSourceTV(client) || IsFakeClient(client))
 		return Plugin_Continue;
