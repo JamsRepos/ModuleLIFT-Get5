@@ -18,7 +18,6 @@ ConVar g_MatchType;
 Handle g_hSocket;
 ConVar g_CVServerIp;
 ConVar g_CVWebsocketPass;
-ConVar g_CVLeagueID;
 
 int g_connectTimer = 300;
 
@@ -43,7 +42,6 @@ public void OnPluginStart()
 	HookEvent("player_changename", Event_NameChange);
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
-	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("player_connect_full", Event_PlayerConnect);
 
 	//Create ArrayList
@@ -81,6 +79,8 @@ public void OnPluginStart()
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
 	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
+	LoadPlayerDiscordNames();
+	FireNameChangeEvent(true);
 }
 
 public void CheckPlayerCount()
@@ -296,12 +296,6 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 			}
 		}
 	}
-}
-
-public void Event_RoundEnd(Event event, char[] name, bool dontBroadcast)
-{
-	LoadPlayerDiscordNames();
-	FireNameChangeEvent(true);
 }
 
 // Need to look at merging Timer_ConnectionTimer and Timer_PlayerCount.

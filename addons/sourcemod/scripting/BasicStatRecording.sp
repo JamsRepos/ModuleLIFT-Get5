@@ -463,6 +463,7 @@ public void OnPluginStart()
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("round_end", Event_RoundEnd);
 	HookEvent("round_mvp", Event_RoundMVP);
+	HookEvent("player_connect_full", Event_PlayerConnect);
 }
 
 /* Enable Or Disable Points In Warmup and Knife Round */
@@ -485,8 +486,9 @@ public void OnDbConnect(Database db, const char[] error, any data)
 	}
 }
 
-public void OnClientPostAdminCheck(int client)
+public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
+	int client = GetClientOfUserId(event.GetInt("userid"));
 	if (!VALIDPLAYER(client) && !DEBUG)
 	{
 		return;
@@ -501,6 +503,23 @@ public void OnClientPostAdminCheck(int client)
 	g_hPlayers[client].insertToDb(false);
 	g_fJoinTime[client] = GetEngineTime();
 }
+
+// public void OnClientPostAdminCheck(int client)
+// {
+// 	if (!VALIDPLAYER(client) && !DEBUG)
+// 	{
+// 		return;
+// 	}
+	
+// 	if (DEBUG)
+// 	{
+// 		PrintToServer("OnClientPostAdminCheck -> %d", client);
+// 	}
+	
+// 	g_hPlayers[client] = new PlayerStatsTracker(client);
+// 	g_hPlayers[client].insertToDb(false);
+// 	g_fJoinTime[client] = GetEngineTime();
+// }
 
 public void OnClientDisconnect(int client)
 {
