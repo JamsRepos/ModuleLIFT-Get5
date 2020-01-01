@@ -12,10 +12,12 @@ int g_iTeamKills[MAXPLAYERS + 1];
 int g_iRetryTimes[MAXPLAYERS + 1];
 int g_iMatchStartTime;
 int g_iLastButtons[MAXPLAYERS + 1];
+int g_iButtonsArraySize = 5;
+int iObserverMode[MAXPLAYERS+1] = -1;
 
 bool g_bLate;
 bool g_bBanned[MAXPLAYERS + 1];
-bool g_bPlayerAfk[MAXPLAYERS + 1];
+bool g_bPlayerAfk[MAXPLAYERS + 1] = true;
 
 float g_fLastPos[MAXPLAYERS + 1][3];
 
@@ -75,6 +77,7 @@ public void OnPluginStart()
 {
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
+	HookEvent("round_start", Event_RoundStart);
 
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
@@ -102,9 +105,7 @@ public Action GlobalSecondTimer(Handle hTimer)
 	{
 		if(IsValidClient(i) && IsPlayerAlive(i))
 		{
-			LogMessage("g_bPlayerAfk[i] %i", g_bPlayerAfk[i]);
 			g_iAfkTime[i] = g_bPlayerAfk[i] ? ++g_iAfkTime[i] : 0;
-			LogMessage("g_iAfkTime[i] %i", g_iAfkTime[i]);
 		}
 	}
 	return Plugin_Continue;
@@ -363,6 +364,7 @@ public void OnClientPostAdminCheck(int Client)
 public void OnClientPutInServer(int Client)
 {
 	ResetVars(Client);
+
 }
 
 public void OnClientDisconnect(int Client)
@@ -492,6 +494,18 @@ public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast
 	}
 }
 
+public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+	if (Get5_GetGameState() <= Get5State_GoingLive) return;
+
+	int client = GetClientOfUserId(event.GetInt("userid"));
+
+	if (IsValidClient(client))
+	{
+		g_bPlayerAfk[client] = true;
+	}
+}
+
 stock bool IsPaused() {
     return GameRules_GetProp("m_bMatchWaitingForResume") != 0;
 }  
@@ -499,8 +513,16 @@ stock bool IsPaused() {
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
 	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused()) return Plugin_Continue;
+
+	if (IsClientSourceTV(client) || IsFakeClient(client))
+		return Plugin_Continue;
+	
+	if (cmdnum <= 0)
+		return Plugin_Handled;
+	
 	g_bPlayerAfk[client] = true;
-	if(g_iAfkTime[client] >= 180)
+
+	if (g_iAfkTime[client] >= 180)
 	{
 		g_iAfkTime[client] = 0;
 
@@ -517,19 +539,17 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_AfkBan, disconnectPack);
 		return Plugin_Continue;
 	}
-
-	if(IsPlayerAlive(client) && !IsFakeClient(client))
+	
+	if ((mouse[0] != 0) || (mouse[1] != 0))
 	{
-		if (g_iLastButtons[client] != buttons)
+		g_bPlayerAfk[client] = false;
+		g_iLastButtons[client] = buttons;
+		return Plugin_Continue;
+	}
+	else
+	{
+		if(buttons && !(buttons & IN_LEFT || buttons & IN_RIGHT))
 		{
-			g_bPlayerAfk[client] = false;
-			g_iLastButtons[client] = buttons;
-			return Plugin_Continue;
-		}
-
-		if ((mouse[0] != 0) || (mouse[1] != 0))
-		{
-			g_iLastButtons[client] = buttons;
 			g_bPlayerAfk[client] = false;
 			return Plugin_Continue;
 		}

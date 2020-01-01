@@ -194,7 +194,6 @@ public void ResetVars(int Client)
 public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 {
 	currentMatchState = newState;
-	LogMessage("Get5_OnGameStateChanged: %s", currentMatchState);
 	if(oldState == Get5State_GoingLive && newState == Get5State_Live)
 	{
 		char sQuery[1024], sMap[64];
@@ -242,8 +241,6 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 
 		GetCurrentMatchId(g_uuidString);
 		Format(sQuery, sizeof(sQuery), "INSERT INTO sql_matches_scoretotal (match_id, team_t, team_ct,team_1_name,team_2_name, map, region, league_id, live, server) VALUES ('%s',%i, %i,'%s','%s', '%s', '%s', '%s', 1, '%s');", g_uuidString, CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT),teamName_T,teamName_CT, sMap, sRegion, sLeagueID, sIP);
-		LogMessage("Get5_OnGameStateChanged: %s", sQuery);
-		PrintToServer("Get5_OnGameStateChanged: %s", sQuery);
 		g_Database.Query(SQL_InitialInsert, sQuery);
 
 		UpdatePlayerStats();
@@ -251,7 +248,8 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 
 	if (newState == Get5State_PostGame)
 	{
-		LogMessage("Im a horse fucker and a weeb.");
+		// Attempt to close it twice because i've given up.
+		CloseMatchSocket();
 	}
 }
 
@@ -376,14 +374,10 @@ void UpdateMatchStats()
 	if (Get5_GetGameState() == Get5State_Live)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=1 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
-		LogMessage("UpdateMatchStats: %s", sQuery);
-		PrintToServer("UpdateMatchStats: %s", sQuery);
 	}
 	else if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
-		LogMessage("UpdateMatchStats: %s", sQuery);
-		PrintToServer("UpdateMatchStats: %s", sQuery);
 	}
 	else
 	{
