@@ -156,7 +156,7 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
       char teamName[32];
       GetEntPropString(teamIndex, Prop_Send, "m_szClanTeamname", teamName, 32);
       if (timeLeft % 30 == 0 && timeLeft != maxPauseTime) {
-        Get5_MessageToAll("%s has %imin%isec left for pauses.", teamName, minutes, seconds);
+        Get5_MessageToAll("%s has %imin %isec left for pauses.", teamName, minutes, seconds);
         return Plugin_Handled;
       }
 
@@ -216,7 +216,7 @@ public Action Command_Unpause(int client, int args) {
     if (team == teamPaused) {
       ServerCommand("mp_unpause_match");
       KillTimer(pauseTimerHandler);
-      Get5_MessageToAll("%s has %imin%isec left for pauses", teamName, minutes, seconds);
+      Get5_MessageToAll("%s has %imin %isec left for pauses", teamName, minutes, seconds);
     }
 
     return Plugin_Handled;
