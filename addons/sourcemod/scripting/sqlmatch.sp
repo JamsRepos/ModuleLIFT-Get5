@@ -374,16 +374,13 @@ void UpdateMatchStats()
 	if (Get5_GetGameState() == Get5State_Live)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=1 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		g_Database.Query(SQL_GenericQuery, sQuery);
 	}
 	else if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		g_Database.Query(SQL_EndGame, sQuery);
 	}
-	else
-	{
-		return;
-	}
-	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
 public Action Command_EndMatch(int Client, int iArgs)
@@ -504,7 +501,7 @@ public void CheckSurrenderVotes()
 
 public Action Timer_KickEveryoneSurrender(Handle timer)
 {
-	CloseMatchSocket();
+	//CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
@@ -532,7 +529,7 @@ public void CloseMatchSocket()
 
 public Action Timer_KickEveryoneEnd(Handle timer)
 {
-	CloseMatchSocket();
+	//CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
 	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
@@ -657,6 +654,18 @@ public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sErr
 		LogError("MySQL Query Failed: %s", sError);
 		return;
 	}
+}
+
+public void SQL_EndGame(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
+
+	CloseMatchSocket();
 }
 
 stock bool IsValidClient(int client, bool inPug = false)
