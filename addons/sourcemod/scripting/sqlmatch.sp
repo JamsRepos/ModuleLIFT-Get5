@@ -379,6 +379,7 @@ void UpdateMatchStats()
 	else if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		g_Database.Query(SQL_GenericQuery, sQuery);
 		CloseMatchSocket();
 	}
 }
