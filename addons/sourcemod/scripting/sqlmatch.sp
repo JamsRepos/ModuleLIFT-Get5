@@ -245,8 +245,6 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 
 		UpdatePlayerStats();
 	}
-
-	if 
 }
 
 // To be rewritten for UUIDs
