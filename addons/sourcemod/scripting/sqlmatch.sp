@@ -246,11 +246,7 @@ public void Get5_OnGameStateChanged(Get5State oldState, Get5State newState)
 		UpdatePlayerStats();
 	}
 
-	if (newState == Get5State_PostGame)
-	{
-		// Attempt to close it twice because i've given up.
-		CloseMatchSocket();
-	}
+	if 
 }
 
 // To be rewritten for UUIDs
@@ -288,6 +284,12 @@ public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		UpdateMatchStats();
 		UpdatePlayerStats();
 		CheckSurrenderVotes();
+	}
+
+	if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
+	{
+		LogMessage("Called Get5State_PostGame state or Get5State_None");
+		UpdateMatchStats();
 	}
 }
 
@@ -378,6 +380,7 @@ void UpdateMatchStats()
 	else if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
+		CloseMatchSocket();
 	}
 	else
 	{
@@ -504,7 +507,6 @@ public void CheckSurrenderVotes()
 
 public Action Timer_KickEveryoneSurrender(Handle timer)
 {
-	CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
@@ -532,7 +534,6 @@ public void CloseMatchSocket()
 
 public Action Timer_KickEveryoneEnd(Handle timer)
 {
-	CloseMatchSocket();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Thanks for playing!\nView the match on our website for statistics");
 	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;

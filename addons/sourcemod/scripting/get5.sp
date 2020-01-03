@@ -820,6 +820,7 @@ public Action Command_EndMatch(int client, int args) {
   LogDebug("Calling Get5_OnSeriesResult(winner=%d, team1_series_score=%d, team2_series_score=%d)",
            MatchTeam_TeamNone, g_TeamSeriesScores[MatchTeam_Team1],
            g_TeamSeriesScores[MatchTeam_Team2]);
+  ChangeState(Get5State_PostGame);
   Call_StartForward(g_OnSeriesResult);
   if (team1score > team2score)
   {
@@ -839,7 +840,6 @@ public Action Command_EndMatch(int client, int args) {
   Call_Finish();
 
   UpdateClanTags();
-  ChangeState(Get5State_PostGame);
 
   Get5_MessageToAll("%t", "AdminForceEndInfoMessage");
   RestoreCvars(g_MatchConfigChangedCvars);
@@ -1136,12 +1136,12 @@ public void EndSeries() {
   EventLogger_SeriesEnd(winningTeam, t1maps, t2maps);
 
   LogDebug("Calling Get5_OnSeriesResult(winner=%d, t1maps=%d, t2maps=%d)", winningTeam, t1maps, t2maps);
+  ChangeState(Get5State_PostGame);
   Call_StartForward(g_OnSeriesResult);
   Call_PushCell(winningTeam);
   Call_PushCell(t1maps);
   Call_PushCell(t2maps);
   Call_Finish();
-  ChangeState(Get5State_PostGame);
 
   RestoreCvars(g_MatchConfigChangedCvars);
 }
