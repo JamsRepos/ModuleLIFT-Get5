@@ -283,12 +283,6 @@ public void Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 		UpdatePlayerStats();
 		CheckSurrenderVotes();
 	}
-
-	if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
-	{
-		LogMessage("Called Get5State_PostGame state or Get5State_None");
-		UpdateMatchStats();
-	}
 }
 
 void UpdatePlayerStats(bool allPlayers = true, int Client = 0)
@@ -379,9 +373,20 @@ void UpdateMatchStats()
 	else if (Get5_GetGameState() == Get5State_PostGame || Get5State_None)
 	{
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_t=%i, team_ct=%i, live=0 WHERE match_id='%s';", CS_GetTeamScore(CS_TEAM_T), CS_GetTeamScore(CS_TEAM_CT), g_uuidString);
-		g_Database.Query(SQL_GenericQuery, sQuery);
-		CloseMatchSocket();
+		g_Database.Query(SQL_EndGame, sQuery);
 	}
+}
+
+public void SQL_EndGame(Database db, DBResultSet results, const char[] sError, any data)
+{
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
+
+	CloseMatchSocket();
 }
 
 public Action Command_EndMatch(int Client, int iArgs)
