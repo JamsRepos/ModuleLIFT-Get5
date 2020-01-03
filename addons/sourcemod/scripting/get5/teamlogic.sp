@@ -186,6 +186,7 @@ public MatchTeam GetClientMatchTeam(int client) {
     if (GetAuth(client, auth, sizeof(auth))) {
       return GetAuthMatchTeam(auth);
     } else {
+      KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play.");
       return MatchTeam_TeamNone;
     }
   }

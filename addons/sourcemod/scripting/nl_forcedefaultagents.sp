@@ -3,6 +3,9 @@
 #include <cstrike>
 #include <dhooks>
 
+
+#define LEGACY_MODELS_PATH          "models/player/custom_player/legacy/"
+
 // Valve Agents models list
 char Agents[][] = {
 "models/player/custom_player/legacy/tm_phoenix_varianth.mdl",
@@ -29,9 +32,11 @@ char Agents[][] = {
 "models/player/custom_player/legacy/ctm_st6_variantk.mdl"
 };
 
-// default models for replace
-char terroristModel[128] = "models/player/custom_player/legacy/tm_phoenix_varianta.mdl";
-char ctModel[128] = "models/player/custom_player/legacy/ctm_sas_varianta.mdl";
+char g_aMapArms[2][128];
+ArrayList g_aMapTModels = null;
+ArrayList g_aMapCTModels = null;
+
+char g_sCurrentMap[PLATFORM_MAX_PATH];
 
 public Plugin myinfo = 
 {
@@ -68,8 +73,111 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-	PrecacheModel(terroristModel);
-	PrecacheModel(ctModel);
+	GetCurrentMap(g_sCurrentMap, sizeof(g_sCurrentMap));
+	GetMapConfig();
+}
+
+public void OnMapEnd()
+{
+	DestroyArrayList(g_aMapTModels);
+	DestroyArrayList(g_aMapCTModels);
+
+	strcopy(g_aMapArms[0], sizeof(g_aMapArms[]), "");
+	strcopy(g_aMapArms[1], sizeof(g_aMapArms[]), "");
+}
+
+public void DestroyArrayList(ArrayList &array)
+{
+    if (array != null && array != INVALID_HANDLE) {
+        delete array;
+    }
+}
+
+public void GetMapConfig()
+{
+	if (!FileExists("gamemodes_server.txt"))
+	{
+		LogError("Something fucked up.");
+		return;
+	}
+
+	bool inError = false;
+
+	KeyValues kvCustom = new KeyValues("GameModes_Server.txt");
+	kvCustom.ImportFromFile("gamemodes_server.txt");
+
+	if (!kvCustom.JumpToKey("maps") || !kvCustom.JumpToKey(g_sCurrentMap))
+		inError = true;
+
+	if (!kvCustom.JumpToKey("original"))
+		inError = true;
+
+	if (inError)
+	{
+		_GetMapConfig_Done(false);
+		return;
+	}
+
+	g_aMapTModels = new ArrayList(128);
+	g_aMapCTModels = new ArrayList(128);
+
+	kvCustom.GetString("t_arms", g_aMapArms[0], sizeof(g_aMapArms[]));
+	GetKvKeysToArrayList(kvCustom, "t_models", g_aMapTModels);
+
+	kvCustom.GetString("ct_arms", g_aMapArms[1], sizeof(g_aMapArms[]));
+	GetKvKeysToArrayList(kvCustom, "ct_models", g_aMapCTModels);
+
+	delete kvCustom;
+
+	_GetMapConfig_Done(true);
+}
+
+public void GetKvKeysToArrayList(KeyValues &kv, const char[] key, ArrayList &dest)
+{
+    char entity[256];
+
+    if (kv.JumpToKey(key)) {
+            
+        if (kv.GotoFirstSubKey(false)) {
+
+            do {
+
+                kv.GetSectionName(entity, sizeof(entity));
+                dest.PushString(entity);
+
+            } while (kv.GotoNextKey(false));
+
+            kv.GoBack();
+        }
+
+        kv.GoBack();
+    }
+}
+
+public void PrecacheModelsArrayList(ArrayList &models, const char[] modelsPath)
+{
+    char model[256];
+
+    for (int i = 0; i < models.Length; i++) {
+
+        models.GetString(i, model, sizeof(model));
+
+        if (model[0] == '\0') {
+            continue;
+        }
+
+        Format(model, sizeof(model), "%s%s.mdl", modelsPath, model);
+
+        if (!IsModelPrecached(model)) {
+            PrecacheModel(model);
+        }
+    }
+}
+
+public void _GetMapConfig_Done(bool map)
+{
+    PrecacheModels(map);
+    PrecacheArms(map);
 }
 
 public void OnClientPutInServer(int client)
@@ -79,11 +187,85 @@ public void OnClientPutInServer(int client)
 	DHookEntity(h_SetModel, true, client);
 }
 
+public void PrecacheModels(bool map)
+{
+    char modelsPath[64];
+    Format(modelsPath, sizeof(modelsPath), "%s", LEGACY_MODELS_PATH);
+
+    if (map) {
+        PrecacheModelsArrayList(g_aMapTModels, modelsPath);
+        PrecacheModelsArrayList(g_aMapCTModels, modelsPath);
+    }
+}
+
+public void PrecacheModelsArray(const char[][] models, int size)
+{
+    for (int i = 0; i < size; i++) {
+
+        if (models[i][0] != '\0' && !IsModelPrecached(models[i])) {
+            PrecacheModel(models[i]);
+        }
+    }
+}
+
+public void PrecacheArms(bool map)
+{
+    if (map)
+    	PrecacheModelsArray(g_aMapArms, sizeof(g_aMapArms));
+}
+
 public MRESReturn ReModel(int client, Handle hParams)
 {
 	CreateTimer(0.0, SetModel, client);
 	
 	return MRES_Ignored;
+}
+
+char GetClientNewRandomModel(int client)
+{
+	char modelPath[64];
+	char model[128];
+	int team = (GetClientTeam(client) == 2) ? 0 : 1;
+
+	Format(modelPath, sizeof(modelPath), "%s", LEGACY_MODELS_PATH);
+
+	if (team == 0)
+	{
+		g_aMapTModels.GetString(GetRandomInt(0, g_aMapTModels.Length - 1), model, sizeof(model));
+		Format(model, sizeof(model), "%s%s.mdl", modelPath, model);
+	} else if (team == 1) {
+		g_aMapCTModels.GetString(GetRandomInt(0, g_aMapCTModels.Length - 1), model, sizeof(model));
+		Format(model, sizeof(model), "%s%s.mdl", modelPath, model);
+	}
+	
+	return model;
+}
+
+
+public void GetKvKeysToKv(KeyValues &kv, const char[] key, KeyValues &kvDest, const char[] destKey)
+{
+    char entity[256];
+
+    kvDest.JumpToKey(destKey, true);
+
+    if (kv.JumpToKey(key)) {
+            
+        if (kv.GotoFirstSubKey(false)) {
+
+            do {
+
+                kv.GetSectionName(entity, sizeof(entity));
+                kvDest.SetString(entity, NULL_STRING);
+
+            } while (kv.GotoNextKey(false));
+
+            kv.GoBack();
+        }
+
+        kv.GoBack();
+    }
+
+    kvDest.GoBack();
 }
 
 public Action SetModel(Handle timer, int client)
@@ -104,11 +286,11 @@ public Action SetModel(Handle timer, int client)
 		{
 			if (team == CS_TEAM_CT)
             {
-                SetEntityModel(client, ctModel);
+                SetEntityModel(client, GetClientNewRandomModel(client));
             }
 			else 
             {
-                SetEntityModel(client, terroristModel);
+                SetEntityModel(client, GetClientNewRandomModel(client));
             }
 			
 			break;
