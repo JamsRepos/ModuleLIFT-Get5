@@ -32,13 +32,15 @@ char Agents[][] = {
 #define MAX_SKINS_COUNT 256
 #define MAX_SKIN_LENGTH 256
 
+#define newdecls required
+
 int TSkins_Count;
 int CTSkins_Count;
 
-char TerrorSkin[MAX_SKINS_COUNT][MAX_SKIN_LENGTH];
-char TerrorArms[MAX_SKINS_COUNT][MAX_SKIN_LENGTH];
-char CTerrorSkin[MAX_SKINS_COUNT][MAX_SKIN_LENGTH];
-char CTerrorArms[MAX_SKINS_COUNT][MAX_SKIN_LENGTH];
+ArrayList TerrorSkinArray;
+ArrayList TerrorArmsArray;
+ArrayList CTerrorSkinArray;
+ArrayList CTerrorArmsArray;
 
 public Plugin myinfo = 
 {
@@ -75,6 +77,12 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
+	TerrorSkinArray = new ArrayList(MAX_SKIN_LENGTH);
+	TerrorArmsArray = new ArrayList(MAX_SKIN_LENGTH);
+	CTerrorSkinArray = new ArrayList(MAX_SKIN_LENGTH);
+	CTerrorArmsArray = new ArrayList(MAX_SKIN_LENGTH);
+
+
 	char file[PLATFORM_MAX_PATH];
 	char currentMap[PLATFORM_MAX_PATH];
 	GetCurrentMap(currentMap, sizeof(currentMap));
@@ -85,8 +93,10 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
-	for (int i = 0)
-
+	TerrorSkinArray.Clear();
+	TerrorArmsArray.Clear();
+	CTerrorSkinArray.Clear();
+	CTerrorArmsArray.Clear();
 }
 
 public void PrepareConfig(const char[] file)
@@ -106,18 +116,15 @@ public void PrepareConfig(const char[] file)
 			KvGetSectionName(kv, section, sizeof(section));
 			if (KvGetString(kv, "skin", skin, sizeof(skin)) && KvGetString(kv, "arms", arms, sizeof(arms)))
 			{
-				TerrorSkinArray.Push()
-				strcopy(TerrorSkin[TSkins_Count], sizeof(TerrorSkin[]), skin);
-				strcopy(TerrorArms[TSkins_Count], sizeof(TerrorArms[]), arms);
+				PushArrayString(TerrorSkinArray, skin);
+				PushArrayString(TerrorArmsArray, arms);
 				PrecacheModel(skin);
 				PrecacheModel(arms);
-				TSkins_Count++
 			} 
 		}
 		while (KvGotoNextKey(kv))
 	}
 	else SetFailState("Fatal error: Missing \"Terrorists\" section!");
-
 	KvRewind(kv);
 
 	if (KvJumpToKey(kv, "Counter-Terrorists"))
@@ -125,7 +132,6 @@ public void PrepareConfig(const char[] file)
 		char section[MAX_SKINS_COUNT];
 		char skin[MAX_SKINS_COUNT];
 		char arms[MAX_SKINS_COUNT];
-		char skin_id[3];
 
 		KvGotoFirstSubKey(kv);
 
@@ -134,13 +140,10 @@ public void PrepareConfig(const char[] file)
 			KvGetSectionName(kv, section, sizeof(section));
 			if (KvGetString(kv, "skin", skin, sizeof(skin)) && KvGetString(kv, "arms", arms, sizeof(arms)))
 			{
-				strcopy(CTerrorSkin[CTSkins_Count], sizeof(CTerrorSkin[]), skin);
-				strcopy(CTerrorArms[CTSkins_Count], sizeof(CTerrorArms[]), arms);
+				PushArrayString(CTerrorSkinArray, skin);
+				PushArrayString(CTerrorArmsArray, arms);
 				PrecacheModel(skin);
-				LogMessage("Precached. %s", CTerrorSkin[CTSkins_Count]);
 				PrecacheModel(arms);
-				LogMessage("Precached. %s", CTerrorArms[CTSkins_Count]);
-				CTSkins_Count++
 			}
 		}
 		while (KvGotoNextKey(kv))
@@ -177,8 +180,8 @@ public Action SetModel(Handle timer, int client)
 	char model[128];
 	GetClientModel(client, model, sizeof(model));
 	
-	int trandom = GetRandomInt(0, TSkins_Count  - 1);
-	int ctrandom = GetRandomInt(0, CTSkins_Count - 1);
+	int trandom = GetRandomInt(0, TerrorSkinArray.Length  - 1);
+	int ctrandom = GetRandomInt(0, CTerrorSkinArray.Length - 1);
 
 	for (int i = 0; i < sizeof(Agents); i++)
 	{
@@ -186,14 +189,21 @@ public Action SetModel(Handle timer, int client)
 		{
 			if (team == CS_TEAM_CT)
             {
-                SetEntityModel(client, CTerrorSkin[ctrandom]);
-				SetEntPropString(client, Prop_Send, "m_szArmsModel", CTerrorArms[ctrandom]);
+				char[] skinModelFile = new char[PLATFORM_MAX_PATH];
+				GetArrayString(TerrorSkinArray, trandom, skinModelFile, PLATFORM_MAX_PATH);
+				char[] armModelFile = new char[PLATFORM_MAX_PATH];
+				GetArrayString(TerrorArmsArray, trandom, armModelFile, PLATFORM_MAX_PATH)
+                SetEntityModel(client, skinModelFile);
+				SetEntPropString(client, Prop_Send, "m_szArmsModel", armModelFile);
             }
 			else 
             {
-                SetEntityModel(client, TerrorSkin[trandom]);
-				SetEntPropString(client, Prop_Send, "m_szArmsModel", TerrorArms[trandom]);
-
+				char[] skinModelFile = new char[PLATFORM_MAX_PATH];
+				GetArrayString(CTerrorSkinArray, ctrandom, skinModelFile, PLATFORM_MAX_PATH);
+				char[] armModelFile = new char[PLATFORM_MAX_PATH];
+				GetArrayString(CTerrorArmsArray, ctrandom, armModelFile, PLATFORM_MAX_PATH)
+                SetEntityModel(client, skinModelFile);
+				SetEntPropString(client, Prop_Send, "m_szArmsModel", armModelFile);
             }
 			
 			break;
