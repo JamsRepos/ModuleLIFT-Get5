@@ -29,8 +29,8 @@ char Agents[][] = {
 "models/player/custom_player/legacy/ctm_st6_variantk.mdl"
 };
 
-#define MAX_SKINS_COUNT 72
-#define MAX_SKIN_LENGTH 41
+#define MAX_SKINS_COUNT 256
+#define MAX_SKIN_LENGTH 256
 
 int TSkins_Count;
 int CTSkins_Count;
@@ -83,6 +83,12 @@ public void OnMapStart()
 	PrepareConfig(file);
 }
 
+public void OnMapEnd()
+{
+	for (int i = 0)
+
+}
+
 public void PrepareConfig(const char[] file)
 {
 	Handle kv = CreateKeyValues("Playermodels");
@@ -95,17 +101,17 @@ public void PrepareConfig(const char[] file)
 		char arms[MAX_SKINS_COUNT];
 
 		KvGotoFirstSubKey(kv);
-
 		do
 		{
 			KvGetSectionName(kv, section, sizeof(section));
-			if (KvGetString(kv, "skin", skin, sizeof(skin) && KvGetString(kv, "arms", arms, sizeof(arms))))
+			if (KvGetString(kv, "skin", skin, sizeof(skin)) && KvGetString(kv, "arms", arms, sizeof(arms)))
 			{
+				TerrorSkinArray.Push()
 				strcopy(TerrorSkin[TSkins_Count], sizeof(TerrorSkin[]), skin);
 				strcopy(TerrorArms[TSkins_Count], sizeof(TerrorArms[]), arms);
+				PrecacheModel(skin);
+				PrecacheModel(arms);
 				TSkins_Count++
-				PrecacheModel(skin, true);
-				PrecacheModel(arms, true)
 			} 
 		}
 		while (KvGotoNextKey(kv))
@@ -116,9 +122,9 @@ public void PrepareConfig(const char[] file)
 
 	if (KvJumpToKey(kv, "Counter-Terrorists"))
 	{
-		char section[72];
-		char skin[72];
-		char arms[72];
+		char section[MAX_SKINS_COUNT];
+		char skin[MAX_SKINS_COUNT];
+		char arms[MAX_SKINS_COUNT];
 		char skin_id[3];
 
 		KvGotoFirstSubKey(kv);
@@ -126,13 +132,15 @@ public void PrepareConfig(const char[] file)
 		do
 		{
 			KvGetSectionName(kv, section, sizeof(section));
-			if (KvGetString(kv, "skin", skin, sizeof(skin) && KvGetString(kv, "arms", arms, sizeof(arms))))
+			if (KvGetString(kv, "skin", skin, sizeof(skin)) && KvGetString(kv, "arms", arms, sizeof(arms)))
 			{
 				strcopy(CTerrorSkin[CTSkins_Count], sizeof(CTerrorSkin[]), skin);
 				strcopy(CTerrorArms[CTSkins_Count], sizeof(CTerrorArms[]), arms);
+				PrecacheModel(skin);
+				LogMessage("Precached. %s", CTerrorSkin[CTSkins_Count]);
+				PrecacheModel(arms);
+				LogMessage("Precached. %s", CTerrorArms[CTSkins_Count]);
 				CTSkins_Count++
-				PrecacheModel(skin, true);
-				PrecacheModel(arms, true)
 			}
 		}
 		while (KvGotoNextKey(kv))
