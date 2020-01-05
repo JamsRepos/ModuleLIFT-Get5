@@ -76,12 +76,20 @@ public void OnPluginStart()
 	g_NameMap = new StringMap();
 }
 
+public void CheckClientsTeam(int client)
+{
+	
+}
+
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
+
 	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
 	LoadPlayerDiscordNames();
 	FireNameChangeEvent(true);
 }
+
+
 
 public void CheckPlayerCount()
 {

@@ -14,6 +14,12 @@ public Action AssignTeamOnConnect(Handle timer, int client) {
     if (IsClientInGame(client)) {
         GetClientAuthId(client, AuthId_SteamID64, steamid, sizeof(steamid));
         ChangeClientTeam(client, Get5_MatchTeamToCSTeam(Get5_GetPlayerTeam(steamid)));
+
+        if (Get5_MatchTeamToCSTeam(Get5_GetPlayerTeam(steamid)) == CS_TEAM_NONE || CS_TEAM_SPECTATOR)
+        {
+          KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play.");
+        }
+
         if (GameRules_GetProp("m_bMatchWaitingForResume") != 0 && GameRules_GetProp("m_bFreezePeriod") == 1 || g_GameState == Get5State_Warmup)
         {
           CS_RespawnPlayer(client);
