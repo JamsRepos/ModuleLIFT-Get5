@@ -93,10 +93,10 @@ public void OnMapStart()
 
 public void OnMapEnd()
 {
-	TerrorSkinArray.Clear();
-	TerrorArmsArray.Clear();
-	CTerrorSkinArray.Clear();
-	CTerrorArmsArray.Clear();
+	ClearArray(TerrorSkinArray);
+	ClearArray(TerrorArmsArray);
+	ClearArray(CTerrorSkinArray);
+	ClearArray(CTerrorArmsArray)
 }
 
 public void PrepareConfig(const char[] file)
@@ -190,18 +190,18 @@ public Action SetModel(Handle timer, int client)
 			if (team == CS_TEAM_CT)
             {
 				char[] skinModelFile = new char[PLATFORM_MAX_PATH];
-				GetArrayString(TerrorSkinArray, trandom, skinModelFile, PLATFORM_MAX_PATH);
+				GetArrayString(CTerrorSkinArray, ctrandom, skinModelFile, PLATFORM_MAX_PATH);
 				char[] armModelFile = new char[PLATFORM_MAX_PATH];
-				GetArrayString(TerrorArmsArray, trandom, armModelFile, PLATFORM_MAX_PATH)
+				GetArrayString(CTerrorArmsArray, ctrandom, armModelFile, PLATFORM_MAX_PATH)
                 SetEntityModel(client, skinModelFile);
 				SetEntPropString(client, Prop_Send, "m_szArmsModel", armModelFile);
             }
 			else 
             {
 				char[] skinModelFile = new char[PLATFORM_MAX_PATH];
-				GetArrayString(CTerrorSkinArray, ctrandom, skinModelFile, PLATFORM_MAX_PATH);
+				GetArrayString(TerrorSkinArray, trandom, skinModelFile, PLATFORM_MAX_PATH);
 				char[] armModelFile = new char[PLATFORM_MAX_PATH];
-				GetArrayString(CTerrorArmsArray, ctrandom, armModelFile, PLATFORM_MAX_PATH)
+				GetArrayString(TerrorArmsArray, trandom, armModelFile, PLATFORM_MAX_PATH)
                 SetEntityModel(client, skinModelFile);
 				SetEntPropString(client, Prop_Send, "m_szArmsModel", armModelFile);
             }
