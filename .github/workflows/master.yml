@@ -38,6 +38,9 @@ jobs:
             spcomp -w234 -O2 -v2 -i $SCRIPTS_PATH/include $file
           done
         working-directory: ${{ env.SCRIPTS_PATH }}
+      
+      - name: Create plugins folder
+        run: mkdir $PLUGINS_PATH/
 
       - name: Move compiled plugins
         run: |
