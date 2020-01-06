@@ -36,7 +36,6 @@ ConVar g_hVoteDuration = null;
 #include "functions/listeners/listissues.sp"
 #include "functions/listeners/callvote.sp"
 #include "functions/listeners/vote.sp"
-#include "functions/listeners/convarChange.sp"
 #include "functions/listeners/roundStart.sp"
 #include "functions/listeners/terminateRound.sp"
 
@@ -72,6 +71,12 @@ public void OnPluginStart() {
 
     HookEvent("round_start", Event_RoundStart);
     HookEventEx("round_end", Event_RoundEnd);
+}
+
+public void OnConVarChange_voteDuration(ConVar convar, char[] oldValue, char[] newValue) {
+	if (GetConVarFloat(g_hVoteDuration) < 1.0) {
+		SetConVarFloat(g_hVoteDuration, 1.0);
+	}
 }
 
 public void OnClientConnected(int client) {
