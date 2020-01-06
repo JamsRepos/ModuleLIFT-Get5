@@ -24,7 +24,7 @@ public Action OnTakeDamage(int victim, int &attacker, int &inflictor, float &dam
 		char inflictorClass[64];
 		if (GetEdictClassname(inflictor, inflictorClass, sizeof(inflictorClass)))
 		{
-			if (strEqual(inflictorClass, "planted_c4"))
+			if (StrEqual(inflictorClass, "planted_c4"))
 				return Plugin_Continue;
 			
 			if (StrEqual(inflictorClass, "inferno"))
