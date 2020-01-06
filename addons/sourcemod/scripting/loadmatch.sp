@@ -113,17 +113,17 @@ public void CheckPlayerCount()
 			int playersOnServer = playersonTerrorist+playersOnCT; 
 			if (StrEqual(matchtype, "5v5"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - playersOnServer);
 			}
 
 			if (StrEqual(matchtype, "2v2"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 4 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - playersOnServer);
 			}
 
 			if (StrEqual(matchtype, "1v1"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 2 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player to join the match...", ChatTag, 2 - playersOnServer);
 			}
 		}
 	}
@@ -343,17 +343,17 @@ public Action Timer_PlayerCount(Handle timer) {
 			int playersOnServer = playersonTerrorist+playersOnCT; 
 			if (StrEqual(matchtype, "5v5"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - playersOnServer);
 			}
 
 			if (StrEqual(matchtype, "2v2"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 4 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - playersOnServer);
 			}
 
 			if (StrEqual(matchtype, "1v1"))
 			{
-				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 2 - playersOnServer);
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - playersOnServer);
 			}
 		}
 	}
