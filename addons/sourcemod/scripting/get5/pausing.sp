@@ -73,7 +73,7 @@ public Action Command_Pause(int client, int args)
 
     char teamName[32];
     GetEntPropString(teamIndex, Prop_Send, "m_szClanTeamname", teamName, 32);
-    Get5_MessageToAll("%s has %imin %isec left for pauses", teamName, minutes, seconds);
+    Get5_MessageToAll("%s has % minute(s) %i second(s) left for pauses", teamName, minutes, seconds);
 
     pauseTimerHandler = CreateTimer(1.0, Timer_PauseTimeCheck, team, TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
 
@@ -156,17 +156,17 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
       char teamName[32];
       GetEntPropString(teamIndex, Prop_Send, "m_szClanTeamname", teamName, 32);
       if (timeLeft % 30 == 0 && timeLeft != maxPauseTime) {
-        Get5_MessageToAll("%s has %imin %isec left for pauses.", teamName, minutes, seconds);
+        Get5_MessageToAll("%s has %i minute(s) %i second(s) left for pauses.", teamName, minutes, seconds);
         return Plugin_Handled;
       }
 
       if (timeLeft == 10) {
-        Get5_MessageToAll("%s has %isec left for pauses", teamName, seconds);
+        Get5_MessageToAll("%s has %i second(s) left for pauses", teamName, seconds);
         return Plugin_Handled;
       }
       
       if (timeLeft <= 0) {
-        Get5_MessageToAll("%s has %isec left for pauses.", teamName, seconds);
+        Get5_MessageToAll("%s has %i second(s) left for pauses.", teamName, seconds);
         ServerCommand("mp_unpause_match");
         return Plugin_Stop;
       }
@@ -216,7 +216,7 @@ public Action Command_Unpause(int client, int args) {
     if (team == teamPaused) {
       ServerCommand("mp_unpause_match");
       KillTimer(pauseTimerHandler);
-      Get5_MessageToAll("%s has %imin %isec left for pauses", teamName, minutes, seconds);
+      Get5_MessageToAll("%s has %i minute(s) %i second(s) left for pauses", teamName, minutes, seconds);
     }
 
     return Plugin_Handled;
