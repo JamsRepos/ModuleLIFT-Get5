@@ -39,8 +39,8 @@ jobs:
           done
         working-directory: ${{ env.SCRIPTS_PATH }}
       
-      - name: Create plugins folder
-        run: mkdir $PLUGINS_PATH/
+      - name: Create Build folder
+        run: mkdir Build
 
       - name: Move compiled plugins
         run: |
@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@master
         with: 
           name: Compiled plugins
-          path: $PLUGINS_PATH/
+          path: Build
 
 
 
