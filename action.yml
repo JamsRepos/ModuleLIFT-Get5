@@ -1,0 +1,2 @@
+- name: Setup SourcePawn Compiler
+  uses: rumblefrog/setup-sp@v1.0.0
