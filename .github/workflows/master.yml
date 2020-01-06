@@ -44,4 +44,11 @@ jobs:
           rm -rf $PLUGINS_PATH/
           mkdir -p $PLUGINS_PATH/
           rsync -av --include='*/' --include="*.smx" --exclude="*" --remove-source-files $SCRIPTS_PATH/ $PLUGINS_PATH/
+      - name: Test Upload plugin files
+        uses: actions/upload-artifact@master
+        with: 
+          name: Compiled plugins
+          path: $PLUGINS_PATH/
+
+
 
