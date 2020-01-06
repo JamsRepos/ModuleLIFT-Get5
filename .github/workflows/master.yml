@@ -51,7 +51,7 @@ jobs:
         uses: actions/upload-artifact@master
         with: 
           name: Compiled plugins
-          path: Build
+          path: Build/
 
 
 
