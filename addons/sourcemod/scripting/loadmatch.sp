@@ -70,26 +70,23 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
+	// CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
 }
 
-public void CheckClientsTeam(int client)
+public void OnMapStart()
 {
-	
+	GameRules_SetProp("m_bIsQueuedMatchmaking", 1);
 }
 
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
-
 	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
 	LoadPlayerDiscordNames();
 	FireNameChangeEvent(true);
 }
-
-
 
 public void CheckPlayerCount()
 {
@@ -114,7 +111,6 @@ public void CheckPlayerCount()
 			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
 			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
 			int playersOnServer = playersonTerrorist+playersOnCT; 
-			LogMessage("The amount of players in server are Terrorist: %i and CT: %i", playersonTerrorist, playersOnCT);
 			if (StrEqual(matchtype, "5v5"))
 			{
 				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
@@ -345,7 +341,6 @@ public Action Timer_PlayerCount(Handle timer) {
 			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
 			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
 			int playersOnServer = playersonTerrorist+playersOnCT; 
-			LogMessage("The amount of players in server are Terrorist: %i and CT: %i", playersonTerrorist, playersOnCT);
 			if (StrEqual(matchtype, "5v5"))
 			{
 				PrintToChatAll("%s Waiting for %i more players to join the match...", ChatTag, 10 - playersOnServer);
@@ -372,7 +367,7 @@ static void CheckWaitingTimes() {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
 
 		if (timeLeft <= 0) {
-			ServerCommand("get5_endmatch");
+			ServerCommand("get5_cancelmatch");
 			UpdateMatchStatus();
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
@@ -380,8 +375,6 @@ static void CheckWaitingTimes() {
 					KickClient(i, "Players did not connect in time. Match has been cancelled");
 				}
 			}
-		} else if (timeLeft <= 300 && timeLeft % 60 == 0) {
-			Get5_MessageToAll("Time remaining to join the server: %i minutes.", timeLeft / 60);
 		}
 	}
 } 
@@ -405,9 +398,7 @@ public void EndMatchSocket()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
 }
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)

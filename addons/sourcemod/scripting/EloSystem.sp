@@ -377,7 +377,6 @@ public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] resu
 public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQueries, DBResultSet[] results, any[] queryData)
 {
 	if(hasCalculated) return;
-	LogMessage("SQL_TranSuccessSelect() called.");
 
 	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
 	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
@@ -393,37 +392,29 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 
 		int eloCol, matchesCol;
 		results[i].FieldNameToNum("elo", eloCol);
-		LogMessage("Client %i: elocolumn %i", i, eloCol);
 		results[i].FieldNameToNum("matches", matchesCol);
-		LogMessage("Client %i: Matches %i", i, matchesCol);
 
 		MatchTeam team = player.GetTeam();
 
 		int currentElo = results[i].FetchInt(eloCol);
 		int matchesPlayed = results[i].FetchInt(matchesCol);
 		player.SetValue("currentelo", currentElo);
-		LogMessage("Client %i: Current elo %i", i, currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
-		LogMessage("Client %i: Current elo %i", i, matchesPlayed);
 
 		if (team == seriesWinner)
 		{
 			winningTeamAvgElo += currentElo;
-			LogMessage("winningTeamAvgElo: %i", winningTeamAvgElo);
 			winningTeamCount++;
 		}
 		else if (team == seriesLoser)
 		{
 			losingTeamAvgElo += currentElo;
-			LogMessage("losingTeamAvgElo: %i", losingTeamAvgElo);
 			losingTeamCount++;
 		}
 	}
 
 	winningTeamAvgElo /= winningTeamCount;
-	LogMessage("winningTeamAvgElo: %i", winningTeamAvgElo);
 	losingTeamAvgElo /= losingTeamCount;
-	LogMessage("losingTeamAvgElo: %i", losingTeamAvgElo);
 	Transaction txn_UpdateElo = new Transaction();
 
 	for (int i = 1; i <= MaxClients; i++)
@@ -435,25 +426,19 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		}
 		char auth[32];
 		player.GetId64(auth, sizeof(auth));
-		LogMessage("Player auth %i", auth);
 			
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
-		LogMessage("playerElo %i", playerElo);
 		player.GetValue("matchesplayed", playerMatches);
-		LogMessage("playerMatches %i", playerMatches);
-
 		if (team == seriesWinner)
 		{
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
-				LogMessage("playerMatches < g_cvPreliminaryMatchCount.IntValue SeriesWinner hit.");
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
-				LogMessage("playerMatches > g_cvPreliminaryMatchCount.IntValue SeriesWinner hit.");
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 			}
 		}
@@ -461,7 +446,6 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		{
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
-				LogMessage("playerMatches < g_cvPreliminaryMatchCount.IntValue SeriesLoser hit.");
 				player.addToEloGain(-g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
@@ -479,8 +463,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			}
 		}
 		int eloGain = player.GetEloGain();
-		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
-		LogMessage(sQuery);
+		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);;
 		txn_UpdateElo.AddQuery(sQuery);
 		// UpdatePlayerInTable(player);
 	}

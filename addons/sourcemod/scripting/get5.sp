@@ -388,6 +388,7 @@ public void OnPluginStart() {
   RegAdminCmd("get5_loadteam", Command_LoadTeam, ADMFLAG_CHANGEMAP,
               "Loads a team data from a file into a team");
   RegAdminCmd("get5_endmatch", Command_EndMatch, ADMFLAG_CHANGEMAP, "Force ends the current match");
+  RegAdminCmd("get5_cancelmatch", Command_CancelMatch, ADMFLAG_CHANGEMAP, "Cancels the match.");
   RegAdminCmd("get5_addplayer", Command_AddPlayer, ADMFLAG_CHANGEMAP,
               "Adds a steamid to a match team");
   RegAdminCmd("get5_removeplayer", Command_RemovePlayer, ADMFLAG_CHANGEMAP,
@@ -781,6 +782,21 @@ static void CheckAutoLoadConfig() {
 /**
  * Client and server commands.
  */
+
+ public Action Command_CancelMatch(int client, int args)
+ {
+    if (g_GameState == Get5State_None) {
+     return Plugin_Handled;
+    }
+
+    ChangeState(Get5State_None);
+    UpdateClanTags();
+    Get5_MessageToAll("%t", "AdminForceEndInfoMessage");
+    RestoreCvars(g_MatchConfigChangedCvars);
+    StopRecording();
+
+    return Plugin_Handled;
+ }
 
 public Action Command_EndMatch(int client, int args) {
   if (g_GameState == Get5State_None) {

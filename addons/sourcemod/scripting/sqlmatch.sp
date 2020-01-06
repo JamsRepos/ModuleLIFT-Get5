@@ -110,7 +110,6 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
 	if (db == null)
 	{
-		LogMessage("Database Error: %s", sError);
 		CreateTimer(10.0, AttemptMySQLConnection);
 		return;
 	}
@@ -531,9 +530,7 @@ public void CloseMatchSocket()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	LogMessage("Socket starting end message send...");
 	SocketSend(g_hSocket, sData, sizeof(sData));
-	LogMessage("Socket sending message: %s", sData);
 }
 
 public Action Timer_KickEveryoneEnd(Handle timer)
