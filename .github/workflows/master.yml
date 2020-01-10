@@ -47,15 +47,8 @@ jobs:
       - name: Test Upload plugin files
         uses: actions/upload-artifact@master
         with: 
-          name: ModuleLIFT-Get5.${{ env.PLUGIN_VERSION}}
+          name: Compiled plugins
           path: Build/
-
-      - name: Release artifact
-        uses: fnkr/github-action-ghr@v1.2
-        env:
-          GHR_COMPRESS: zip
-          GHR_PATH: Build/
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
 
 
 
