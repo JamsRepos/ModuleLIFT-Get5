@@ -47,7 +47,7 @@ jobs:
       - name: Test Upload plugin files
         uses: actions/upload-artifact@master
         with: 
-          name: ModuleLIFT-Get5.${{ env.PLUGIN_VERSION }
+          name: ModuleLIFT-Get5.${{ env.PLUGIN_VERSION}}
           path: Build/
 
       - name: Release artifact
