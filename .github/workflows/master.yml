@@ -52,7 +52,6 @@ jobs:
 
       - name: Release artifact
         uses: fnkr/github-action-ghr@v1.2
-        if: startWith(github.ref, 'refs/tags/')
         env:
           GHR_COMPRESS: zip
           GHR_PATH: Build/
