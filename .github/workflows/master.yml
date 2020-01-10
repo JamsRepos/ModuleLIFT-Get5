@@ -14,7 +14,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v1
-
+      - uses: fnkr/github-action-ghr@v1.2
+      
       - name: Set ENV variables
         run: |
           VERSION=$(git rev-list --count HEAD)
@@ -51,7 +52,6 @@ jobs:
           path: Build/
 
       - name: Release artifact
-        uses: fnkr/github-action-ghr@v1
         if: startWith(github.ref, 'refs/tags/')
         env:
           GHR_COMPRESS: zip
