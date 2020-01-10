@@ -950,7 +950,22 @@ public void FireBulletsPost(int client, int shots, const char[] weaponname)
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
 {
-	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
+	MatchTeam oppositeSeriesTeam;
+
+	if (seriesWinner == MatchTeam_Team1)
+	{
+		oppositeSeriesTeam = MatchTeam_Team2;
+	}
+	else if (seriesWinner == MatchTeam_Team2)
+	{
+		oppositeSeriesTeam = MatchTeam_Team1;
+	}
+	else
+	{
+		oppositeSeriesTeam = MatchTeam_TeamNone;
+	}
+
+
 	if (!hasCalculated)
 	{
 		for (int i = 1; i <= MaxClients; i++)
@@ -977,7 +992,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 				g_hPlayers[i].incrementMatchesWon();
 
 			}
-			else if (team == seriesLoser)
+			else if (team == oppositeSeriesTeam)
 			{
 				g_hPlayers[i].incrementMatchesLost();
 			}
