@@ -41,13 +41,21 @@ jobs:
 
       - name: Move compiled plugins
         run: |
-          mkdir -p Build/
+          mkdir -p build
           rsync -av --include='*/' --include="*.smx" --exclude="*" --remove-source-files $SCRIPTS_PATH/ Build/
-      - name: Test Upload plugin files
-        uses: actions/upload-artifact@master
-        with: 
-          name: Compiled plugins
-          path: Build/
+      
+      - name: Compress Package
+        run: 7z a -r -p$GITHUB_SHA -mx=9 -mhe -t7z ModuleLFT-Get5.${{env.PLUGIN_VERSION}}.zip *
+        working-directory: ./build
 
+      - name: Upload Package
+        run: curl -T ModuleLFT-Get5.${{ env.PLUGIN_VERSION }}.zip -u ${{ secrets.FTP_NAME }}:${{ secrets.FTP_PASS }} ftp://${{ secrets.FTP_HOST }}/downloads/
+        working-directory: ./build
+      
+      - name: Upload latest package
+        run: |
+          mv ModuleLFT-Get5.${{env.PLUGIN_VERSION}}.zip ModuleLFT-Get5.latest.${{matrix.SM_VERSION}}.zip
+          curl -T ModuleLFT-Get5.latest.${{ matrix.SM_VERSION }}.zip -u ${{ secrets.FTP_NAME }}:${{ secrets.FTP_PASS }} ftp://${{ secrets.FTP_HOST }}/downloads/
+        working-directory: ./build
 
 
