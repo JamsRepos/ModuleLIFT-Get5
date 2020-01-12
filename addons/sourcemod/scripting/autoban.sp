@@ -4,6 +4,7 @@
 #include <SteamWorks>
 #include <socket>
 #include <smjansson>
+#include <base64>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
 
