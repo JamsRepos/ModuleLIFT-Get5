@@ -6,6 +6,7 @@
 #include <get5>
 #include <socket>
 #include <loadmatch>
+#include <base64>
 
 #pragma semicolon 1
 #pragma newdecls required
