@@ -55,7 +55,7 @@ public void OnPluginStart()
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
-	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "jf8u689shgfds", "pass for websocket");
+	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_MatchType = CreateConVar("sm_matchtype", "5v5", "The match type which we are loading and checking the connection for.");
 	AutoExecConfig(true, "loadmatch");
 

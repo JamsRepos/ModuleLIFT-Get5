@@ -60,11 +60,8 @@ public void OnPluginStart()
 	HookEvent("announce_phase_end", Event_HalfTime);
 
 	//ConVars
-	/*g_CVSiteURL = CreateConVar("sm_site_url", "", "Website url for viewing scores", FCVAR_PROTECTED);
-	g_CVEmbedColour = CreateConVar("sm_embed_color", "16741688", "Color to use for webhook (Must be decimal value)", FCVAR_PROTECTED);
-	g_CVEmbedAvatar = CreateConVar("sm_embed_avatar", "https://i.imgur.com/Y0J4yzv.png", "Avatar to use for webhook", FCVAR_PROTECTED);*/
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
-	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "jf8u689shgfds", "pass for websocket");
+	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_CVLeagueID = CreateConVar("sqlmatch_leagueid", "", "League identifier used for renting purposes.", FCVAR_PROTECTED);
 
 	AutoExecConfig(true, "sqlmatch");
