@@ -307,7 +307,7 @@ public void BanPlayer(int Client)
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
 
-	char sData[2048], sPort[16], sPackageKey[128], sIP[32] sDataEncoded[4096];
+	char sData[2048], sPort[16], sPackageKey[128], sIP[32], sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
