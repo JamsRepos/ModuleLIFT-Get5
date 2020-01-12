@@ -307,7 +307,7 @@ public void BanPlayer(int Client)
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
 
-	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
+	char sData[2048], sPort[16], sPackageKey[128], sIP[32] sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
@@ -328,6 +328,8 @@ public void BanPlayer(int Client)
 
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
+
+	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
 	SocketSend(g_hSocket, sData, sizeof(sData));
 }

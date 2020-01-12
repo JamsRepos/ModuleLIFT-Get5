@@ -514,7 +514,7 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 
 public void CloseMatchSocket()
 {
-	char sData[1024], sPass[128];
+	char sData[1024], sPass[128], sDataEncoded[2048];
 	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
 
 	Handle jsonObj = json_object();
@@ -526,8 +526,10 @@ public void CloseMatchSocket()
 
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
+	
+	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
-	SocketSend(g_hSocket, sData, sizeof(sData));
+	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
 }
 
 public Action Timer_KickEveryoneEnd(Handle timer)

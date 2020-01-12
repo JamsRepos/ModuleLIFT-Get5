@@ -5,6 +5,7 @@
 #include <cstrike>
 #include <sdktools>
 #include <socket>
+#include <base64>
 
 char g_sMatchID[38];
 //ArrayList g_Players;
@@ -19,7 +20,7 @@ Handle g_hSocket;
 ConVar g_CVServerIp;
 ConVar g_CVWebsocketPass;
 
-int g_connectTimer = 300;
+int g_connectTimer = 300
 
 StringMap g_NameMap;
 
@@ -381,7 +382,7 @@ static void CheckWaitingTimes() {
 
 public void EndMatchSocket()
 {
-	char sQuery[1024];
+	char sQuery[1024], sDataEncoded[2048];
 	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
 	g_Database.Query(SQL_GenericQuery, sQuery);
 
@@ -397,6 +398,8 @@ public void EndMatchSocket()
 
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
+	
+	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
 	SocketSend(g_hSocket, sData, sizeof(sData));
 }
