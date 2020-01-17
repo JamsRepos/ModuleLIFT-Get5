@@ -44,6 +44,7 @@ public void OnPluginStart()
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 	HookEvent("player_connect_full", Event_PlayerConnect);
+	HookEvent("switch_team", Event_SwitchTeam);
 
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
@@ -70,8 +71,8 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-	CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
+	// CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	// CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
@@ -80,6 +81,9 @@ public void OnPluginStart()
 public void OnMapStart()
 {
 	GameRules_SetProp("m_bIsQueuedMatchmaking", 1);
+	ServerCommand("mp_warmuptime 60");
+	ServerCommand("mp_warmup_pausetimer 1");
+
 }
 
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
@@ -89,6 +93,7 @@ public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadca
 	FireNameChangeEvent(true);
 }
 
+// Key method.
 public void CheckPlayerCount()
 {
 	if (Get5_GetGameState() == Get5State_None) {
@@ -222,22 +227,6 @@ stock int GetRealClientCount() {
   return clients;
 }
 
-/* Initialise Warmup */
-stock void StartWarmup(int warmupTime = 60) {
-  ServerCommand("mp_do_warmup_period 1");
-  ServerCommand("mp_warmuptime %d", warmupTime);
-  ServerCommand("mp_warmup_start");
-}
-
-stock void EndWarmup(int time = 0) {
-  if (time == 0) {
-    ServerCommand("mp_warmup_end");
-  } else {
-    ServerCommand("mp_warmup_pausetimer 0");
-    ServerCommand("mp_warmuptime %d", time);
-  }
-}
-
 /* "Ready" system */
 stock bool IsPlayer(int client) {
   return IsClientInGame(client) && !IsFakeClient(client);
@@ -303,67 +292,106 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 	}
 }
 
-// Need to look at merging Timer_ConnectionTimer and Timer_PlayerCount.
-public Action Timer_ConnectionTimer(Handle timer) {
-	if (Get5_GetGameState() == Get5State_None) {
-		return Plugin_Continue;
-	}
-
-	if (Get5_GetGameState() <= Get5State_Warmup && Get5_GetGameState() != Get5State_None) {
-    	if (GetRealClientCount() < 1) {
-      		StartWarmup(g_connectTimer);
-    	}
-  	}
-
-	if (Get5_GetGameState() == Get5State_Warmup) {
-		if (!IsEveryoneReady()) {
-			CheckWaitingTimes();
-		}
-	}
-	return Plugin_Continue;
-}
-
-// Need to look at this.
-public Action Timer_PlayerCount(Handle timer) {
+public void Event_SwitchTeam(Event event, const char[] name, bool dontBroadcast)
+{
+	static int numPlayers_previous;
+	int m_bWarmupPeriod = GameRules_GetProp("m_bWarmupPeriod");
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
 
-	if (Get5_GetGameState() == Get5State_Warmup)
+	int numPlayers = event.GetInt("numPlayers");
+
+	if (!m_bWarmupPeriod && numPlayers <= 1 && numPlayers_previous > numPlayers)
 	{
-		if (IsEveryoneReady()) 
+		if (StrEqual(matchtype, "5v5"))
 		{
-			PrintToChatAll("%s All players have connected. Match will start in 15 seconds.", ChatTag);
-			EndWarmup(15);
-			CreateTimer(10.0, Timer_StartMatch);
-			return Plugin_Stop;
+			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - numPlayers);
+			ServerCommand("mp_warmup_pausetimer 1");
+			ServerCommand("mp_warmup_start");
+		}
+		else if (StrEqual(matchtype, "2v2"))
+		{
+			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - numPlayers);
+			ServerCommand("mp_warmup_pausetimer 1");
+			ServerCommand("mp_warmup_start");
 		}
 		else
 		{
-			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
-			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
-			int playersOnServer = playersonTerrorist+playersOnCT; 
-			if (StrEqual(matchtype, "5v5"))
-			{
-				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - playersOnServer);
-			}
-
-			if (StrEqual(matchtype, "2v2"))
-			{
-				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - playersOnServer);
-			}
-
-			if (StrEqual(matchtype, "1v1"))
-			{
-				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - playersOnServer);
-			}
+			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - numPlayers);
+			ServerCommand("mp_warmup_pausetimer 1");
+			ServerCommand("mp_warmup_start");
 		}
 	}
-	return Plugin_Continue;
+
+	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
+	{
+		ServerCommand("mp_warmup_pausetimer 0")
+	}
+
+	CheckWaitingTimes();
+
+	numPlayers_previous = numPlayers;
 }
 
-static void CheckWaitingTimes() {
-	//g_timeUsed++;
+// Need to look at merging Timer_ConnectionTimer and Timer_PlayerCount.
+// public Action Timer_ConnectionTimer(Handle timer) {
+// 	if (Get5_GetGameState() == Get5State_None) {
+// 		return Plugin_Continue;
+// 	}
 
+// 	if (Get5_GetGameState() <= Get5State_Warmup && Get5_GetGameState() != Get5State_None) {
+//     	if (GetRealClientCount() < 1) {
+//       		StartWarmup(g_connectTimer);
+//     	}
+//   	}
+
+// 	if (Get5_GetGameState() == Get5State_Warmup) {
+// 		if (!IsEveryoneReady()) {
+// 			CheckWaitingTimes();
+// 		}
+// 	}
+// 	return Plugin_Continue;
+// }
+
+// Need to look at this.
+// public Action Timer_PlayerCount(Handle timer) {
+// 	char matchtype[32];
+// 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
+
+// 	if (Get5_GetGameState() == Get5State_Warmup)
+// 	{
+// 		if (IsEveryoneReady()) 
+// 		{
+// 			PrintToChatAll("%s All players have connected. Match will start in 15 seconds.", ChatTag);
+// 			EndWarmup(15);
+// 			CreateTimer(10.0, Timer_StartMatch);
+// 			return Plugin_Stop;
+// 		}
+// 		else
+// 		{
+// 			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
+// 			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
+// 			int playersOnServer = playersonTerrorist+playersOnCT; 
+// 			if (StrEqual(matchtype, "5v5"))
+// 			{
+// 				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - playersOnServer);
+// 			}
+
+// 			if (StrEqual(matchtype, "2v2"))
+// 			{
+// 				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - playersOnServer);
+// 			}
+
+// 			if (StrEqual(matchtype, "1v1"))
+// 			{
+// 				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - playersOnServer);
+// 			}
+// 		}
+// 	}
+// 	return Plugin_Continue;
+// }
+
+static void CheckWaitingTimes() {
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
 
