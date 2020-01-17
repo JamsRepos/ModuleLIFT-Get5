@@ -227,6 +227,15 @@ stock int GetRealClientCount() {
   return clients;
 }
 
+stock void EndWarmup(int time = 0) {
+  if (time == 0) {
+    ServerCommand("mp_warmup_end");
+  } else {
+    ServerCommand("mp_warmup_pausetimer 0");
+    ServerCommand("mp_warmuptime %d", time);
+  }
+}
+
 /* "Ready" system */
 stock bool IsPlayer(int client) {
   return IsClientInGame(client) && !IsFakeClient(client);
