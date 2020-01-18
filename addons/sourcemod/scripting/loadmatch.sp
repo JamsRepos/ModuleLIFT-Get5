@@ -112,26 +112,6 @@ public void CheckPlayerCount()
 			CreateTimer(10.0, Timer_StartMatch);
 			return;
 		}
-		else
-		{
-			int playersonTerrorist = GetRealTeamCount(CS_TEAM_T);
-			int playersOnCT = GetRealTeamCount(CS_TEAM_CT);
-			int playersOnServer = playersonTerrorist+playersOnCT; 
-			if (StrEqual(matchtype, "5v5"))
-			{
-				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - playersOnServer);
-			}
-
-			if (StrEqual(matchtype, "2v2"))
-			{
-				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - playersOnServer);
-			}
-
-			if (StrEqual(matchtype, "1v1"))
-			{
-				PrintToChatAll("%s Waiting for %i more player to join the match...", ChatTag, 2 - playersOnServer);
-			}
-		}
 	}
 	return;
 }
@@ -357,7 +337,12 @@ public Action Timer_ConnectionTimer(Handle timer) {
 static void CheckWaitingTimes() {
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
-		LogMessage("Time Left. %i", timeLeft);
+		int minutes = timeLeft / 60;
+
+		if (timeLeft % 60)
+		{
+			PrintToChatALl("%s %i remaining to join the server.", ChatTag, minutes);
+		}
 
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
@@ -365,7 +350,7 @@ static void CheckWaitingTimes() {
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
 					EndMatchSocket();
-					KickClient(i, "Players did not connect in time. Match has been cancelled");
+					KickClient(i, "Players did not connect in time. Match has been cancelled.");
 				}
 			}
 		}
