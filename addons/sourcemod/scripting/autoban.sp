@@ -84,7 +84,7 @@ public void OnPluginStart()
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
 	g_hCVServerIp = CreateConVar("sm_autoban_websocket_ip", "127.0.0.1", "IP to connect to for sending ban messages.");
 	g_hCVPackageKey = CreateConVar("sm_autoban_package_key", "PLEASECHANGEME", "The package key / Secret key to communicate with the socket.");
-	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "300", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
+	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "150", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
 
 	//Create Socket
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
