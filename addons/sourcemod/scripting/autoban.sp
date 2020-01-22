@@ -186,7 +186,7 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
 	if (db == null)
 	{
-		LogMessage("Database Error: %s", sError);
+		LogError("Database Error: %s", sError);
 		CreateTimer(10.0, AttemptMySQLConnection);
 		return;
 	}
@@ -518,7 +518,7 @@ stock bool InFreezeTime()
 
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
-	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused() || InFreezeTime()) return Plugin_Continue;
+	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(client) || g_bBanned[client] || IsPaused() || InFreezeTime()) return Plugin_Continue;
 
 	if (IsClientSourceTV(client) || IsFakeClient(client))
 		return Plugin_Continue;
@@ -535,7 +535,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		char sSteamID[64];
 		if(!GetClientAuthId(client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
 		{
-			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.", client);
+			LogError("OnPlayerRunCmd(): Failed to get %N's SteamID, not going to add player to disconnect list.", client);
 			return Plugin_Continue;
 		}
 
