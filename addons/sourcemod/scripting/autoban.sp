@@ -98,6 +98,7 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	CreateTimer(1.0, GlobalSecondTimer, _, TIMER_REPEAT);
+	Database.Connect(SQL_InitialConnection, "auto_ban");
 }
 
 public Action GlobalSecondTimer(Handle hTimer)
