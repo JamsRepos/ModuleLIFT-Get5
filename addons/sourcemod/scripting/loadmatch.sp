@@ -44,7 +44,7 @@ public void OnPluginStart()
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
 	HookEvent("player_connect_full", Event_PlayerConnect);
-	HookEvent("switch_team", Event_SwitchTeam);
+	HookEvent("player_spawn", Event_PlayerSpawn); 
 
 	//Create ArrayList
 	//g_Players = new ArrayList(32);
@@ -71,8 +71,7 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-	// CreateTimer(15.0, Timer_PlayerCount, _, TIMER_REPEAT);
+	CreateTimer(60.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
@@ -281,7 +280,7 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 	}
 }
 
-public void Event_SwitchTeam(Event event, const char[] name, bool dontBroadcast)
+public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	static int numPlayers_previous;
 	bool countdownStart = false;
@@ -289,7 +288,7 @@ public void Event_SwitchTeam(Event event, const char[] name, bool dontBroadcast)
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
 
-	int numPlayers = event.GetInt("numPlayers");
+	int numPlayers = GetClientCount();
 
 	if (!m_bWarmupPeriod && numPlayers <= 1 && numPlayers_previous > numPlayers)
 	{
