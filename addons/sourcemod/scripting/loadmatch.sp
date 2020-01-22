@@ -19,6 +19,7 @@ ConVar g_MatchType;
 Handle g_hSocket;
 ConVar g_CVServerIp;
 ConVar g_CVWebsocketPass;
+ConVar g_warmupTimerValue;
 
 int g_connectTimer = 300
 
@@ -59,6 +60,8 @@ public void OnPluginStart()
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
 	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_MatchType = CreateConVar("sm_matchtype", "5v5", "The match type which we are loading and checking the connection for.");
+
+	g_warmupTimerValue = FindConVar("mp_warmup_pausetimer");
 	AutoExecConfig(true, "loadmatch");
 
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
@@ -71,7 +74,8 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	CreateTimer(60.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	CreateTimer(0.1, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
@@ -283,13 +287,14 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	static int numPlayers_previous;
-	bool countdownStart = false;
 	int m_bWarmupPeriod = GameRules_GetProp("m_bWarmupPeriod");
+	LogMessage("m_bWarmupPeriod: %i", m_bWarmupPeriod);
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
 
-	int numPlayers = GetClientCount();
-
+	int numPlayers = GetPlayerCount();
+	LogMessage("numPlayers %i", numPlayers);
+	LogMessage("numPlayers_previous %i", numPlayers_previous);
 	if (!m_bWarmupPeriod && numPlayers <= 1 && numPlayers_previous > numPlayers)
 	{
 		if (StrEqual(matchtype, "5v5"))
@@ -333,15 +338,34 @@ public Action Timer_ConnectionTimer(Handle timer) {
 	return Plugin_Continue;
 }
 
-static void CheckWaitingTimes() {
-	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
+public Action Timer_PrintConnectTimer(Handle timer)
+{
+	if (Get5_GetGameState() == Get5State_Warmup && (GetConVarInt(g_warmupTimerValue) == 0))
+	{
+		if (!IsEveryoneReady()) 
+		{
+			PrintWaitTime();
+		}
+	}
+}
+
+static void PrintWaitTime()
+{
+	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) 
+	{
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
 		int minutes = timeLeft / 60;
 
-		if (timeLeft % 60)
+		if (timeLeft % 60 && !(timeLeft <= 60))
 		{
 			PrintToChatAll("%s %i remaining to join the server.", ChatTag, minutes);
 		}
+	}
+}
+
+static void CheckWaitingTimes() {
+	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
+		int timeLeft = FloatToInt(GetWarmupLeftTime());
 
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
@@ -778,3 +802,16 @@ public int Native_GetCurrentMatchId(Handle plugin, int numParams)
 	SetNativeString(1, g_sMatchID, sizeof(g_sMatchID));
 	return 1;
 }
+
+stock int GetPlayerCount()
+{
+    int PlayerNumb = 0;
+    for (int x = 1; x <= MaxClients; x++)
+    {
+        if(IsClientInGame(x) && !IsFakeClient(x))
+        {
+            PlayerNumb++;
+        }
+    }
+    return PlayerNumb;
+}  
