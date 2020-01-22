@@ -30,7 +30,7 @@ Handle g_hSocket;
 ConVar g_CVEmbedColour;
 ConVar g_CVEmbedAvatar;*/
 ConVar g_CVServerIp;
-ConVar g_CVWebsocketPass;
+//ConVar g_CVWebsocketPass;
 ConVar g_CVLeagueID;
 
 //ArrayList ga_sWinningPlayers;
@@ -62,7 +62,7 @@ public void OnPluginStart()
 
 	//ConVars
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
-	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
+	//g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_CVLeagueID = CreateConVar("sqlmatch_leagueid", "", "League identifier used for renting purposes.", FCVAR_PROTECTED);
 
 	AutoExecConfig(true, "sqlmatch");
@@ -515,13 +515,11 @@ public Action Timer_KickEveryoneSurrender(Handle timer)
 
 public void CloseMatchSocket()
 {
-	char sData[1024], sPass[128], sDataEncoded[2048];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+	char sData[1024], sDataEncoded[2048];
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(1));
 	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
