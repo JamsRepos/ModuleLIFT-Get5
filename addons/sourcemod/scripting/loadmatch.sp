@@ -80,7 +80,7 @@ public void OnPluginStart()
 
 public void OnMapStart()
 {
-	GameRules_SetProp("m_bIsQueuedMatchmaking", 1);
+	// GameRules_SetProp("m_bIsQueuedMatchmaking", 1);
 	ServerCommand("mp_warmuptime 300");
 	ServerCommand("mp_warmup_pausetimer 1");
 
