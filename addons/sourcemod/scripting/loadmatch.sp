@@ -358,7 +358,7 @@ static void PrintWaitTime()
 
 		if (timeLeft % 60 && !(timeLeft <= 60))
 		{
-			PrintToChatAll("%s %i remaining to join the server.", ChatTag, minutes);
+			PrintToChatAll("%s %i minute(s) remaining to join the server.", ChatTag, minutes);
 		}
 	}
 }
