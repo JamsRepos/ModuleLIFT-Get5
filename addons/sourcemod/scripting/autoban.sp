@@ -36,7 +36,7 @@ BanReason g_eBanReason[MAXPLAYERS + 1];
 
 ConVar g_hCVFallbackTime;
 ConVar g_hCVServerIp;
-ConVar g_hCVPackageKey;
+//ConVar g_hCVPackageKey;
 ConVar g_hCVGracePeriod;
 
 Handle g_hSocket;
@@ -83,8 +83,8 @@ public void OnPluginStart()
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
 	g_hCVServerIp = CreateConVar("sm_autoban_websocket_ip", "127.0.0.1", "IP to connect to for sending ban messages.");
-	g_hCVPackageKey = CreateConVar("sm_autoban_package_key", "PLEASECHANGEME", "The package key / Secret key to communicate with the socket.");
-	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "300", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
+	//g_hCVPackageKey = CreateConVar("sm_autoban_package_key", "PLEASECHANGEME", "The package key / Secret key to communicate with the socket.");
+	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "150", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
 
 	//Create Socket
 	g_hSocket = SocketCreate(SOCKET_TCP, OnSocketError);
@@ -186,7 +186,7 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 {
 	if (db == null)
 	{
-		LogMessage("Database Error: %s", sError);
+		LogError("Database Error: %s", sError);
 		CreateTimer(10.0, AttemptMySQLConnection);
 		return;
 	}
@@ -308,11 +308,10 @@ public void BanPlayer(int Client)
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
 
-	char sData[2048], sPort[16], sPackageKey[128], sIP[32], sDataEncoded[4096];
+	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
-	g_hCVPackageKey.GetString(sPackageKey, sizeof(sPackageKey));
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
 
 	Handle jsonObj = json_object();
@@ -320,7 +319,6 @@ public void BanPlayer(int Client)
 	json_object_set_new(jsonObj, "server", json_string(sIP));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string(sReason));
-	json_object_set_new(jsonObj, "pass", json_string(sPackageKey));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
@@ -332,7 +330,7 @@ public void BanPlayer(int Client)
 
 	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
-	SocketSend(g_hSocket, sData, sizeof(sData));
+	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
 }
 
 public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError, DataPack data)
@@ -404,19 +402,17 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 		if(StrEqual(sSteamID, sCompareId)) return Plugin_Stop;
 	}
 
-	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
+	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	g_hCVPackageKey.GetString(sPackageKey, sizeof(sPackageKey));
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(2));
 	json_object_set_new(jsonObj, "server", json_string(sIP));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string("Automatic Left Match Ban"));
-	json_object_set_new(jsonObj, "pass", json_string(sPackageKey));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
@@ -427,7 +423,9 @@ public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	SocketSend(g_hSocket, sData, sizeof(sData));
+	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
+
+	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
 	
 	return Plugin_Stop;
 }
@@ -447,19 +445,17 @@ public Action Timer_AfkBan(Handle hTimer, DataPack disconnectPack)
 		if(StrEqual(sSteamID, sCompareId)) return Plugin_Stop;
 	}
 
-	char sData[2048], sPort[16], sPackageKey[128], sIP[32];
+	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
 	SteamWorks_GetPublicIP(ip);
 	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-	g_hCVPackageKey.GetString(sPackageKey, sizeof(sPackageKey));
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(2));
 	json_object_set_new(jsonObj, "server", json_string(sIP));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string("Automatic AFK Ban"));
-	json_object_set_new(jsonObj, "pass", json_string(sPackageKey));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
@@ -470,7 +466,9 @@ public Action Timer_AfkBan(Handle hTimer, DataPack disconnectPack)
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	SocketSend(g_hSocket, sData, sizeof(sData));
+	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
+
+	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
 	
 	return Plugin_Stop;
 }
@@ -520,7 +518,7 @@ stock bool InFreezeTime()
 
 public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3], float angles[3], int& weapon, int& subtype, int& cmdnum, int& tickcount, int& seed, int mouse[2])
 {
-	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[client] || IsPaused() || InFreezeTime()) return Plugin_Continue;
+	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(client) || g_bBanned[client] || IsPaused() || InFreezeTime()) return Plugin_Continue;
 
 	if (IsClientSourceTV(client) || IsFakeClient(client))
 		return Plugin_Continue;
@@ -537,7 +535,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		char sSteamID[64];
 		if(!GetClientAuthId(client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
 		{
-			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.", client);
+			LogError("OnPlayerRunCmd(): Failed to get %N's SteamID, not going to add player to disconnect list.", client);
 			return Plugin_Continue;
 		}
 
