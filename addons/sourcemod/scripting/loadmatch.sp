@@ -44,7 +44,6 @@ public void OnPluginStart()
 	HookEvent("player_changename", Event_NameChange);
 	//HookEvent("player_spawn", Event_PlayerSpawn);
 	HookEvent("announce_phase_end", Event_Halftime);
-	HookEvent("player_connect_full", Event_PlayerConnect);
 	HookEvent("player_spawn", Event_PlayerSpawn); 
 
 	//Create ArrayList
@@ -91,7 +90,6 @@ public void OnMapStart()
 
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
-	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
 	LoadPlayerDiscordNames();
 	FireNameChangeEvent(true);
 }
@@ -323,6 +321,8 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	}
 
 	numPlayers_previous = numPlayers;
+
+	CheckPlayerCount();
 }
 
 public Action Timer_ConnectionTimer(Handle timer) {
