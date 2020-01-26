@@ -117,15 +117,6 @@ public void CheckPlayerCount()
 	return;
 }
 
-public void Frame_PlayerConnect(any data)
-{
-	int client = GetClientOfUserId(view_as<int>(data));
-	if (client)
-	{
-		CheckPlayerCount();
-	}
-}
-
 void ConnectRelay()
 {	
 	if (!SocketIsConnected(g_hSocket))
@@ -321,8 +312,6 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	}
 
 	numPlayers_previous = numPlayers;
-
-	CheckPlayerCount();
 }
 
 public Action Timer_ConnectionTimer(Handle timer) {
@@ -366,7 +355,7 @@ static void PrintWaitTime()
 static void CheckWaitingTimes() {
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
-
+		CheckPlayerCount();
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
 			UpdateMatchStatus();
