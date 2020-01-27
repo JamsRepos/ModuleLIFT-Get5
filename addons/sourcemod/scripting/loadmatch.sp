@@ -44,7 +44,7 @@ public void OnPluginStart()
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("player_changename", Event_NameChange);
-	//HookEvent("player_spawn", Event_PlayerSpawn);
+	HookEvent("player_connect_full", Event_PlayerConnect);
 	HookEvent("announce_phase_end", Event_Halftime);
 	HookEvent("player_spawn", Event_PlayerSpawn); 
 
@@ -92,8 +92,18 @@ public void OnMapStart()
 
 public void Event_PlayerConnect(Event event, const char[] name, bool dontBroadcast)
 {
+	RequestFrame(Frame_PlayerConnect, event.GetInt("userid"));
 	LoadPlayerDiscordNames();
 	FireNameChangeEvent(true);
+}
+
+public void Frame_PlayerConnect(any data)
+{
+	int client = GetClientOfUserId(view_as<int>(data));
+	if (client)
+	{
+		CheckPlayerCount();
+	}
 }
 
 // Key method.
@@ -312,11 +322,6 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
-	}
-
-	if (m_bWarmupPeriod && numPlayers >= 10 && numPlayers_previous < numPlayers)
-	{
-		CheckPlayerCount();
 	}
 
 	numPlayers_previous = numPlayers;
