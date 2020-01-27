@@ -314,7 +314,6 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		ServerCommand("mp_warmup_pausetimer 0")
 	}
 
-	CheckPlayerCount();
 	numPlayers_previous = numPlayers;
 }
 
