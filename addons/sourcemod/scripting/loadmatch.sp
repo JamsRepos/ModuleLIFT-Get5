@@ -75,7 +75,7 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	CreateTimer(0.1, Timer_ConnectionTimer, _, TIMER_REPEAT);
+	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
 	CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
@@ -333,10 +333,10 @@ public Action Timer_ConnectionTimer(Handle timer) {
 	}
 
 	if (Get5_GetGameState() == Get5State_Warmup) {
-		if (!IsEveryoneReady()) {
-			CheckWaitingTimes();
-		}
+		CheckWaitingTimes();
 	}
+	
+	CheckPlayerCount();
 	return Plugin_Continue;
 }
 
