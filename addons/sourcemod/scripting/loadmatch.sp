@@ -25,6 +25,8 @@ int g_connectTimer = 300
 
 StringMap g_NameMap;
 
+bool g_matchStarted = false;
+
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
 
@@ -104,10 +106,11 @@ public void CheckPlayerCount()
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
 
-	if (Get5_GetGameState() == Get5State_Warmup)
+	if (Get5_GetGameState() == Get5State_Warmup && !g_matchStarted)
 	{
 		if (IsEveryoneReady()) 
 		{
+			g_matchStarted = true;
 			PrintToChatAll("%s All players have connected. Match will start in 15 seconds.", ChatTag);
 			EndWarmup(15);
 			CreateTimer(10.0, Timer_StartMatch);
@@ -311,6 +314,7 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		ServerCommand("mp_warmup_pausetimer 0")
 	}
 
+	CheckPlayerCount();
 	numPlayers_previous = numPlayers;
 }
 
@@ -355,7 +359,6 @@ static void PrintWaitTime()
 static void CheckWaitingTimes() {
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
-		CheckPlayerCount();
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
 			UpdateMatchStatus();
