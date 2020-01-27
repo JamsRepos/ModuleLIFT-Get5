@@ -258,6 +258,11 @@ public bool IsEveryoneReady() {
 	{
 		if (GetRealTeamCount(CS_TEAM_CT) == 2 && GetRealTeamCount(CS_TEAM_T) == 2) return true; 
 	}
+
+	else if (StrEqual(matchtype, "DEBUG"))
+	{
+		if (GetRealTeamCount(CS_TEAM_CT) == 1 || GetRealTeamCount(CS_TEAM_T) == 1) return true;
+	}
 	
 	return false;
 }
@@ -297,32 +302,35 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	int numPlayers = GetPlayerCount();
 	LogMessage("numPlayers %i", numPlayers);
 	LogMessage("numPlayers_previous %i", numPlayers_previous);
-	if (!m_bWarmupPeriod && numPlayers <= 1 && numPlayers_previous > numPlayers)
+	if (!StrEqual(matchtype, "DEBUG"))
 	{
-		if (StrEqual(matchtype, "5v5"))
+		if (!m_bWarmupPeriod && numPlayers <= 1 && numPlayers_previous > numPlayers)
 		{
-			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - numPlayers);
-			ServerCommand("mp_warmup_pausetimer 1");
-			ServerCommand("mp_warmup_start");
-		}
-		else if (StrEqual(matchtype, "2v2"))
-		{
-			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - numPlayers);
-			ServerCommand("mp_warmup_pausetimer 1");
-			ServerCommand("mp_warmup_start");
-		}
-		else
-		{
-			PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - numPlayers);
-			ServerCommand("mp_warmup_pausetimer 1");
-			ServerCommand("mp_warmup_start");
+			if (StrEqual(matchtype, "5v5"))
+			{
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 10 - numPlayers);
+				ServerCommand("mp_warmup_pausetimer 1");
+				ServerCommand("mp_warmup_start");
+			}
+			else if (StrEqual(matchtype, "2v2"))
+			{
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 4 - numPlayers);
+				ServerCommand("mp_warmup_pausetimer 1");
+				ServerCommand("mp_warmup_start");
+			}
+			else
+			{
+				PrintToChatAll("%s Waiting for %i more player(s) to join the match...", ChatTag, 2 - numPlayers);
+				ServerCommand("mp_warmup_pausetimer 1");
+				ServerCommand("mp_warmup_start");
+			}
 		}
 	}
 
 	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
-	}
+	} 
 
 	numPlayers_previous = numPlayers;
 }
@@ -335,7 +343,7 @@ public Action Timer_ConnectionTimer(Handle timer) {
 	if (Get5_GetGameState() == Get5State_Warmup) {
 		CheckWaitingTimes();
 	}
-	
+
 	CheckPlayerCount();
 	return Plugin_Continue;
 }
