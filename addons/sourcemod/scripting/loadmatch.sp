@@ -314,6 +314,11 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		ServerCommand("mp_warmup_pausetimer 0")
 	}
 
+	if (m_bWarmupPeriod && numPlayers >= 10 && numPlayers_previous < numPlayers)
+	{
+		CheckPlayerCount();
+	}
+
 	numPlayers_previous = numPlayers;
 }
 
