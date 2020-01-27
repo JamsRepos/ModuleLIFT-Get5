@@ -344,13 +344,13 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 {
 	char sSteamID[64];
 	char sReason[128];
-	
+	 
 	if(results == null)
 	{
 		PrintToServer("MySQL Query Failed: %s", sError);
 		LogError("MySQL Query Failed: %s", sError);
 
-		char sSteamID[64], char sReason[128];
+		// char sSteamID[64], char sReason[128];
 		data.Reset();
 		data.ReadString(sSteamID, sizeof(sSteamID));
 		data.ReadString(sReason, sizeof(sReason));
@@ -360,7 +360,9 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 			LogError("SQL_InsertBan(): Failed to ban SteamID %s via SM natives :(", sSteamID);
 		return;
 	}
-
+	
+	data.ReadString(sSteamID, sizeof(sSteamID));
+	data.ReadString(sReason, sizeof(sReason));
 	ExecuteBanMessageSocket(sSteamID, sReason);
 }
 
