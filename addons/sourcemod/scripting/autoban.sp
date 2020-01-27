@@ -325,6 +325,23 @@ public void BanPlayer(int Client)
 
 	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
 	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
+}
+
+public void ExecuteBanMessageSocket()
+{
+	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
+	int ip[4];
+	FindConVar("hostport").GetString(sPort, sizeof(sPort));
+	SteamWorks_GetPublicIP(ip);
+	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+
+	Handle jsonObj = json_object();
+	json_object_set_new(jsonObj, "type", json_integer(2));
+	json_object_set_new(jsonObj, "server", json_string(sIP));
+	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
+	json_object_set_new(jsonObj, "reason", json_string(sReason));
+	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
+	CloseHandle(jsonObj);
 
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
@@ -332,6 +349,7 @@ public void BanPlayer(int Client)
 	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
 	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
+
 }
 
 public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError, DataPack data)
@@ -350,6 +368,8 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 			LogError("SQL_InsertBan(): Failed to ban SteamID %s via SM natives :(", sSteamID);
 		return;
 	}
+
+	ExecuteBanMessageSocket();
 }
 
 public void Get5_OnGoingLive(int mapNumber)
