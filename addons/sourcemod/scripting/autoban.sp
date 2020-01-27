@@ -304,31 +304,19 @@ public void BanPlayer(int Client)
 
 	DataPack steamPack = new DataPack();
 	steamPack.WriteString(sSteamID);
+	steamPack.WriteString(sReason);
 
 	g_bBanned[Client] = true;
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
 
-	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
-	int ip[4];
-	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-	SteamWorks_GetPublicIP(ip);
-	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
-
-	Handle jsonObj = json_object();
-	json_object_set_new(jsonObj, "type", json_integer(2));
-	json_object_set_new(jsonObj, "server", json_string(sIP));
-	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
-	json_object_set_new(jsonObj, "reason", json_string(sReason));
-	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
-	CloseHandle(jsonObj);
-
 	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
 	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
 }
 
-public void ExecuteBanMessageSocket()
+public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 {
+
 	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
 	int ip[4];
 	FindConVar("hostport").GetString(sPort, sizeof(sPort));
@@ -362,6 +350,7 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 		char sSteamID[64];
 		data.Reset();
 		data.ReadString(sSteamID, sizeof(sSteamID));
+		data.ReadString(sReason, sizeof(sReason));
 		delete data;
 		LogError("SQL_InsertBan(): Failed to insert ban for SteamID %s, trying to ban via SM natives instead.", sSteamID);
 		if(!BanIdentity(sSteamID, g_hCVFallbackTime.IntValue, BANFLAG_AUTHID, "Fallback ban"))
@@ -369,7 +358,7 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 		return;
 	}
 
-	ExecuteBanMessageSocket();
+	ExecuteBanMessageSocket(sSteamID, sReason);
 }
 
 public void Get5_OnGoingLive(int mapNumber)
