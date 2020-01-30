@@ -1269,11 +1269,11 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
 
     if (Get5_MatchTeamToCSTeam(MatchTeam_Team2) == CS_TEAM_CT)
     {
-      g_TeamSideLetter[MatchTeam_Team1] = "\x0CCT";
+      g_TeamSideLetter[MatchTeam_Team2] = "\x0CCT";
     } 
     else
     {
-      g_TeamSideLetter[MatchTeam_Team1] = "\x07T";
+      g_TeamSideLetter[MatchTeam_Team2] = "\x07T";
     }
 
     Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1], 
