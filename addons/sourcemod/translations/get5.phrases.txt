@@ -239,8 +239,8 @@
     }
     "CurrentScoreInfoMessage"
     {
-        "#format"       "{1:s},{2:d},{3:d},{4:s}"
-        "en"            "{LIGHT_GREEN}{1} {GREEN}{2} {NORMAL}- {GREEN}{3} {LIGHT_GREEN}{4}"
+        "#format"       "{1:s},{2:s},{3:d},{4:d},{5:s},{6:s}"
+        "en"            "{NORMAL}{1}({2})  {GREEN}{3}{NORMAL}:{GREEN}{4} {NORMAL}{5}({6})"
     }
     "BackupLoadedInfoMessage"
     {

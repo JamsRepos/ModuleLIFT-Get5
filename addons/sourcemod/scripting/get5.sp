@@ -101,6 +101,7 @@ ArrayList g_MapPoolList = null;
 ArrayList g_TeamAuths[MatchTeam_Count];
 StringMap g_PlayerNames;
 char g_TeamNames[MatchTeam_Count][MAX_CVAR_LENGTH];
+char g_TeamSide[MatchTeam_Count][MAX_CVAR_LENGTH];
 char g_TeamTags[MatchTeam_Count][MAX_CVAR_LENGTH];
 char g_FormattedTeamNames[MatchTeam_Count][MAX_CVAR_LENGTH];
 char g_TeamFlags[MatchTeam_Count][MAX_CVAR_LENGTH];
@@ -1257,10 +1258,35 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     int csTeamWinner = event.GetInt("winner");
     int csReason = event.GetInt("reason");
 
-    Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1],
+    if (Get5_MatchTeamToCSTeam(MatchTeam_Team1) == CS_TEAM_CT)
+    {
+      g_TeamSide[MatchTeam_Team1] = "\x0CCT";
+    } 
+    else
+    {
+      g_TeamSide[MatchTeam_Team1] = "\x02T";
+    }
+
+    if (Get5_MatchTeamToCSTeam(MatchTeam_Team2) == CS_TEAM_CT)
+    {
+      g_TeamSide[MatchTeam_Team1] = "\x0CCT";
+    } 
+    else
+    {
+      g_TeamSide[MatchTeam_Team1] = "\x02T";
+    }
+
+    Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1], 
+                      g_TeamSide[MatchTeam_Team1],
                       CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team1)),
                       CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team2)),
+                      g_TeamSide[MatchTeam_Team2],
                       g_TeamNames[MatchTeam_Team2]);
+
+    // Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1],
+    //                   CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team1)),
+    //                   CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team2)),
+    //                   g_TeamNames[MatchTeam_Team2]);
 
     Stats_RoundEnd(csTeamWinner);
 
