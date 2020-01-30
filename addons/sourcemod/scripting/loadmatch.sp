@@ -459,7 +459,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public Action Timer_StartMatch(Handle timer)
 {
-	PrintToChatAll("%s Match has been started.", ChatTag);
 	ServerCommand("get5_forceready");
 }
 

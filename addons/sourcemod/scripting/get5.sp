@@ -1283,11 +1283,6 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
                       g_TeamNames[MatchTeam_Team2],
                       g_TeamSideLetter[MatchTeam_Team2]);
 
-    // Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1],
-    //                   CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team1)),
-    //                   CS_GetTeamScore(MatchTeamToCSTeam(MatchTeam_Team2)),
-    //                   g_TeamNames[MatchTeam_Team2]);
-
     Stats_RoundEnd(csTeamWinner);
 
     LogDebug("Calling Get5_OnRoundStatsUpdated");
