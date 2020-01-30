@@ -1264,7 +1264,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     } 
     else
     {
-      g_TeamSide[MatchTeam_Team1] = "\x02T";
+      g_TeamSide[MatchTeam_Team1] = "\x07T";
     }
 
     if (Get5_MatchTeamToCSTeam(MatchTeam_Team2) == CS_TEAM_CT)
@@ -1273,7 +1273,7 @@ public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast)
     } 
     else
     {
-      g_TeamSide[MatchTeam_Team1] = "\x02T";
+      g_TeamSide[MatchTeam_Team1] = "\x07T";
     }
 
     Get5_MessageToAll("%t", "CurrentScoreInfoMessage", g_TeamNames[MatchTeam_Team1], 
