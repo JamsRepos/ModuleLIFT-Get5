@@ -334,9 +334,17 @@ public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
+	LogMessage("ExecuteBanMessageSocket(): Data before base64 encode: %s", sData);
+
 	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
+	LogMessage("ExecuteBanMessageSocket(): Data after base64 encode: %s", sDataEncoded);
+
 	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
+
+	char sSocketIp[64];
+	g_hCVServerIp.GetString(sSocketIp, sizeof(sSocketIp));
+	LogMessage("ExecuteBanMessageSocket(): Data: %s sent to %s:8889", sDataEncoded, sSocketIp);
 
 }
 
