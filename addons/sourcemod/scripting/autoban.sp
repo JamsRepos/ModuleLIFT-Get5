@@ -369,8 +369,10 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 		return;
 	}
 
+	data.Reset();
 	data.ReadString(sSteamID, sizeof(sSteamID));
 	data.ReadString(sReason, sizeof(sReason));
+	delete data;
 	ExecuteBanMessageSocket(sSteamID, sReason);
 }
 
