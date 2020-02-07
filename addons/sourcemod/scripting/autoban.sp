@@ -302,13 +302,13 @@ public void BanPlayer(int Client)
 		default: Format(sSmallReason, sizeof(sSmallReason), "Something");
 	}
 
-	DataPack steamPack = new DataPack();
-	steamPack.WriteString(sSteamID);
-	steamPack.WriteString(sReason);
-
 	g_bBanned[Client] = true;
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
+
+	DataPack steamPack = new DataPack();
+	steamPack.WriteString(sSteamID);
+	steamPack.WriteString(sReason);
 
 	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
 	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
