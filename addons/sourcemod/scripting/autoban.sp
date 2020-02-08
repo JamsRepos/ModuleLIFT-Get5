@@ -527,6 +527,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
 		disconnectPack.WriteString("Automatic AFK Ban");
+		g_bBanned[client] = true;
 		KickClient(client, "You have %i seconds to rejoin before you are banned for being AFK", g_hCVGracePeriod.IntValue);
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_AfkBan, disconnectPack);
 		return Plugin_Continue;
