@@ -5,6 +5,7 @@
 #include <socket>
 #include <smjansson>
 #include <base64>
+#include <loadmatch>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
 
@@ -317,15 +318,12 @@ public void BanPlayer(int Client)
 public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 {
 
-	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
-	int ip[4];
-	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-	SteamWorks_GetPublicIP(ip);
-	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+	char sData[2048], sDataEncoded[4096], sMatchId[256];
+	GetCurrentMatchId(sMatchId);
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(2));
-	json_object_set_new(jsonObj, "server", json_string(sIP));
+	json_object_set_new(jsonObj, "matchid", json_string(sMatchId));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string(sReason));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
