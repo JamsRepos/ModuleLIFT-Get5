@@ -11,7 +11,7 @@ public Action StartKnifeRound(Handle timer) {
 }
 
 public Action Timer_AnnounceKnife(Handle timer) {
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 3; i++) {
     Get5_MessageToAll("%t", "KnifeInfoMessage");
   }
 

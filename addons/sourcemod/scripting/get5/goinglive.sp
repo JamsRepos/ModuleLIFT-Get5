@@ -48,7 +48,9 @@ public Action MatchLive(Handle timer) {
   g_PendingSideSwap = false;
   ConVar mp_match_restart_delay = FindConVar("mp_match_restart_delay");
   SetConVarInt(mp_match_restart_delay, GetTvDelay() + MATCH_END_DELAY_AFTER_TV + 5);
-  Get5_MessageToAll("%t", "MatchIsLiveInfoMessage");
+  for (int i = 0; i < 3; i++) {
+    Get5_MessageToAll("%t", "MatchIsLiveInfoMessage");
+  }
 
   char tag[64];
   g_MessagePrefixCvar.GetString(tag, sizeof(tag));

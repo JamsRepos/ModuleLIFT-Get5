@@ -296,7 +296,7 @@ public void OnPluginStart() {
   g_LiveCfgCvar =
       CreateConVar("get5_live_cfg", "get5/live.cfg", "Config file to exec when the game goes live");
   g_LiveCountdownTimeCvar = CreateConVar(
-      "get5_live_countdown_time", "10",
+      "get5_live_countdown_time", "5",
       "Number of seconds used to count down when a match is going live", 0, true, 5.0, true, 60.0);
   g_MaxBackupAgeCvar =
       CreateConVar("get5_max_backup_age", "160000",
