@@ -18,6 +18,7 @@ ConVar g_MatchType;
 
 Handle g_hSocket;
 ConVar g_CVServerIp;
+ConVar g_CVServerPort;
 ConVar g_CVWebsocketPass;
 ConVar g_warmupTimerValue;
 
@@ -59,6 +60,7 @@ public void OnPluginStart()
 	//Create ConVar
 	CreateConVar("sm_loadmatch_version", PLUGIN_VERSION, "Keeps track of version for stuff", FCVAR_PROTECTED);
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
+	g_CVServerPort = CreateConVar("sqlmatch_websocket_port", "8889", "Port to connect to for sending match end messages.");
 	g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_MatchType = CreateConVar("sm_matchtype", "5v5", "The match type which we are loading and checking the connection for.");
 
@@ -136,8 +138,10 @@ void ConnectRelay()
 	if (!SocketIsConnected(g_hSocket))
 	{
 		char sHost[32];
+		char sPort[32];
 		g_CVServerIp.GetString(sHost, sizeof(sHost));
-		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, 8889);
+		g_CVServerPort.GetString(sPort, sizeof(sPort));
+		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, sPort);
 	}
 	else
 		PrintToServer("Socket is already connected?");

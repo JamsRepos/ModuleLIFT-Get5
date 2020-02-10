@@ -30,6 +30,7 @@ Handle g_hSocket;
 ConVar g_CVEmbedColour;
 ConVar g_CVEmbedAvatar;*/
 ConVar g_CVServerIp;
+ConVar g_CVServerPort;
 //ConVar g_CVWebsocketPass;
 ConVar g_CVLeagueID;
 
@@ -62,6 +63,7 @@ public void OnPluginStart()
 
 	//ConVars
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
+	g_CVServerPort = CreateCoNVar("sqlmatch_websocket_port", "8889", "Port to connect to for sending match end messages.")
 	//g_CVWebsocketPass = CreateConVar("sqlmatch_websocket_pass", "PLEASECHANGEME", "pass for websocket");
 	g_CVLeagueID = CreateConVar("sqlmatch_leagueid", "", "League identifier used for renting purposes.", FCVAR_PROTECTED);
 
@@ -125,8 +127,10 @@ void ConnectRelay()
 	if (!SocketIsConnected(g_hSocket))
 	{
 		char sHost[32];
+		char sPort[32];
 		g_CVServerIp.GetString(sHost, sizeof(sHost));
-		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, 8889);
+		g_CVServerPort.GetString(sPort, sizeof(sPort));
+		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, sPort);
 	}
 	else
 		PrintToServer("Socket is already connected?");
