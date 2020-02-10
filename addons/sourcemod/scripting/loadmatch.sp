@@ -70,6 +70,7 @@ public void OnPluginStart()
 	//Set Socket Options
 	SocketSetOption(g_hSocket, SocketReuseAddr, 1);
 	SocketSetOption(g_hSocket, SocketKeepAlive, 1);
+	SocketSetOption(g_hSocket, ConcatenateCallbacks, 4096);
 	SocketSetOption(g_hSocket, DebugMode, 1); // Put socket into debug mode
 
 	if(!SocketIsConnected(g_hSocket))
@@ -136,7 +137,7 @@ void ConnectRelay()
 	{
 		char sHost[32];
 		g_CVServerIp.GetString(sHost, sizeof(sHost));
-		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, 8888);
+		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, 8889);
 	}
 	else
 		PrintToServer("Socket is already connected?");
