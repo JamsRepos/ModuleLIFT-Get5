@@ -141,7 +141,7 @@ void ConnectRelay()
 		char sPort[32];
 		g_CVServerIp.GetString(sHost, sizeof(sHost));
 		g_CVServerPort.GetString(sPort, sizeof(sPort));
-		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, StingToInt(sPort));
+		SocketConnect(g_hSocket, OnSocketConnected, OnSocketReceive, OnSocketDisconnected, sHost, StringToInt(sPort));
 	}
 	else
 		PrintToServer("Socket is already connected?");
