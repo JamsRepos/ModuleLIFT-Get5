@@ -1,4 +1,4 @@
-## Plugin Configuration.
+## Plugin Configuration
 
 ### Autoban Plugin
 
@@ -98,6 +98,11 @@ EloSys_PrelimMatchEloGain - Default: 125 - The amount of elo which a player will
 	}
 }
 ```
+
+### Force Default Agents
+
+### Setup
+* Put the folder playermodels into addons/sourcemod/configs to load the map's config files.
 
 ### Ladder Statistics Plugin
 

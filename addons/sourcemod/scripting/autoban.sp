@@ -5,6 +5,7 @@
 #include <socket>
 #include <smjansson>
 #include <base64>
+#include <loadmatch>
 
 float g_fTeamDamage[MAXPLAYERS + 1];
 
@@ -82,7 +83,7 @@ public void OnPluginStart()
 
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
-	g_hCVServerIp = CreateConVar("sm_autoban_websocket_ip", "127.0.0.1", "IP to connect to for sending ban messages.");
+	g_hCVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending ban messages.");
 	//g_hCVPackageKey = CreateConVar("sm_autoban_package_key", "PLEASECHANGEME", "The package key / Secret key to communicate with the socket.");
 	g_hCVGracePeriod = CreateConVar("sm_autoban_grace_period", "150", "The amount of time a player has to rejoin before being banned for afk/disconnect bans.");
 
@@ -302,13 +303,13 @@ public void BanPlayer(int Client)
 		default: Format(sSmallReason, sizeof(sSmallReason), "Something");
 	}
 
-	DataPack steamPack = new DataPack();
-	steamPack.WriteString(sSteamID);
-	steamPack.WriteString(sReason);
-
 	g_bBanned[Client] = true;
 	Format(sReason, sizeof(sReason), "Automatic %s Ban", sSmallReason);
 	KickClient(Client, sReason);
+
+	DataPack steamPack = new DataPack();
+	steamPack.WriteString(sSteamID);
+	steamPack.WriteString(sReason);
 
 	Format(sQuery, sizeof(sQuery), "INSERT INTO bans (steamid, reason, active) VALUES ('%s', '%s', 1);", sSteamID, sReason);
 	g_Database.Query(SQL_InsertBan, sQuery, steamPack);
@@ -317,15 +318,12 @@ public void BanPlayer(int Client)
 public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 {
 
-	char sData[2048], sPort[16], sIP[32], sDataEncoded[4096];
-	int ip[4];
-	FindConVar("hostport").GetString(sPort, sizeof(sPort));
-	SteamWorks_GetPublicIP(ip);
-	Format(sIP, sizeof(sIP), "%i.%i.%i.%i:%s", ip[0], ip[1], ip[2], ip[3], sPort);
+	char sData[2048], sDataEncoded[4096], sMatchId[256];
+	GetCurrentMatchId(sMatchId);
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(2));
-	json_object_set_new(jsonObj, "server", json_string(sIP));
+	json_object_set_new(jsonObj, "match_id", json_string(sMatchId));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string(sReason));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
@@ -334,9 +332,17 @@ public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
+	LogMessage("ExecuteBanMessageSocket(): Data before base64 encode: %s", sData);
+
 	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
+	LogMessage("ExecuteBanMessageSocket(): Data after base64 encode: %s", sDataEncoded);
+
 	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
+
+	char sSocketIp[64];
+	g_hCVServerIp.GetString(sSocketIp, sizeof(sSocketIp));
+	LogMessage("ExecuteBanMessageSocket(): Data: %s sent to %s:8889", sDataEncoded, sSocketIp);
 
 }
 
@@ -361,8 +367,10 @@ public void SQL_InsertBan(Database db, DBResultSet results, const char[] sError,
 		return;
 	}
 
+	data.Reset();
 	data.ReadString(sSteamID, sizeof(sSteamID));
 	data.ReadString(sReason, sizeof(sReason));
+	delete data;
 	ExecuteBanMessageSocket(sSteamID, sReason);
 }
 
@@ -398,6 +406,7 @@ public void OnClientDisconnect(int Client)
 
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
+		disconnectPack.WriteString("Automatic Left Match Ban");
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_DisconnectBan, disconnectPack);
 	}
 }
@@ -515,6 +524,8 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
+		disconnectPack.WriteString("Automatic AFK Ban");
+		g_bBanned[client] = true;
 		KickClient(client, "You have %i seconds to rejoin before you are banned for being AFK", g_hCVGracePeriod.IntValue);
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_AfkBan, disconnectPack);
 		return Plugin_Continue;
