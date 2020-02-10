@@ -323,7 +323,7 @@ public void ExecuteBanMessageSocket(char[] sSteamID, char[] sReason)
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(2));
-	json_object_set_new(jsonObj, "matchid", json_string(sMatchId));
+	json_object_set_new(jsonObj, "match_id", json_string(sMatchId));
 	json_object_set_new(jsonObj, "steamid", json_string(sSteamID));
 	json_object_set_new(jsonObj, "reason", json_string(sReason));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
