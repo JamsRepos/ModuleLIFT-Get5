@@ -511,7 +511,7 @@ public Action OnPlayerRunCmd(int client, int& buttons, int& impulse, float vel[3
 	
 	g_bPlayerAfk[client] = true;
 
-	if (g_iAfkTime[client] >= 180)
+	if (g_iAfkTime[client] >= 30)
 	{
 		g_iAfkTime[client] = 0;
 
