@@ -488,7 +488,7 @@ public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
 
 public void OnClientAuthorized(int Client, const char[] auth)
 {
-	if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
+	// if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
 
 	if(StrEqual(g_sMatchID, ""))
 	{
