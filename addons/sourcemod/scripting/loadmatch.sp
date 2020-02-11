@@ -488,8 +488,6 @@ public bool OnClientConnect(int Client, char[] rejectMsg, int maxLen)
 
 public void OnClientAuthorized(int Client, const char[] auth)
 {
-	// if(Get5_GetPlayerTeam(auth) != MatchTeam_TeamNone) return;
-
 	if(StrEqual(g_sMatchID, ""))
 	{
 		// Retry in a few sec
@@ -512,7 +510,7 @@ public Action Timer_RetryPlayerCheck(Handle timer, int userid)
 	// Check if player is in queues table
 	char sSteamID[64], sQuery[256];
 	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))
-	Format(sQuery, sizeof(sQuery), "SELECT team, steamid FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
+	Format(sQuery, sizeof(sQuery), "SELECT steamid, steamid FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
 	g_Database.Query(SQL_PlayerCheck, sQuery);
 	return Plugin_Handled;
 }
@@ -529,8 +527,8 @@ public void SQL_PlayerCheck(Database db, DBResultSet results, const char[] sErro
 	if(!results.FetchRow()) return;
 
 	int teamCol, steamCol;
-	results.FieldNameToNum("team", teamCol);
 	results.FieldNameToNum("steamid", steamCol);
+	results.FieldNameToNum("team", teamCol);
 
 	MatchTeam team;
 	if(results.FetchInt(teamCol) == 0)
@@ -545,7 +543,7 @@ public void SQL_PlayerCheck(Database db, DBResultSet results, const char[] sErro
 
 public void OnClientPostAdminCheck(int Client)
 {
-	if (!IsValidClient(Client) || Get5_GetGameState() != Get5State_Warmup) return;
+	if (!IsValidClient(Client)) return;
 	
 	
 	// Set player name to discord name if it isn't set already
