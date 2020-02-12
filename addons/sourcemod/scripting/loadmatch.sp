@@ -498,7 +498,7 @@ public void OnClientAuthorized(int Client, const char[] auth)
 	// Check if player is in queues table
 	char sSteamID[64], sQuery[256];
 	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))
-	Format(sQuery, sizeof(sQuery), "SELECT team FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
+	Format(sQuery, sizeof(sQuery), "SELECT steamid, team FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
 	g_Database.Query(SQL_PlayerCheck, sQuery, GetClientUserId(Client));
 }
 
@@ -510,7 +510,7 @@ public Action Timer_RetryPlayerCheck(Handle timer, int userid)
 	// Check if player is in queues table
 	char sSteamID[64], sQuery[256];
 	GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))
-	Format(sQuery, sizeof(sQuery), "SELECT steamid, steamid FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
+	Format(sQuery, sizeof(sQuery), "SELECT steamid, team FROM queue_players WHERE steamid='%s' AND match_id='%s'", sSteamID, g_sMatchID);
 	g_Database.Query(SQL_PlayerCheck, sQuery);
 	return Plugin_Handled;
 }
