@@ -531,7 +531,8 @@ public void SQL_PlayerCheck(Database db, DBResultSet results, const char[] sErro
 	results.FieldNameToNum("team", teamCol);
 
 	MatchTeam team;
-	if(results.FetchInt(teamCol) == 0)
+	LogMessage("Test %i", results.FetchInt(teamCol));
+	if(results.FetchInt(teamCol) == 1)
 		team = MatchTeam_Team1;
 	else
 		team = MatchTeam_Team2;
