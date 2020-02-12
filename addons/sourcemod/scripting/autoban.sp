@@ -391,7 +391,7 @@ public void OnClientPutInServer(int Client)
 
 }
 
-public void OnClientDisconnect(int Client)
+public void OnClientDisconnect_Post(int Client)
 {
 	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[Client]) return;
 
@@ -400,7 +400,7 @@ public void OnClientDisconnect(int Client)
 		char sSteamID[64];
 		if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
 		{
-			LogError("OnClientDisconnect(): Failed to get %N's SteamID, not going to add player to disconnect list.", Client);
+			LogError("OnClientDisconnect_Post(): Failed to get %N's SteamID, not going to add player to disconnect list.", Client);
 			return;
 		}
 
