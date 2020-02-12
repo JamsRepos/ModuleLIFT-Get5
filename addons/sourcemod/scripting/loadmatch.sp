@@ -494,6 +494,9 @@ public void OnClientAuthorized(int Client, const char[] auth)
 		CreateTimer(5.0, Timer_RetryPlayerCheck, GetClientUserId(Client));
 		return;
 	}
+	
+	LoadPlayerDiscordNames();
+	FireNameChangeEvent(true);
 
 	// Check if player is in queues table
 	char sSteamID[64], sQuery[256];
