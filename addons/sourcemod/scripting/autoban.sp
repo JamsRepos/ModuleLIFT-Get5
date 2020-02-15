@@ -417,18 +417,33 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
 	// If the game hasn't gone live yet, the client isn't valid or the client is already marked as banned return
 	int Client = GetClientOfUserId(event.GetInt("userid"));
-	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(Client) || g_bBanned[Client]) return;
+	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(Client) || g_bBanned[Client])
+	{
+		LogError("Event_PlayerDisconnect(): Match isn't live, client isn't valid or client is already banned.");
+	}
 
 	// If the client was disconnected by anything other than themselves return
 	char sDisconnectReason[32];
 	event.GetString("reason", sDisconnectReason, sizeof(sDisconnectReason));
-	if(!StrEqual(sDisconnectReason, "disconnect", false)) return;
+	if(!StrEqual(sDisconnectReason, "disconnect", false))
+	{
+		LogError("Event_PlayerDisconnect(): Unexpected value for disconnect reason: %s. Expected value: disconnect", sDisconnectReason);
+		return;
+	}
 
 	// If the client's steamid isn't valid return
 	char sSteamID[64];
 	event.GetString("networkid", sSteamID, sizeof(sSteamID));
-	if(sSteamID[7] != ':') return;
-	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) return;
+	if(sSteamID[7] != ':')
+	{
+		LogError("Event_PlayerDisconnect(): Unexpected value for steamid %c. Expected value: :", sSteamID[7]);
+		return;
+	}
+	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
+	{
+		LogError("Event_PlayerDisconnect(): Failed to get %N's steamid64.");
+		return;
+	}
 
 	// If it has been 240 seconds or more since the match started, create a disconnect timer for the client
 	if(GetTime() - g_iMatchStartTime >= 240)
@@ -438,6 +453,8 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		disconnectPack.WriteString("Automatic Left Match Ban");
 		CreateTimer(g_hCVGracePeriod.FloatValue, Timer_DisconnectBan, disconnectPack);
 	}
+	else
+		LogError("Event_PlayerDisconnect(): It hasn't been 240 seconds since the match started.");
 }
 
 public Action Timer_DisconnectBan(Handle hTimer, DataPack disconnectPack)
