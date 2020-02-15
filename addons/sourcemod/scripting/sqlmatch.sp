@@ -60,6 +60,7 @@ public void OnPluginStart()
 	HookEvent("weapon_fire", Event_WeaponFired);
 	HookEvent("player_hurt", Event_PlayerHurt);
 	HookEvent("announce_phase_end", Event_HalfTime);
+	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
 
 	//ConVars
 	g_CVServerIp = CreateConVar("sqlmatch_websocket_ip", "127.0.0.1", "IP to connect to for sending match end messages.", FCVAR_PROTECTED);
@@ -627,28 +628,64 @@ public void SQL_HalfTimeSwap(Database db, DBResultSet results, const char[] sErr
 	} while(results.FetchRow());
 }
 
-public void OnClientDisconnect(int Client)
+/* Switching to player_disconnect event */
+//	public void OnClientDisconnect(int Client)
+//	{
+//		if(IsValidClient(Client))
+//		{
+//			int iIndexT = ga_iEndMatchVotesT.FindValue(Client);
+//			int iIndexCT = ga_iEndMatchVotesCT.FindValue(Client);
+
+//			if(iIndexT != -1) ga_iEndMatchVotesT.Erase(iIndexT);
+//			if(iIndexCT != -1) ga_iEndMatchVotesCT.Erase(iIndexCT);
+
+//			UpdatePlayerStats(false, Client);
+
+//			CheckSurrenderVotes();
+//			ResetVars(Client);
+
+//			if(Get5_GetGameState() == Get5State_Live && IsValidClient(Client, true))
+//			{
+//				char sQuery[1024], sSteamID[64];
+//				GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
+//				Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
+//				g_Database.Query(SQL_GenericQuery, sQuery);
+//			}
+//		}
+//	}
+
+void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
-	if(IsValidClient(Client))
+	// If the client isn't valid or isn't currently in a match return
+	int Client = GetClientOfUserId(event.GetInt("userid"));
+	if(!IsValidClient(Client, true)) return;
+
+	// If the client's steamid isn't valid return
+	char sSteamID[64];
+	event.GetString("networkid", sSteamID, sizeof(sSteamID));
+	if(sSteamID[7] != ':') return;
+	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) return;
+
+	// Find and erase any surrender votes the client has made
+	int iIndexT = ga_iEndMatchVotesT.FindValue(Client);
+	int iIndexCT = ga_iEndMatchVotesCT.FindValue(Client);
+
+	if(iIndexT != -1) ga_iEndMatchVotesT.Erase(iIndexT);
+	if(iIndexCT != -1) ga_iEndMatchVotesCT.Erase(iIndexCT);
+
+	// Update clients stats
+	UpdatePlayerStats(false, Client);
+
+	// Recheck surrender votes and reset client vars
+	CheckSurrenderVotes();
+	ResetVars(Client);
+
+	// If a match is live set the player to disconnected in the database
+	if(Get5_GetGameState() == Get5State_Live)
 	{
-		int iIndexT = ga_iEndMatchVotesT.FindValue(Client);
-		int iIndexCT = ga_iEndMatchVotesCT.FindValue(Client);
-
-		if(iIndexT != -1) ga_iEndMatchVotesT.Erase(iIndexT);
-		if(iIndexCT != -1) ga_iEndMatchVotesCT.Erase(iIndexCT);
-
-		UpdatePlayerStats(false, Client);
-
-		CheckSurrenderVotes();
-		ResetVars(Client);
-
-		if(Get5_GetGameState() == Get5State_Live && IsValidClient(Client, true))
-		{
-			char sQuery[1024], sSteamID[64];
-			GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID));
-			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
-			g_Database.Query(SQL_GenericQuery, sQuery);
-		}
+		char sQuery[1024];
+		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
+		g_Database.Query(SQL_GenericQuery, sQuery);
 	}
 }
 

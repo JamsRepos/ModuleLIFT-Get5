@@ -80,6 +80,7 @@ public void OnPluginStart()
 	//Hook Event
 	HookEvent("player_death", Event_PlayerDeath);
 	HookEvent("round_start", Event_RoundStart);
+	HookEvent("player_disconnect", Event_PlayerDisconnect, EventHookMode_Pre);
 
 	//Create ConVar
 	g_hCVFallbackTime = CreateConVar("sm_autoban_fallback_time", "120", "Time a player should be banned for if MySQL ban fails.");
@@ -391,19 +392,47 @@ public void OnClientPutInServer(int Client)
 
 }
 
-public void OnClientDisconnect_Post(int Client)
-{
-	if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[Client]) return;
+/* Using player_disconnect event instead */
+//	public void OnClientDisconnect_Post(int Client)
+//	{
+//		if(Get5_GetGameState() <= Get5State_GoingLive || g_bBanned[Client]) return;
 
+//		if(GetTime() - g_iMatchStartTime >= 240)
+//		{
+//			char sSteamID[64];
+//			if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
+//			{
+//				LogError("OnClientDisconnect_Post(): Failed to get %N's SteamID, not going to add player to disconnect list.", Client);
+//				return;
+//			}
+
+//			DataPack disconnectPack = new DataPack();
+//			disconnectPack.WriteString(sSteamID);
+//			disconnectPack.WriteString("Automatic Left Match Ban");
+//			CreateTimer(g_hCVGracePeriod.FloatValue, Timer_DisconnectBan, disconnectPack);
+//		}
+//	}
+
+void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
+{
+	// If the game hasn't gone live yet, the client isn't valid or the client is already marked as banned return
+	int Client = GetClientOfUserId(event.GetInt("userid"));
+	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(Client) || g_bBanned[Client]) return;
+
+	// If the client was disconnected by anything other than themselves return
+	char sDisconnectReason[32];
+	event.GetString("reason", sDisconnectReason, sizeof(sDisconnectReason));
+	if(!StrEqual(sDisconnectReason, "disconnect", false)) return;
+
+	// If the client's steamid isn't valid return
+	char sSteamID[64];
+	event.GetString("networkid", sSteamID, sizeof(sSteamID));
+	if(sSteamID[7] != ':') return;
+	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) return;
+
+	// If it has been 240 seconds or more since the match started, create a disconnect timer for the client
 	if(GetTime() - g_iMatchStartTime >= 240)
 	{
-		char sSteamID[64];
-		if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID)))
-		{
-			LogError("OnClientDisconnect_Post(): Failed to get %N's SteamID, not going to add player to disconnect list.", Client);
-			return;
-		}
-
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
 		disconnectPack.WriteString("Automatic Left Match Ban");
