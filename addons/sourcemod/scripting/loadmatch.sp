@@ -383,7 +383,6 @@ static void CheckWaitingTimes() {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
-			UpdateMatchStatus();
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
 					EndMatchSocket();
@@ -702,7 +701,6 @@ public void SQL_SelectSetup(Database db, DBResultSet results, const char[] sErro
 
 	if(Get5_LoadMatchConfig(sPath))
 	{
-		UpdateMatchStatus();
 		DeleteFile(sPath);
 		g_NameMap.Clear();
 	}
@@ -745,11 +743,6 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 	while(results.FetchRow());
 }
 
-public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
-{
-	UpdateMatchStatus();
-}
-
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 {
 	int Client = GetClientOfUserId(event.GetInt("userid"));
@@ -766,13 +759,6 @@ public void Event_Halftime(Event event, const char[] name, bool dontBroadcast)
 
 	g_sTeamName[2] = oldNameCT;
 	g_sTeamName[3] = oldNameT;
-}
-
-public void UpdateMatchStatus()
-{
-	char sQuery[1024];
-	Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=0 WHERE match_id='%s'", g_sMatchID);
-	g_Database.Query(SQL_GenericQuery, sQuery);
 }
 
 //generic query handler
