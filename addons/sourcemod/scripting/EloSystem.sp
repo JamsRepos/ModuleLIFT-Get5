@@ -459,6 +459,10 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			}
 		}
 		int eloGain = player.GetEloGain();
+		if (eloGain <= 0)
+		{
+			eloGain = 0;
+		}
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
 		txn_UpdateElo.AddQuery(sQuery);
 		// UpdatePlayerInTable(player);
