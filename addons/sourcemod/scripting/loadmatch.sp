@@ -383,29 +383,36 @@ static void CheckWaitingTimes() {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
+			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
+			g_Database.Query(SQL_EndGame, sQuery);
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
-					EndMatchSocket();
 					KickClient(i, "Players did not connect in time. Match has been cancelled.");
 				}
 			}
 		}
 	}
-} 
+}
 
-public void EndMatchSocket()
+public void SQL_EndGame(Database db, DBResultSet results, const char[] sError, any data)
 {
-	char sQuery[1024], sDataEncoded[2048];
-	Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
-	g_Database.Query(SQL_GenericQuery, sQuery);
+	if(results == null)
+	{
+		PrintToServer("MySQL Query Failed: %s", sError);
+		LogError("MySQL Query Failed: %s", sError);
+		return;
+	}
 
-	char sData[1024], sPass[128];
-	g_CVWebsocketPass.GetString(sPass, sizeof(sPass));
+	CloseMatchSocket();
+}
+
+public void CloseMatchSocket()
+{
+	char sData[1024], sDataEncoded[2048];
 
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_sMatchID));
-	json_object_set_new(jsonObj, "pass", json_string(sPass));
+	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
@@ -414,7 +421,7 @@ public void EndMatchSocket()
 	
 	EncodeBase64(sDataEncoded, sizeof(sDataEncoded), sData);
 
-	SocketSend(g_hSocket, sData, sizeof(sData));
+	SocketSend(g_hSocket, sDataEncoded, sizeof(sDataEncoded));
 }
 
 public void SQL_InitialConnection(Database db, const char[] sError, int data)
