@@ -410,10 +410,9 @@ public void SQL_EndGame(Database db, DBResultSet results, const char[] sError, a
 public void CloseMatchSocket()
 {
 	char sData[1024], sDataEncoded[2048];
-
 	Handle jsonObj = json_object();
 	json_object_set_new(jsonObj, "type", json_integer(1));
-	json_object_set_new(jsonObj, "match_id", json_string(g_uuidString));
+	json_object_set_new(jsonObj, "match_id", json_string(g_sMatchID));
 	json_dump(jsonObj, sData, sizeof(sData), 0, false, false, true);
 	CloseHandle(jsonObj);
 
