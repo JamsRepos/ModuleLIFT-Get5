@@ -444,7 +444,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		}
 		else if (team == seriesLoser)
 		{
-			if (!(playerMatches < g_cvPreliminaryMatchCount.IntValue))
+			if (playerMatches > g_cvPreliminaryMatchCount.IntValue))
 			{
 				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
 				int playerNewElo = playerElo - eloValue;
