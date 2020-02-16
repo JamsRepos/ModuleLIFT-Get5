@@ -381,6 +381,7 @@ static void PrintWaitTime()
 static void CheckWaitingTimes() {
 	if (!IsEveryoneReady() && Get5_GetGameState() != Get5State_None) {
 		int timeLeft = FloatToInt(GetWarmupLeftTime());
+		char sQuery[1024];
 		if (timeLeft <= 0) {
 			ServerCommand("get5_cancelmatch");
 			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
