@@ -389,7 +389,6 @@ public void OnClientPostAdminCheck(int Client)
 public void OnClientPutInServer(int Client)
 {
 	ResetVars(Client);
-
 }
 
 /* Using player_disconnect event instead */
@@ -447,7 +446,7 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 	}
 
 	// If it has been 240 seconds or more since the match started, create a disconnect timer for the client
-	if(GetTime() - g_iMatchStartTime >= 240)
+	if(GetTime() > g_iMatchStartTime+240)
 	{
 		g_bBanned[Client] = true;
 		DataPack disconnectPack = new DataPack();
