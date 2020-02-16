@@ -420,6 +420,7 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 	if(Get5_GetGameState() <= Get5State_GoingLive || !IsValidClient(Client) || g_bBanned[Client])
 	{
 		LogError("Event_PlayerDisconnect(): Match isn't live, client isn't valid or client is already banned.");
+		return;
 	}
 
 	// If the client was disconnected by anything other than themselves return
@@ -448,6 +449,7 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 	// If it has been 240 seconds or more since the match started, create a disconnect timer for the client
 	if(GetTime() - g_iMatchStartTime >= 240)
 	{
+		g_bBanned[Client] = true;
 		DataPack disconnectPack = new DataPack();
 		disconnectPack.WriteString(sSteamID);
 		disconnectPack.WriteString("Automatic Left Match Ban");
