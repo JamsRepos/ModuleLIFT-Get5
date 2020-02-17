@@ -790,7 +790,7 @@ static void CheckAutoLoadConfig() {
      return Plugin_Handled;
     }
 
-    ChangeState(Get5State_None);
+    ChangeState(Get5State_PostGame);
     UpdateClanTags();
     Get5_MessageToAll("%t", "AdminForceEndInfoMessage");
     RestoreCvars(g_MatchConfigChangedCvars);
