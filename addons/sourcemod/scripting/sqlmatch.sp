@@ -269,7 +269,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
-	CreateTimer(40.0, Timer_KickEveryoneEnd); 
+	CreateTimer(45.0, Timer_KickEveryoneEnd); 
 }
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
