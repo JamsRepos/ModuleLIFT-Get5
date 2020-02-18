@@ -67,8 +67,11 @@ static bool AwaitingKnifeDecision(int client) {
 void HandleVotes() {
 
   int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
+  LogMessage("Winner of the Knife was %i", winner);
   float votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(CS_TEAM_CT);
+  LogMessage("Vote percentage CT %f", votePercentCTs);
   float votePercentTs = g_iVoteTs / GetNumHumansOnTeam(CS_TEAM_T);
+  LogMessage("Vote percentage T %f", votePercentTs);
 
 
   if (votePercentCTs >= 0.6) {
