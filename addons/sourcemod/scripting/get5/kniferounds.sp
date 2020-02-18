@@ -68,9 +68,12 @@ void HandleVotes() {
 
   int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
   LogMessage("Winner of the Knife was %i", winner);
-  float votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(CS_TEAM_CT);
+  float votePercentCTs = 0;
+  float votePercentTs = 0;
+
+  votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(CS_TEAM_CT);
   LogMessage("Vote percentage CT %f", votePercentCTs);
-  float votePercentTs = g_iVoteTs / GetNumHumansOnTeam(CS_TEAM_T);
+  votePercentTs = g_iVoteTs / GetNumHumansOnTeam(CS_TEAM_T);
   LogMessage("Vote percentage T %f", votePercentTs);
 
 
