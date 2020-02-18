@@ -414,7 +414,9 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 	}
 
 	winningTeamAvgElo /= winningTeamCount;
+	LogMessage("Winning Team Average Elo: %s", winningTeamAvgElo);
 	losingTeamAvgElo /= losingTeamCount;
+	LogMessage("Losing Team Average Elo: %s", winningTeamAvgElo);
 	Transaction txn_UpdateElo = new Transaction();
 
 	for (int i = 1; i <= MaxClients; i++)
@@ -426,19 +428,30 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		}
 		char auth[32];
 		player.GetId64(auth, sizeof(auth));
+		LogMessage("Player auth: %s", auth);
 			
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
+		if (playerElo <= 0)
+		{
+			LogMessage("Player %s elo was minus. We need to rectify this. NOW.", auth);
+			Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=0 WHERE `steamid` = '%s'", auth);
+			LogMessage("Query %s is run", sQuery);
+			txn_UpdateElo.AddQuery(sQuery);
+		}
 		player.GetValue("matchesplayed", playerMatches);
 		if (team == seriesWinner)
 		{
 			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
 			{
+				LogMessage("Player %s in placements.", auth);
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
 			}
 			else
 			{
+				LogMessage("Player %s out of placements.", auth);
+				LogMessage("Player %s Player Elo is %i", auth, playerElo);
 				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
 			}
 		}
@@ -446,10 +459,12 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		{
 			if (playerMatches >= g_cvPreliminaryMatchCount.IntValue)
 			{
+				LogMessage("Player %s is out of placements", auth);
 				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
 				int playerNewElo = playerElo - eloValue;
 				if (playerNewElo < 0)
 				{
+					
 					player.SetValue("currentelo", 0);
 				}
 				else
@@ -464,6 +479,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			eloGain = 0;
 		}
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
+		LogMessage("The query which is run: %s", sQuery);
 		txn_UpdateElo.AddQuery(sQuery);
 		// UpdatePlayerInTable(player);
 	}

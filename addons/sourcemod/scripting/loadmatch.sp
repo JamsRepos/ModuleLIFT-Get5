@@ -384,7 +384,7 @@ static void CheckWaitingTimes() {
 		char sQuery[1024];
 		if (timeLeft <= 0) {
 			ServerCommand("get5_endmatch");
-			Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET live=0 WHERE match_id='%s' AND live=1;", g_sMatchID);
+			Format(sQuery, sizeof(sQuery), "UPDATE queues SET status=0 WHERE match_id='%s';", g_sMatchID);
 			g_Database.Query(SQL_EndGame, sQuery);
 			for(int i = 1; i <= MaxClients; i++) {
 				if(IsValidClient(i)) {
