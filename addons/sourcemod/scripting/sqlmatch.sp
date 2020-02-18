@@ -269,7 +269,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 
 	UpdatePlayerStats();
 	UpdateMatchStats();
-	CreateTimer(40.0, Timer_KickEveryoneEnd); 
+	CreateTimer(45.0, Timer_KickEveryoneEnd); 
 }
 
 public void Event_PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -571,6 +571,8 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
 {
     if (!g_alreadySwapped)
     {
+    	LogMessage("Event_HalfTime(): Starting team swap...");
+
         char sQuery[1024];
         int teamIndex_T = -1, teamIndex_CT = -1; 
 
@@ -593,6 +595,7 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
         teamNameNew_CT = teamNameOld_T;
 
         Format(sQuery, sizeof(sQuery), "UPDATE sql_matches_scoretotal SET team_1_name = '%s', team_2_name = '%s' WHERE match_id = '%s';", teamNameNew_T, teamNameNew_CT, g_uuidString);
+        LogMessage("Event_HalfTime(): Setting team_1_name to %s and team_2_name to %s for match_id %s.", teamNameNew_T, teamNameNew_CT, g_uuidString);
         g_Database.Query(SQL_GenericQuery, sQuery);
 
         // Swap team in database for disconnected players
@@ -601,6 +604,8 @@ public void Event_HalfTime(Event event, const char[] name, bool dontBroadcast)
 
         g_alreadySwapped = true;
     }
+    else
+    	LogError("Event_HalfTime(): Teams have already been swapped!");
 }
 
 public void SQL_HalfTimeSwap(Database db, DBResultSet results, const char[] sError, any data)
