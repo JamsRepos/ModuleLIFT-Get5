@@ -71,9 +71,9 @@ void HandleVotes() {
   float votePercentCTs = 0;
   float votePercentTs = 0;
 
-  votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(CS_TEAM_CT);
+  votePercentCTs = g_iVoteCTs / GetNumHumansOnTeam(g_KnifeWinnerTeam);
   LogMessage("Vote percentage CT %f", votePercentCTs);
-  votePercentTs = g_iVoteTs / GetNumHumansOnTeam(CS_TEAM_T);
+  votePercentTs = g_iVoteTs / GetNumHumansOnTeam(g_KnifeWinnerTeam);
   LogMessage("Vote percentage T %f", votePercentTs);
 
 
