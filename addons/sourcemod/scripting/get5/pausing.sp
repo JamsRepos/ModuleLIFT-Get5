@@ -166,7 +166,7 @@ public Action Timer_PauseTimeCheck(Handle timer, int data) {
       }
       
       if (timeLeft <= 0) {
-        Get5_MessageToAll("%s has %i second(s) left for pauses.", teamName, seconds);
+        Get5_MessageToAll("%s has used all the pause time.", teamName);
         ServerCommand("mp_unpause_match");
         return Plugin_Stop;
       }
