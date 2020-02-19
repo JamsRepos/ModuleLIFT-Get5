@@ -67,16 +67,10 @@ static bool AwaitingKnifeDecision(int client) {
 void HandleVotes() {
 
   int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
-  LogMessage("Winner of the Knife was %i", winner);
   float votePercentCTs, votePercentTs;
 
   votePercentCTs = float(g_iVoteCTs / GetNumHumansOnTeam(winner));
   votePercentTs = float(g_iVoteTs / GetNumHumansOnTeam(winner));
-  LogMessage("Result of GetNumHumansOnTeam(winner) %i", GetNumHumansOnTeam(winner));
-  LogMessage("Reuslt of g_iVoteCTs %i", g_iVoteCTs);
-  LogMessage("Vote percentage CT %f", votePercentCTs);
-  LogMessage("Vote percentage T %f", votePercentTs);
-
 
   if (votePercentCTs >= 0.6) {
     if (winner == CS_TEAM_CT) {
@@ -98,10 +92,6 @@ void HandleVotes() {
       EndKnifeRound(true);
       delete g_bSideVoteTimer;
     }
-  }
-  else
-  {
-    
   }
 
   if (Get5_GetGameState() == Get5State_GoingLive)
