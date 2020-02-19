@@ -186,7 +186,7 @@ public Action Timer_VoteSide(Handle timer) {
 public Action Command_Stay(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
   if (StrEqual(voteMode, "ESEA", false)) {
-    return Plugin_Stop;
+    return Plugin_Handled;
   } else {
     if (AwaitingKnifeDecision(client)) {
     EndKnifeRound(false);
@@ -200,7 +200,7 @@ public Action Command_Stay(int client, int args) {
 public Action Command_Swap(int client, int args) {
   GetConVarString(g_voteModeCvar, voteMode, sizeof(voteMode));
   if (StrEqual(voteMode, "ESEA", false)) {
-    return Plugin_Stop;
+    return Plugin_Handled;
   } else {
     if (AwaitingKnifeDecision(client)) {
       EndKnifeRound(true);
