@@ -336,6 +336,7 @@ public void OnPluginStart() {
   g_TimeFormatCvar = CreateConVar(
       "get5_time_format", "%Y-%m-%d_%H",
       "Time format to use when creating file names. Don't tweak this unless you know what you're doing! Avoid using spaces or colons.");
+  g_VoteThresholdCvar = CreateConVar("get5_vote_threshold", "0.60", "Percentage of votes required for a successful team vote.");
   g_voteModeCvar = CreateConVar("get5_votemode", "", "Which team voting system. ESEA: The players vote for the team they want to be on. Default: Captain will use !switch or !stay");
   g_VetoConfirmationTimeCvar = CreateConVar(
       "get5_veto_confirmation_time", "2.0",

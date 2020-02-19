@@ -67,27 +67,38 @@ static bool AwaitingKnifeDecision(int client) {
 void HandleVotes() {
 
   int winner = Get5_MatchTeamToCSTeam(g_KnifeWinnerTeam);
-  float votePercentCTs, votePercentTs;
 
-  votePercentCTs = float(g_iVoteCTs / GetNumHumansOnTeam(winner));
-  votePercentTs = float(g_iVoteTs / GetNumHumansOnTeam(winner));
+  float votePercentCTs = FloatDiv(float(g_iVoteCTs), float(GetNumHumansOnTeam(winner)));
+  float votePercentTs = FloatDiv(float(g_iVoteTs), float(GetNumHumansOnTeam(winner)));
 
-  if (votePercentCTs >= 0.6) {
-    if (winner == CS_TEAM_CT) {
+  float limit = g_VoteThresholdCvar.FloatValue;
+
+  if (FloatCompare(votePercentCTs, limit) > 0)
+  {
+    if (winner == CS_TEAM_CT)
+    {
       Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(false);
       delete g_bSideVoteTimer;
-    } else if (winner == CS_TEAM_T) {
+    } 
+    else if (winner == CS_TEAM_T)
+    {
       Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(true);
       delete g_bSideVoteTimer;
     }
-  } else if (votePercentTs >= 0.6) {
-    if (winner == CS_TEAM_T) {
+  }
+  
+  else if (FloatCompare(votePercentTs, limit) > 0)
+  {
+    if (winner == CS_TEAM_T) 
+    {
       Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(false);
       delete g_bSideVoteTimer;
-    } else if (winner == CS_TEAM_CT) {
+    } 
+    else if (winner == CS_TEAM_CT) 
+    {
       Get5_MessageToAll("%t", "TeamDecidedToSwapInfoMessage", g_FormattedTeamNames[g_KnifeWinnerTeam]);
       EndKnifeRound(true);
       delete g_bSideVoteTimer;
