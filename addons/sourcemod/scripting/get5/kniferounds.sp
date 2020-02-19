@@ -99,6 +99,10 @@ void HandleVotes() {
       delete g_bSideVoteTimer;
     }
   }
+  else
+  {
+    
+  }
 
   if (Get5_GetGameState() == Get5State_GoingLive)
   {
@@ -182,7 +186,12 @@ public Action Command_VoteT(int client, int args) {
 }
 
 public Action Timer_VoteSide(Handle timer) {
-  HandleVotes();
+  if (AwaitingKnifeDecision(client))
+  {
+    EndKnifeRound(false);
+    Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage",
+                      g_FormattedTeamNames[g_KnifeWinnerTeam]);
+  }
 }
 
 /** Default Vote Commands **/
