@@ -1,4 +1,4 @@
-stock void ChangeMap(const char[] map, float delay = 3.0) {
+stock void ChangeMap(const char[] map, float delay = 0.0) {
   Get5_MessageToAll("%t", "ChangingMapInfoMessage", map);
 
   // pass the "true" name to a timer to changelevel
