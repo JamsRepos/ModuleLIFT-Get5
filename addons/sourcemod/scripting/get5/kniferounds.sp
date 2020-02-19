@@ -186,12 +186,10 @@ public Action Command_VoteT(int client, int args) {
 }
 
 public Action Timer_VoteSide(Handle timer) {
-  if (AwaitingKnifeDecision(client))
-  {
     EndKnifeRound(false);
     Get5_MessageToAll("%t", "TeamDecidedToStayInfoMessage",
                       g_FormattedTeamNames[g_KnifeWinnerTeam]);
-  }
+    delete g_bSideVoteTimer;
 }
 
 /** Default Vote Commands **/
