@@ -15,8 +15,6 @@ bool g_GotKill[MAXPLAYERS + 1][MAXPLAYERS + 1];
 public void OnPluginStart() {
 	g_hMessageFormat = CreateConVar("tnn_damageprint_msg", "[\x0BDMG\x01] ({DMG_TO} dmg / {HITS_TO} hits) to ({DMG_FROM} dmg / {HITS_FROM} hits) from {NAME} ({HEALTH} HP)", "Damage Message");
 
-	RegConsoleCmd("sm_dmg", Command_Damage, "Displays damage done");
-
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_hurt", Event_DamageDealt, EventHookMode_Pre);
 	HookEvent("player_death", Event_PlayerDeath);
@@ -79,16 +77,6 @@ static void PrintDamageInfo(int client) {
 			PrintToChat(client, message);
 		}
 	}
-}
-
-public Action Command_Damage(int client, int args) {
-	if (IsPlayerAlive(client)) {
-		PrintToChat(client, "[\x0BNexusLeague.gg\x01] You cannot use that command when alive.");
-		return Plugin_Handled;
-	}
-
-	PrintDamageInfo(client);
-	return Plugin_Handled;
 }
 
 public Action Event_RoundEnd(Event event, const char[] name, bool dontBroadcast) {
