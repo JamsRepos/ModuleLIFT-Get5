@@ -73,7 +73,7 @@ void HandleVotes() {
 
   float limit = g_VoteThresholdCvar.FloatValue;
 
-  if (FloatCompare(votePercentCTs, limit) > 0)
+  if (FloatCompare(votePercentCTs, limit) >= 0)
   {
     if (winner == CS_TEAM_CT)
     {
@@ -89,7 +89,7 @@ void HandleVotes() {
     }
   }
   
-  else if (FloatCompare(votePercentTs, limit) > 0)
+  else if (FloatCompare(votePercentTs, limit) >= 0)
   {
     if (winner == CS_TEAM_T) 
     {
