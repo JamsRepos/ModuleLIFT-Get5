@@ -31,6 +31,7 @@ int m_bWarmupPeriod;
 StringMap g_NameMap;
 
 bool g_matchStarted = false;
+bool g_countdownStarted = false;
 
 #define ChatTag			"[SM]"
 #define PLUGIN_VERSION	"1.1.0"
@@ -335,14 +336,12 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 		}
 	}
 
-	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
+	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers && !g_countdownStarted)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
-		if (g_hConnectionTimer || g_hPrintTimer == null)
-		{
-			g_hConnectionTimer = CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-			g_hPrintTimer = CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
-		}
+		g_hConnectionTimer = CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+		g_hPrintTimer = CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
+		g_countdownStarted = true;
 	}
 	else
 	{
