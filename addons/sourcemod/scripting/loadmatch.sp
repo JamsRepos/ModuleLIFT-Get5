@@ -83,6 +83,8 @@ public void OnPluginStart()
 		ConnectRelay();
 
 	Database.Connect(SQL_InitialConnection, "sql_matches");
+	// Hacky i don't like this
+	SQL_FastQuery(g_Database, "SET NAMES \"UTF8\"");
 
 	g_NameMap = new StringMap();
 }
@@ -730,6 +732,7 @@ public void LoadPlayerDiscordNames()
 {
 	char sQuery[256];
 	Format(sQuery, sizeof(sQuery), "SELECT p.steamid, c.name FROM discord_caching c INNER JOIN discord_auth a ON c.discordid = a.discordid INNER JOIN queue_players p ON a.steamid = p.steamid AND p.match_id='%s';", g_sMatchID);
+
 	g_Database.Query(SQL_LoadPlayerDiscordNamesCallback, sQuery);
 }
 
