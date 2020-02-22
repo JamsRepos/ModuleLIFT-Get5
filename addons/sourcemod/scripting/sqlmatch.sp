@@ -659,7 +659,7 @@ public void SQL_HalfTimeSwap(Database db, DBResultSet results, const char[] sErr
 //		}
 //	}
 
-void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
+public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
 	// If the client isn't valid or isn't currently in a match return
 	int Client = GetClientOfUserId(event.GetInt("userid"));
@@ -692,8 +692,14 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
 		g_Database.Query(SQL_GenericQuery, sQuery);
 	}
-	SetEventBroadcast(event, true)
-	return Plugin_Continue;
+	
+	char sReason[50];
+	GetEventString(event, "reason", sReason, sizeof(sReason));
+	if (StrContains(sReason, "You are not authorised to play this match", false))
+	{
+		SetEventBroadcast(event, true);
+		return Plugin_Continue;
+	}
 }
 
 //generic query handler
