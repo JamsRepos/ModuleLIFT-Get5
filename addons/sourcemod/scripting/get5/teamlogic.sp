@@ -21,7 +21,7 @@ public Action AssignTeamOnConnect(Handle timer, int client) {
         }     
         if (Get5_MatchTeamToCSTeam(Get5_GetPlayerTeam(steamid)) == 0)
         {
-          KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play.");
+          KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play");
         }
     }
     return Plugin_Continue;
@@ -191,7 +191,7 @@ public MatchTeam GetClientMatchTeam(int client) {
     if (GetAuth(client, auth, sizeof(auth))) {
       return GetAuthMatchTeam(auth);
     } else {
-      KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play.");
+      KickClient(client, "You are not authorised to play this match. Join NexusLeague.gg to play");
       return MatchTeam_TeamNone;
     }
   }
