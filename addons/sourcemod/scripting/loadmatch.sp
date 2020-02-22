@@ -79,8 +79,6 @@ public void OnPluginStart()
 	if(!SocketIsConnected(g_hSocket))
 		ConnectRelay();
 
-	CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-	CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 
 	g_NameMap = new StringMap();
@@ -336,6 +334,8 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
+		CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+		CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
 	} 
 
 	numPlayers_previous = numPlayers;
