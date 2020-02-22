@@ -239,30 +239,11 @@ public void MissingPlayerInfoMessageTeam(MatchTeam team) {
 // Helpers
 
 public void UpdateClanTags() {
-  if (!g_SetClientClanTagCvar.BoolValue) {
-    LogMessage("Not setting client clang tags because get5_set_client_clan_tags is 0");
-    return;
-  }
-
-  char readyTag[32], notReadyTag[32];
-  Format(readyTag, sizeof(readyTag), "%T", "ReadyTag", LANG_SERVER);
-  Format(notReadyTag, sizeof(notReadyTag), "%T", "NotReadyTag", LANG_SERVER);
-
-  LOOP_CLIENTS(i) {
-    if (IsPlayer(i)) {
-      if (GetClientTeam(i) == CS_TEAM_SPECTATOR) {
-        if (GetTeamMinReady(MatchTeam_TeamSpec) > 0 && IsReadyGameState()) {
-          CS_SetClientClanTag(i, IsClientReady(i) ? readyTag : notReadyTag);
-        } else {
-          CS_SetClientClanTag(i, "");
-        }
-      } else {
-        if (IsReadyGameState()) {
-          CS_SetClientClanTag(i, IsClientReady(i) ? readyTag : notReadyTag);
-        } else {
-          CS_SetClientClanTag(i, g_TeamTags[GetClientMatchTeam(i)]);
-        }
-      }
+  LOOP_CLIENTS(i) 
+  {
+    if (IsPlayer(i)) 
+    {
+      CS_SetClientClanTag(i, "");
     }
   }
 }
