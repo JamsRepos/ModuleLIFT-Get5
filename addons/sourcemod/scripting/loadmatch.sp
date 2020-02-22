@@ -84,7 +84,6 @@ public void OnPluginStart()
 
 	Database.Connect(SQL_InitialConnection, "sql_matches");
 	// Hacky i don't like this
-	SQL_FastQuery(g_Database, "SET NAMES \"UTF8\"");
 
 	g_NameMap = new StringMap();
 }
@@ -442,11 +441,10 @@ public void SQL_InitialConnection(Database db, const char[] sError, int data)
 		LogMessage("Database Error: %s", sError);
 		return;
 	}
-	
 	char sDriver[16];
 	db.Driver.GetIdentifier(sDriver, sizeof(sDriver));
 	if (StrEqual(sDriver, "mysql", false)) LogMessage("MySQL Database: connected");
-	
+	SQL_FastQuery(db, "SET NAMES \"UTF8\"");
 	g_Database = db;
 }
 
