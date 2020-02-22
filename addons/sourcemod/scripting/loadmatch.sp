@@ -338,8 +338,11 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
-		g_hConnectionTimer = CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-		g_hPrintTimer = CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
+		if (g_hConnectionTimer || g_hPrintTimer == null)
+		{
+			g_hConnectionTimer = CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+			g_hPrintTimer = CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
+		}
 	}
 	else
 	{

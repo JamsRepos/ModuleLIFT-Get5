@@ -336,7 +336,6 @@ public void Get5_OnGoingLive(int mapNumber)
 		} else {
 			g_hPlayer[i].SetTeam(Get5_CSTeamToMatchTeam(GetClientTeam(i)));
 		}
-
 		
 	}	
 }
@@ -414,9 +413,9 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 	}
 
 	winningTeamAvgElo /= winningTeamCount;
-	LogMessage("Winning Team Average Elo: %s", winningTeamAvgElo);
+	LogMessage("Winning Team Average Elo: %i", winningTeamAvgElo);
 	losingTeamAvgElo /= losingTeamCount;
-	LogMessage("Losing Team Average Elo: %s", winningTeamAvgElo);
+	LogMessage("Losing Team Average Elo: %i", winningTeamAvgElo);
 	Transaction txn_UpdateElo = new Transaction();
 
 	for (int i = 1; i <= MaxClients; i++)
@@ -443,7 +442,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		player.GetValue("matchesplayed", playerMatches);
 		if (team == seriesWinner)
 		{
-			if (playerMatches < g_cvPreliminaryMatchCount.IntValue)
+			if (playerMatches <= g_cvPreliminaryMatchCount.IntValue)
 			{
 				LogMessage("Player %s in placements.", auth);
 				player.addToEloGain(g_cvPreliminaryMatchEloGain.IntValue);
@@ -460,15 +459,17 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			if (playerMatches >= g_cvPreliminaryMatchCount.IntValue)
 			{
 				LogMessage("Player %s is out of placements", auth);
-				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, true);
+				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, false);
+				LogMessage("Player %s eloValue %i", auth, eloValue);
 				int playerNewElo = playerElo - eloValue;
-				if (playerNewElo < 0)
+				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, eloValue);
+				if (playerNewElo <= 0)
 				{
-					
 					player.SetValue("currentelo", 0);
 				}
 				else
 				{
+					LogMessage("player.addToEloGain called.");
 					player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
 				}
 			}
