@@ -753,6 +753,7 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 	{
 		results.FetchString(steamCol, sSteam, sizeof(sSteam));
 		results.FetchString(nameCol, sName, sizeof(sName));
+		LogMessage("String %s", sName);
 		// Get5_SetPlayerName(sSteam, sName);
 		g_NameMap.SetString(sSteam, sName, true);
 	}
