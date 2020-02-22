@@ -342,10 +342,10 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 
 public Action Timer_ConnectionTimer(Handle timer) {
 	if (Get5_GetGameState() == Get5State_None) {
-		return Plugin_Continue;
+		return Plugin_Handled;
 	}
 
-	if (Get5_GetGameState() == Get5State_Warmup) {
+	if (Get5_GetGameState() == Get5State_Warmup && m_bWarmupPeriod) {
 		CheckWaitingTimes();
 	}
 
@@ -355,7 +355,7 @@ public Action Timer_ConnectionTimer(Handle timer) {
 
 public Action Timer_PrintConnectTimer(Handle timer)
 {
-	if (Get5_GetGameState() == Get5State_Warmup && (GetConVarInt(g_warmupTimerValue) == 0))
+	if (Get5_GetGameState() == Get5State_Warmup && (GetConVarInt(g_warmupTimerValue) == 0) && m_bWarmupPeriod)
 	{
 		if (!IsEveryoneReady()) 
 		{
