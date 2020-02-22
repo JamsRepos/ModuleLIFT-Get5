@@ -692,6 +692,8 @@ void Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 		Format(sQuery, sizeof(sQuery), "UPDATE sql_matches SET disconnected=1 WHERE match_id='%s' AND steamid='%s'", g_uuidString, sSteamID);
 		g_Database.Query(SQL_GenericQuery, sQuery);
 	}
+	SetEventBroadcast(event, true)
+	return Plugin_Continue;
 }
 
 //generic query handler
