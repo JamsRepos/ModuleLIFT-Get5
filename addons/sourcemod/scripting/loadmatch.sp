@@ -17,6 +17,9 @@ bool g_ClientReady[MAXPLAYERS + 1];         // Whether clients are marked ready.
 ConVar g_MatchType;
 
 Handle g_hSocket;
+Handle g_hConnectionTimer = null;
+Handle g_hPrintTimer = null;
+
 ConVar g_CVServerIp;
 ConVar g_CVServerPort;
 ConVar g_CVWebsocketPass;
@@ -334,8 +337,13 @@ public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast
 	if (m_bWarmupPeriod && numPlayers >= 2 && numPlayers_previous < numPlayers)
 	{
 		ServerCommand("mp_warmup_pausetimer 0")
-		CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
-		CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
+		g_hConnectionTimer = CreateTimer(1.0, Timer_ConnectionTimer, _, TIMER_REPEAT);
+		g_hPrintTimer = CreateTimer(60.0, Timer_PrintConnectTimer, _, TIMER_REPEAT);
+	}
+	else
+	{
+		g_hConnectionTimer = null;
+		g_hPrintTimer = null;
 	} 
 
 	numPlayers_previous = numPlayers;
