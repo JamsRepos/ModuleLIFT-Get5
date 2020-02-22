@@ -748,7 +748,7 @@ public void SQL_LoadPlayerDiscordNamesCallback(Database db, DBResultSet results,
 	results.FieldNameToNum("steamid", steamCol);
 	results.FieldNameToNum("name", nameCol);
 
-	char sSteam[64], sName[64];
+	char sSteam[128], sName[128];
 	do
 	{
 		results.FetchString(steamCol, sSteam, sizeof(sSteam));
