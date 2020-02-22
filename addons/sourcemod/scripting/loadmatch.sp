@@ -22,7 +22,8 @@ ConVar g_CVServerPort;
 ConVar g_CVWebsocketPass;
 ConVar g_warmupTimerValue;
 
-int g_connectTimer = 300
+int g_connectTimer = 300;
+int m_bWarmupPeriod;
 
 StringMap g_NameMap;
 
@@ -299,7 +300,7 @@ public void Event_NameChange(Event event, char[] name, bool dontBroadcast)
 public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	static int numPlayers_previous;
-	int m_bWarmupPeriod = GameRules_GetProp("m_bWarmupPeriod");
+	m_bWarmupPeriod = GameRules_GetProp("m_bWarmupPeriod");
 	LogMessage("m_bWarmupPeriod: %i", m_bWarmupPeriod);
 	char matchtype[32];
 	GetConVarString(g_MatchType, matchtype, sizeof(matchtype));
