@@ -663,13 +663,13 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 {
 	// If the client isn't valid or isn't currently in a match return
 	int Client = GetClientOfUserId(event.GetInt("userid"));
-	if(!IsValidClient(Client, true)) return;
+	if(!IsValidClient(Client, true)) return Plugin_Handled;
 
 	// If the client's steamid isn't valid return
 	char sSteamID[64];
 	event.GetString("networkid", sSteamID, sizeof(sSteamID));
-	if(sSteamID[7] != ':') return;
-	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) return;
+	if(sSteamID[7] != ':') return Plugin_Handled;
+	if(!GetClientAuthId(Client, AuthId_SteamID64, sSteamID, sizeof(sSteamID))) return Plugin_Handled;
 
 	// Find and erase any surrender votes the client has made
 	int iIndexT = ga_iEndMatchVotesT.FindValue(Client);
