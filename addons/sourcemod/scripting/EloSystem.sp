@@ -415,7 +415,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 	winningTeamAvgElo /= winningTeamCount;
 	LogMessage("Winning Team Average Elo: %i", winningTeamAvgElo);
 	losingTeamAvgElo /= losingTeamCount;
-	LogMessage("Losing Team Average Elo: %i", winningTeamAvgElo);
+	LogMessage("Losing Team Average Elo: %i", losingTeamAvgElo);
 	Transaction txn_UpdateElo = new Transaction();
 
 	for (int i = 1; i <= MaxClients; i++)
@@ -475,10 +475,6 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			}
 		}
 		int eloGain = player.GetEloGain();
-		if (eloGain <= 0)
-		{
-			eloGain = 0;
-		}
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
 		LogMessage("The query which is run: %s", sQuery);
 		txn_UpdateElo.AddQuery(sQuery);
