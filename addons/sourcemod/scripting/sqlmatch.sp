@@ -698,8 +698,9 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 	if (StrContains(sReason, "You are not authorised to play this match", false))
 	{
 		SetEventBroadcast(event, true);
-		return Plugin_Continue;
+		return Plugin_Handled;
 	}
+	return Plugin_Continue;
 }
 
 //generic query handler
