@@ -661,6 +661,7 @@ public void SQL_HalfTimeSwap(Database db, DBResultSet results, const char[] sErr
 
 public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBroadcast)
 {
+	SetEventBroadcast(event, false);
 	// If the client isn't valid or isn't currently in a match return
 	int Client = GetClientOfUserId(event.GetInt("userid"));
 	if(!IsValidClient(Client, true)) return Plugin_Handled;
@@ -698,8 +699,9 @@ public Action Event_PlayerDisconnect(Event event, const char[] name, bool dontBr
 	if (StrContains(sReason, "You are not authorised to play this match", false))
 	{
 		SetEventBroadcast(event, true);
-		return Plugin_Handled;
+		return Plugin_Continue;
 	}
+	
 	return Plugin_Continue;
 }
 
