@@ -266,8 +266,9 @@ public void OnDeath(int victim, int killer, int assister)
 		
 		return;
 	}
+	int currentElo = g_hPlayer[victim].GetValue("currentelo", currentElo);
 
-	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || g_hPlayer[victim].GetValue("currentelo") <= 0)
+	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || currentElo <= 0)
 	{
 		return;
 	}
