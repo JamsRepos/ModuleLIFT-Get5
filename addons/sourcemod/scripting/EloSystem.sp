@@ -186,7 +186,7 @@ public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 		return;
 	}
 
-	if (g_hPlayer[client].GetMatchesPlayed() < 10)
+	if (g_hPlayer[client].GetMatchesPlayed() <= 10)
 	{
 		return;
 	}
@@ -226,7 +226,7 @@ public void OnKill(int killer, int victim, bool headshot)
 		return;
 	}
 
-	if (g_hPlayer[killer].GetMatchesPlayed() < 10)
+	if (g_hPlayer[killer].GetMatchesPlayed() <= 10)
 	{
 		return;
 	}
@@ -249,7 +249,7 @@ public void OnRoundMVP(int client)
 		return;
 	}
 
-	if (g_hPlayer[client].GetMatchesPlayed() < 10)
+	if (g_hPlayer[client].GetMatchesPlayed() <= 10)
 	{
 		return;
 	}
@@ -267,7 +267,7 @@ public void OnDeath(int victim, int killer, int assister)
 		return;
 	}
 
-	if (g_hPlayer[victim].GetMatchesPlayed() < 10 || g_hPlayer[victim].GetValue("currentelo") <= 0)
+	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || g_hPlayer[victim].GetValue("currentelo") <= 0)
 	{
 		return;
 	}
@@ -286,7 +286,7 @@ public void OnAssist(int assister, int victim)
 		return;
 	}
 
-	if (g_hPlayer[assister].GetMatchesPlayed() < 10)
+	if (g_hPlayer[assister].GetMatchesPlayed() <= 10)
 	{
 		return;
 	}
