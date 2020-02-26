@@ -424,7 +424,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
 		player.GetValue("currentelo", playerElo);
-		if (playerElo <= 0)
+		if (playerElo < 0)
 		{
 			LogMessage("Player %s elo was minus. We need to rectify this. NOW.", auth);
 			Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=0 WHERE `steamid` = '%s'", auth);
@@ -455,7 +455,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 				LogMessage("Player %s eloValue %i", auth, eloValue);
 				int playerNewElo = playerElo - eloValue;
 				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, eloValue);
-				if (playerNewElo <= 0)
+				if (playerNewElo < 0)
 				{
 					player.SetValue("currentelo", 0);
 				}
