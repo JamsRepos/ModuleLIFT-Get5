@@ -24,8 +24,6 @@ ConVar g_cvEloPerDeath;
 ConVar g_cvEloPerAssist;
 ConVar g_cvEloPerMVP;
 ConVar g_cvEloHeadShotKillBonus;
-ConVar g_cvEloPerBombExplosion;
-ConVar g_cvEloPerBombDisarm;
 ConVar g_cvPreliminaryMatchCount;
 ConVar g_cvPreliminaryMatchEloGain;
 ConVar g_cvEloPerOneVsTwo;
@@ -117,11 +115,8 @@ public void OnPluginStart()
 	g_cvEloPerOneVsFour = CreateConVar("EloSys_EloPerOneVsFour", "2", "Elo gained per 1vs4");
 	g_cvEloPerOneVsFive = CreateConVar("EloSys_EloPerOneVsFive", "4", "Elo gained per 1vs5");
 	g_cvEloHeadShotKillBonus = CreateConVar("EloSys_HeadShotKillBonus", "0", "Bonus elo gained for a headshot kill.");
-	g_cvEloPerBombExplosion = CreateConVar("EloSys_EloPerBombExplode", "0", "Elo gained for successful bomb explosion.");
-	g_cvEloPerBombDisarm = CreateConVar("EloSys_EloPerBombDisarm", "0", "Elo gained for successfully disarming bomb.");
 	g_cvPreliminaryMatchCount = CreateConVar("EloSys_PreliminaryMatchCount", "10", "Preliminary matches to play until a player is ranked.");
 	g_cvPreliminaryMatchEloGain = CreateConVar("EloSys_PrelimMatchEloGain", "125", "Elo amount gained or lost per preliminary match.");
-	
 	AutoExecConfig(true);
 }
 
@@ -172,10 +167,6 @@ public void OnClientPostAdminCheck(int client)
 	}
 	
 	InsertPlayerToTable(auth);
-	if (DEBUG)
-	{
-		g_hPlayer[client] = new PlayerEloMap(auth);
-	}
 }
 
 public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
@@ -354,7 +345,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		PlayerEloMap player = g_hPlayer[i];
 		if (player == null)
 		{
-			continue;
+			return;
 		}
 		player.GetId64(auth, sizeof(auth));
 
