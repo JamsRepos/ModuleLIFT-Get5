@@ -13,7 +13,7 @@ int g_DamageDoneHits[MAXPLAYERS + 1][MAXPLAYERS + 1];
 bool g_GotKill[MAXPLAYERS + 1][MAXPLAYERS + 1];
 
 public void OnPluginStart() {
-	g_hMessageFormat = CreateConVar("tnn_damageprint_msg", "[\x0BDMG\x01] ({DMG_TO} dmg / {HITS_TO} hits) to ({DMG_FROM} dmg / {HITS_FROM} hits) from {NAME} ({HEALTH} HP)", "Damage Message");
+	g_hMessageFormat = CreateConVar("tnn_damageprint_msg", "--> ({DMG_TO} dmg / {HITS_TO} hits) to ({DMG_FROM} dmg / {HITS_FROM} hits) from {NAME} ({HEALTH} HP)", "Damage Message");
 
 	HookEvent("round_start", Event_RoundStart);
 	HookEvent("player_hurt", Event_DamageDealt, EventHookMode_Pre);
