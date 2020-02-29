@@ -485,6 +485,7 @@ public void CheckSurrenderVotes()
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_T), 16, CS_GetTeamScore(CS_TEAM_CT));
 		ServerCommand("get5_endmatch"); // Force end the match
+		CS_TerminateRound(1.0, CSRoundEnd_TerroristsSurrender, false);
 		UpdateMatchStats();
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
@@ -504,6 +505,7 @@ public void CheckSurrenderVotes()
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_CT), CS_GetTeamScore(CS_TEAM_T), 16);
 		ServerCommand("get5_endmatch"); // Force end the match
+		CS_TerminateRound(1.0, CSRoundEnd_CTSurrender, false);
 		UpdateMatchStats();
 		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
