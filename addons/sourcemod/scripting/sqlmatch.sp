@@ -515,6 +515,7 @@ public void CheckSurrenderVotes()
 
 public Action Timer_KickEveryoneSurrender(Handle timer)
 {
+	UpdateMatchStats();
 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
 	ServerCommand("tv_stoprecord");
 	return Plugin_Stop;
