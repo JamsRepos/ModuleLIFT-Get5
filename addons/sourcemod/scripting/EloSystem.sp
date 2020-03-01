@@ -146,28 +146,28 @@ public void OnConfigsExecuted()
 	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
 
-public void OnClientPostAdminCheck(int client)
-{
-	if (!VALIDPLAYER(client) && !DEBUG)
-	{
-		return;
-	}
+// public void OnClientPostAdminCheck(int client)
+// {
+// 	if (!VALIDPLAYER(client) && !DEBUG)
+// 	{
+// 		return;
+// 	}
 	
-	char auth[32];
-	if (!GetClientAuthId(client, AuthId_SteamID64, auth, sizeof(auth)))
-	{
-		if (DEBUG)
-		{
-			Format(auth, sizeof(auth), "BOT_%d", client);
-		}
-		else
-		{
-			Format(auth, sizeof(auth), "INVALID_%d", client);
-		}
-	}
+// 	char auth[32];
+// 	if (!GetClientAuthId(client, AuthId_SteamID64, auth, sizeof(auth)))
+// 	{
+// 		if (DEBUG)
+// 		{
+// 			Format(auth, sizeof(auth), "BOT_%d", client);
+// 		}
+// 		else
+// 		{
+// 			Format(auth, sizeof(auth), "INVALID_%d", client);
+// 		}
+// 	}
 	
-	InsertPlayerToTable(auth);
-}
+// 	InsertPlayerToTable(auth);
+// }
 
 public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 {
@@ -321,6 +321,7 @@ public void Get5_OnGoingLive(int mapNumber)
 				Format(auth, sizeof(auth), "INVALID_%d", i);
 			}
 		}
+		InsertPlayerToTable(auth);
 		g_hPlayer[i] = new PlayerEloMap(auth);
 		
 		if (!isInvalid) {
@@ -345,7 +346,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		PlayerEloMap player = g_hPlayer[i];
 		if (player == null)
 		{
-			return;
+			continue;
 		}
 		player.GetId64(auth, sizeof(auth));
 
