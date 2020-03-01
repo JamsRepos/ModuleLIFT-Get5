@@ -259,7 +259,7 @@ public void OnDeath(int victim, int killer, int assister)
 	}
 	int currentElo = g_hPlayer[victim].GetValue("currentelo", currentElo);
 
-	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || currentElo <= 0)
+	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || currentElo <= 0 )
 	{
 		return;
 	}
@@ -420,7 +420,6 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		}
 		char auth[32];
 		player.GetId64(auth, sizeof(auth));
-		LogMessage("Player auth: %s", auth);
 			
 		MatchTeam team = player.GetTeam();
 		int playerElo, playerMatches;
@@ -467,7 +466,8 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 				}
 			}
 		}
-		int eloGain = player.GetEloGain();
+		int eloGain; 
+		player.GetValue("elogain", eloGain);
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
 		LogMessage("The query which is run: %s", sQuery);
 		txn_UpdateElo.AddQuery(sQuery);

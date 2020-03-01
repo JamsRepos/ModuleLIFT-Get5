@@ -484,10 +484,8 @@ public void CheckSurrenderVotes()
 		}
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_T), 16, CS_GetTeamScore(CS_TEAM_CT));
-		ServerCommand("get5_endmatch"); // Force end the match
 		CS_TerminateRound(1.0, CSRoundEnd_TerroristsSurrender, false);
 		UpdateMatchStats();
-		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
 		return;
 	}
@@ -504,22 +502,20 @@ public void CheckSurrenderVotes()
 		}
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_CT), CS_GetTeamScore(CS_TEAM_T), 16);
-		ServerCommand("get5_endmatch"); // Force end the match
 		CS_TerminateRound(1.0, CSRoundEnd_CTSurrender, false);
 		UpdateMatchStats();
-		CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
 		ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
 		return;
 	}
 }
 
-public Action Timer_KickEveryoneSurrender(Handle timer)
-{
-	UpdateMatchStats();
-	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
-	ServerCommand("tv_stoprecord");
-	return Plugin_Stop;
-}
+// public Action Timer_KickEveryoneSurrender(Handle timer)
+// {
+// 	UpdateMatchStats();
+// 	for(int i = 1; i <= MaxClients; i++) if(IsValidClient(i)) KickClient(i, "Match force ended by surrender vote");
+// 	ServerCommand("tv_stoprecord");
+// 	return Plugin_Stop;
+// }
 
 public void CloseMatchSocket()
 {
