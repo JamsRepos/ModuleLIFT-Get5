@@ -422,7 +422,7 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		player.GetId64(auth, sizeof(auth));
 			
 		MatchTeam team = player.GetTeam();
-		int playerElo, playerMatches;
+		int playerElo, playerMatches, playerNewElo;
 		player.GetValue("currentelo", playerElo);
 		if (playerElo < 0)
 		{
@@ -442,8 +442,10 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 			else
 			{
 				LogMessage("Player %s out of placements.", auth);
-				LogMessage("Player %s Player Elo is %i", auth, playerElo);
-				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
+				int eloValue = player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
+				LogMessage("Player %s eloValue %i", auth, eloValue);
+				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, eloValue);
+
 			}
 		}
 		else if (team == seriesLoser)
@@ -509,6 +511,7 @@ bool VALIDPLAYER(int client)
 	return false;
 }
 
+// May need to look at this again
 int calculateEloGain(int playerElo, int otherTeamAvgElo, bool playerWon)
 {
 	int eloDiff = playerElo - otherTeamAvgElo;
@@ -600,8 +603,6 @@ int calculateEloGain(int playerElo, int otherTeamAvgElo, bool playerWon)
 			return -5;
 		}
 	}
-	
-	return 0;
 }
 
 public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sError, any data)
