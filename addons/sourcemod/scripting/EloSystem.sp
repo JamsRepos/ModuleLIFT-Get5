@@ -149,14 +149,9 @@ public void OnConfigsExecuted()
 
 public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 {
-	if(g_hPlayer[client] == null)
+	if(g_hPlayer[client] == null || g_hPlayer[client].GetMatchesPlayed() <= 10)
 	{
 		PrintToServer("Client %d does not have an elo map.", client);
-		return;
-	}
-
-	if (g_hPlayer[client].GetMatchesPlayed() <= 10)
-	{
 		return;
 	}
 
@@ -187,81 +182,74 @@ public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 
 public void OnKill(int killer, int victim, bool headshot)
 {
-	if (g_hPlayer[killer] == null)
+	if (g_hPlayer[killer] == null || g_hPlayer[killer].GetMatchesPlayed() <= 10)
 	{
 		if (DEBUG)
 		PrintToServer("Client %d does not have an elo map.", killer);
-		
 		return;
 	}
-
-	if (g_hPlayer[killer].GetMatchesPlayed() <= 10)
+	else
 	{
-		return;
+		if (headshot)
+		{
+			g_hPlayer[killer].addToEloGain(g_cvEloPerKill.IntValue + g_cvEloHeadShotKillBonus.IntValue);
+		}
+		else
+		{
+			g_hPlayer[killer].addToEloGain(g_cvEloPerKill.IntValue);
+		}
 	}
 	
-	if (headshot)
-	{
-		g_hPlayer[killer].addToEloGain(g_cvEloPerKill.IntValue + g_cvEloHeadShotKillBonus.IntValue);
-		return;
-	}
-	
-	g_hPlayer[killer].addToEloGain(g_cvEloPerKill.IntValue);
 }
 
 public void OnRoundMVP(int client)
 {
-	if (g_hPlayer[client] == null)
+	if (g_hPlayer[client] == null || g_hPlayer[client].GetMatchesPlayed() <= 10)
 	{
 		if (DEBUG)
 		PrintToServer("Client %i does not have an elo map.", client);
 		return;
 	}
-
-	if (g_hPlayer[client].GetMatchesPlayed() <= 10)
+	else
 	{
+		g_hPlayer[client].addToEloGain(g_cvEloPerMVP.IntValue);
 		return;
 	}
-
-	g_hPlayer[client].addToEloGain(g_cvEloPerMVP.IntValue);
 }
 
 public void OnDeath(int victim, int killer, int assister)
 {
-	if (g_hPlayer[victim] == null)
+	int currentElo;
+	g_hPlayer[victim].GetValue("currentelo", currentElo);
+
+	if (g_hPlayer[victim] == null || g_hPlayer[client].GetMatchesPlayed() <= 10 || currentElo <= 0)
 	{
 		if (DEBUG)
 		PrintToServer("Client %d does not have an elo map.", victim);
 		
 		return;
 	}
-	int currentElo = g_hPlayer[victim].GetValue("currentelo", currentElo);
-
-	if (g_hPlayer[victim].GetMatchesPlayed() <= 10 || currentElo <= 0 )
+	else
 	{
+		g_hPlayer[victim].addToEloGain(g_cvEloPerDeath.IntValue);
 		return;
 	}
 	
-	g_hPlayer[victim].addToEloGain(g_cvEloPerDeath.IntValue);
 }
 
 public void OnAssist(int assister, int victim)
 {
-
-	if (g_hPlayer[assister] == null)
+	if (g_hPlayer[assister] == null || g_hPlayer[assister].GetMatchesPlayed() <= 10)
 	{
 		if (DEBUG)
 		PrintToServer("Client %d does not have an elo map.", assister);
 		
 		return;
 	}
-
-	if (g_hPlayer[assister].GetMatchesPlayed() <= 10)
+	else
 	{
-		return;
+		g_hPlayer[assister].addToEloGain(g_cvEloPerAssist.IntValue);
 	}
-	
-	g_hPlayer[assister].addToEloGain(g_cvEloPerAssist.IntValue);
 }
 
 public void Get5_OnGoingLive(int mapNumber)
