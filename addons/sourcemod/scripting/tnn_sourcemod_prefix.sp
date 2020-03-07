@@ -31,7 +31,7 @@ public Action OnTextMsg(UserMsg msg_id, Protobuf hUserMsg, const int[] iClients,
 		return Plugin_Continue; 
 		
 	DataPack hPack = new DataPack(); 
-	RequestFrame(Frame_Output, hPack); 
+	CreateDataTimer(0.0, prefixChange, hPack, TIMER_FLAG_NO_MAPCHANGE);
 	hPack.WriteCell(iNumClients); 
     
 	for (int i = 0; i < iNumClients; ++i) 
@@ -43,7 +43,7 @@ public Action OnTextMsg(UserMsg msg_id, Protobuf hUserMsg, const int[] iClients,
 	return Plugin_Handled; 
 } 
 
-public void Frame_Output(DataPack hPack) 
+public Action prefixChange(Handle timer, Handle pack)
 { 
 	int iTotal = hPack.ReadCell(); 
 	int[] iPlayers = new int[iTotal]; 
@@ -61,7 +61,7 @@ public void Frame_Output(DataPack hPack)
 
 	if (iTotal >= 1) 
 	{
-		Handle pb = StartMessage("TextMsg", iPlayers, iTotal, USERMSG_BLOCKHOOKS); 
+		Handle pb = StartMessage("TextMsg", iPlayers, iTotal, USERMSG_RELIABLE|USERMSG_BLOCKHOOKS); 
 		PbSetInt(pb, "msg_dst", 3); 
 	
 		int buffer_size = hPack.ReadCell() + 30; 
