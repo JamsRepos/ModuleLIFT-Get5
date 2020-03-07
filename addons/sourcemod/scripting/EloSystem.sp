@@ -272,7 +272,7 @@ public void Get5_OnGoingLive(int mapNumber)
 		SetFailState("[EloSys] Dependent Library 'Basic Player Stats' is not loaded.");
 	}*/
 
-	Transaction txn_SelectElo = new Transaction();
+	Transaction txn_SelectElo_OnGoingLive = new Transaction();
 	char sQuery[1024]; 
 
 	for (int i = 1; i <= MaxClients; i++)
@@ -313,9 +313,9 @@ public void Get5_OnGoingLive(int mapNumber)
 		}
 
 		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
-		txn_SelectElo.AddQuery(sQuery, i);
+		txn_SelectElo_OnGoingLive.AddQuery(sQuery, i);
 	}
-	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccess_Select, SQL_TranFailure, 0);	
+	g_hThreadedDb.Execute(txn_SelectElo_OnGoingLive, SQL_TranSuccess_Select, SQL_TranFailure);	
 }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
