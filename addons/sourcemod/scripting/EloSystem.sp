@@ -351,7 +351,7 @@ public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] resu
 	PrintToServer("Transaction Successful");
 }
 
-public void SQL_TranSuccess_Select(Database db, int numQueries, DBResultSet[] results, any[] queryData)
+public void SQL_TranSuccess_Select(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
 	char sQuery[1024];
 
