@@ -42,6 +42,7 @@ methodmap PlayerEloMap < StringMap
 		StringMap map = new StringMap();
 		map.SetString("id64", id64);
 		map.SetValue("elogain", 0);
+		map.SetValue("currentelo", 0);
 		return view_as<PlayerEloMap>(map);
 	}
 	
@@ -145,29 +146,6 @@ public void OnConfigsExecuted()
 	g_hThreadedDb.Format(query, sizeof(query), CREATE_TABLE, g_cvDefaultElo.IntValue);
 	g_hThreadedDb.Query(SQL_GenericQuery, query);
 }
-
-// public void OnClientPostAdminCheck(int client)
-// {
-// 	if (!VALIDPLAYER(client) && !DEBUG)
-// 	{
-// 		return;
-// 	}
-	
-// 	char auth[32];
-// 	if (!GetClientAuthId(client, AuthId_SteamID64, auth, sizeof(auth)))
-// 	{
-// 		if (DEBUG)
-// 		{
-// 			Format(auth, sizeof(auth), "BOT_%d", client);
-// 		}
-// 		else
-// 		{
-// 			Format(auth, sizeof(auth), "INVALID_%d", client);
-// 		}
-// 	}
-	
-// 	InsertPlayerToTable(auth);
-// }
 
 public void OnPlayerRoundWon(int client, int team, int enemyRemaining)
 {
@@ -293,6 +271,8 @@ public void Get5_OnGoingLive(int mapNumber)
 		PrintToChatAll("[EloSys] Unable to start ranking system. This match will no longer affect your ranking.");
 		SetFailState("[EloSys] Dependent Library 'Basic Player Stats' is not loaded.");
 	}*/
+
+	Transaction txn_SelectElo = new Transaction();
 	
 	for (int i = 1; i <= MaxClients; i++)
 	{
@@ -323,14 +303,18 @@ public void Get5_OnGoingLive(int mapNumber)
 		}
 		InsertPlayerToTable(auth);
 		g_hPlayer[i] = new PlayerEloMap(auth);
+
 		
 		if (!isInvalid) {
 			g_hPlayer[i].SetTeam(Get5_GetPlayerTeam(auth));
 		} else {
 			g_hPlayer[i].SetTeam(Get5_CSTeamToMatchTeam(GetClientTeam(i)));
 		}
-		
-	}	
+
+		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
+		txn_SelectElo.AddQuery(sQuery, i);
+	}
+	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccess_Select, SQL_TranFailure);	
 }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
@@ -353,7 +337,7 @@ public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int t
 		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
 		txn_SelectElo.AddQuery(sQuery, i);
 	}
-	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccessSelect, SQL_TranFailure, seriesWinner);
+	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccess_EndMatch, SQL_TranFailure, seriesWinner);
 }
 
 public void SQL_TranFailure(Database db, any data, int numQueries, const char[] sError, int failIndex, any[] queryData)
@@ -366,12 +350,8 @@ public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] resu
 	PrintToServer("Transaction Successful");
 }
 
-public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQueries, DBResultSet[] results, any[] queryData)
+public void SQL_TranSuccess_Select(Database db, int numQueries, DBResultSet[] results, any[] queryData)
 {
-	if(hasCalculated) return;
-
-	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
-	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
 	char sQuery[1024];
 
 	for(int i = 0; i < numQueries; i++)
@@ -386,12 +366,33 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		results[i].FieldNameToNum("elo", eloCol);
 		results[i].FieldNameToNum("matches", matchesCol);
 
-		MatchTeam team = player.GetTeam();
-
 		int currentElo = results[i].FetchInt(eloCol);
 		int matchesPlayed = results[i].FetchInt(matchesCol);
 		player.SetValue("currentelo", currentElo);
+		LogMessage("Player current elo is %i", currentElo);
 		player.SetValue("matchesplayed", matchesPlayed);
+	}
+}
+
+public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int numQueries, DBResultSet[] results, any[] queryData)
+{
+	if(hasCalculated) return;
+
+	MatchTeam seriesLoser = seriesWinner == MatchTeam_Team2 ? MatchTeam_Team1:MatchTeam_Team2;
+	int winningTeamCount, losingTeamCount, winningTeamAvgElo, losingTeamAvgElo;
+	char sQuery[1024];
+
+	for(int i = 0; i < numQueries; i++)
+	{
+		PlayerEloMap player = g_hPlayer[queryData[i]];
+		if(player == null)
+			continue;
+
+		MatchTeam team = player.GetTeam();
+
+		int currentElo, matchesPlayed;
+		player.GetValue("currentelo", currentElo);
+		player.GetValue("matchesplayed", matchesPlayed);
 
 		if (team == seriesWinner)
 		{
@@ -422,8 +423,12 @@ public void SQL_TranSuccessSelect(Database db, MatchTeam seriesWinner, int numQu
 		player.GetId64(auth, sizeof(auth));
 			
 		MatchTeam team = player.GetTeam();
-		int playerElo, playerMatches, playerNewElo;
+		int playerElo, playerMatches, playerNewElo, eloGain;
+		player.GetValue("elogain", eloGain);
 		player.GetValue("currentelo", playerElo);
+		LogMessage("Elo gain for player %s is %i", auth, eloGain);
+		LogMessage("Current elo for player %s is %i", auth, playerElo);
+
 		if (playerElo < 0)
 		{
 			LogMessage("Player %s elo was minus. We need to rectify this. NOW.", auth);
