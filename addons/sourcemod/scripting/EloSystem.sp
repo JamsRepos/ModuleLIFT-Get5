@@ -273,7 +273,8 @@ public void Get5_OnGoingLive(int mapNumber)
 	}*/
 
 	Transaction txn_SelectElo = new Transaction();
-	
+	char sQuery[1024]; 
+
 	for (int i = 1; i <= MaxClients; i++)
 	{
 		if (!VALIDPLAYER(i) && !DEBUG)
@@ -426,7 +427,7 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 		int playerElo, playerMatches, playerNewElo, eloGain;
 		player.GetValue("elogain", eloGain);
 		player.GetValue("currentelo", playerElo);
-		LogMessage("Elo gain for player %s is %i", auth, eloGain);
+		LogMessage("Elo gain for player %s is %i. Pre win/loss bonus.", auth, eloGain);
 		LogMessage("Current elo for player %s is %i", auth, playerElo);
 
 		if (playerElo < 0)
@@ -447,9 +448,11 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 			else
 			{
 				LogMessage("Player %s out of placements.", auth);
-				int eloValue = player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
-				LogMessage("Player %s eloValue %i", auth, eloValue);
-				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, eloValue);
+				player.addToEloGain(calculateEloGain(playerElo, winningTeamAvgElo, true));
+				player.GetValue("elogain", eloGain);
+				LogMessage("Elo gain for player %s is %i. Post win/loss bonus.", auth, eloGain);
+				playerNewElo = playerElo + eloGain;
+				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, playerElo);
 
 			}
 		}
@@ -460,7 +463,7 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 				LogMessage("Player %s is out of placements", auth);
 				int eloValue = calculateEloGain(playerElo, losingTeamAvgElo, false);
 				LogMessage("Player %s eloValue %i", auth, eloValue);
-				int playerNewElo = playerElo - eloValue;
+				playerNewElo = playerElo - eloValue;
 				LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, eloValue);
 				if (playerNewElo < 0)
 				{
@@ -470,11 +473,13 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 				{
 					LogMessage("player.addToEloGain called.");
 					player.addToEloGain(calculateEloGain(playerElo, losingTeamAvgElo, false));
+					player.GetValue("elogain", eloGain);
+					LogMessage("Elo gain for player %s is %i. Post win/loss bonus.", auth, eloGain);
+					playerNewElo = playerElo + eloGain;
+					LogMessage("Player %s playerNewElo %i playerElo %i", auth, playerNewElo, playerElo);
 				}
 			}
 		}
-		int eloGain; 
-		player.GetValue("elogain", eloGain);
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
 		LogMessage("The query which is run: %s", sQuery);
 		txn_UpdateElo.AddQuery(sQuery);
@@ -520,7 +525,6 @@ bool VALIDPLAYER(int client)
 int calculateEloGain(int playerElo, int otherTeamAvgElo, bool playerWon)
 {
 	int eloDiff = playerElo - otherTeamAvgElo;
-	
 	//Hardcoded for testing period.
 	if (playerWon)
 	{
@@ -608,6 +612,7 @@ int calculateEloGain(int playerElo, int otherTeamAvgElo, bool playerWon)
 			return -5;
 		}
 	}
+	return 0;
 }
 
 public void SQL_GenericQuery(Database db, DBResultSet results, const char[] sError, any data)
