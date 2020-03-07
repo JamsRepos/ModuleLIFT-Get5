@@ -222,7 +222,7 @@ public void OnDeath(int victim, int killer, int assister)
 	int currentElo;
 	g_hPlayer[victim].GetValue("currentelo", currentElo);
 
-	if (g_hPlayer[victim] == null || g_hPlayer[client].GetMatchesPlayed() <= 10 || currentElo <= 0)
+	if (g_hPlayer[victim] == null || g_hPlayer[victim].GetMatchesPlayed() <= 10 || currentElo <= 0)
 	{
 		if (DEBUG)
 		PrintToServer("Client %d does not have an elo map.", victim);
@@ -341,8 +341,6 @@ public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] resu
 
 public void SQL_TranSuccess_Select(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
 {
-	char sQuery[1024];
-
 	for(int i = 0; i < numQueries; i++)
 	{
 		PlayerEloMap player = g_hPlayer[queryData[i]];
