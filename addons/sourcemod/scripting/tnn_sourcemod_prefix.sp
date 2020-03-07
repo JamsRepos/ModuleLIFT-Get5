@@ -43,7 +43,7 @@ public Action OnTextMsg(UserMsg msg_id, Protobuf hUserMsg, const int[] iClients,
 	return Plugin_Handled; 
 } 
 
-public Action prefixChange(Handle timer, Handle pack)
+public Action prefixChange(Handle timer, Handle hPack)
 { 
 	int iTotal = hPack.ReadCell(); 
 	int[] iPlayers = new int[iTotal]; 
