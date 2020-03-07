@@ -413,10 +413,6 @@ public Action Command_EndMatch(int Client, int iArgs)
 				if(ga_iEndMatchVotesT.Length >= iTeamCount) // Check if we have the amount of votes needed to surrender
 				{
 					CheckSurrenderVotes();
-					// // ServerCommand("get5_endmatch"); // Force end the match
-					// // UpdateMatchStats();
-					// CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
-					// ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
 				}
 				else
 				{
@@ -443,16 +439,6 @@ public Action Command_EndMatch(int Client, int iArgs)
 				if(ga_iEndMatchVotesCT.Length >= iTeamCount) // Check if we have the amount of votes needed to surrender
 				{
 					CheckSurrenderVotes();
-					// for(int i = 1; i <= MaxClients; i++)
-					// {
-					// 	if(IsValidClient(i, true))
-					// 		PrintToChat(i, "%s Counter-Terrorists have voted to surrender. Match ending...", PREFIX);
-					// }
-
-					// ServerCommand("get5_endmatch"); // Force end the match
-					// UpdateMatchStats();
-					// CreateTimer(10.0, Timer_KickEveryoneSurrender); // Delay kicking everyone so they can see the chat message and so the plugin has time to update their stats
-					// ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
 				}
 				else
 				{
@@ -485,6 +471,7 @@ public void CheckSurrenderVotes()
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_T), 16, CS_GetTeamScore(CS_TEAM_CT));
 		CS_TerminateRound(1.0, CSRoundEnd_TerroristsSurrender, false);
+		ServerCommand("get5_endmatch");
 		UpdateMatchStats();
 		ga_iEndMatchVotesCT.Clear(); // Reset the ArrayList
 		return;
@@ -503,6 +490,7 @@ public void CheckSurrenderVotes()
 
 		Get5_OnSeriesResult(Get5_CSTeamToMatchTeam(CS_TEAM_CT), CS_GetTeamScore(CS_TEAM_T), 16);
 		CS_TerminateRound(1.0, CSRoundEnd_CTSurrender, false);
+		ServerCommand("get5_endmatch");
 		UpdateMatchStats();
 		ga_iEndMatchVotesT.Clear(); // Reset the ArrayList
 		return;
