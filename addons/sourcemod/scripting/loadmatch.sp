@@ -33,7 +33,7 @@ StringMap g_NameMap;
 bool g_matchStarted = false;
 bool g_countdownStarted = false;
 
-#define ChatTag			"[SM]"
+#define ChatTag			"[\x0BNexusLeague.gg\x01]"
 #define PLUGIN_VERSION	"1.1.0"
 
 public Plugin myinfo = 
