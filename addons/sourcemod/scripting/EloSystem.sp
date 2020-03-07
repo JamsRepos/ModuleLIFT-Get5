@@ -315,7 +315,7 @@ public void Get5_OnGoingLive(int mapNumber)
 		g_hThreadedDb.Format(sQuery, sizeof(sQuery), g_sz_GET_PLAYER, auth);
 		txn_SelectElo.AddQuery(sQuery, i);
 	}
-	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccess_Select, SQL_TranFailure);	
+	g_hThreadedDb.Execute(txn_SelectElo, SQL_TranSuccess_Select, SQL_TranFailure, null);	
 }
 
 public void Get5_OnSeriesResult(MatchTeam seriesWinner, int team1MapScore, int team2MapScore)
