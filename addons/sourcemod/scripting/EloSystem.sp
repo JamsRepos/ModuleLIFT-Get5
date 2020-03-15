@@ -337,6 +337,10 @@ public void SQL_TranFailure(Database db, any data, int numQueries, const char[] 
 public void SQL_TranSuccess(Database db, any data, int numQueries, Handle[] results, any[] queryData)
 {
 	PrintToServer("Transaction Successful");
+
+	char sQuery[1024];
+	g_hThreadedDb.Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`= 0 WHERE `elo` < 0");
+	g_hThreadedDb.Query(SQL_GenericQuery, sQuery);
 }
 
 public void SQL_TranSuccess_Select(Database db, any data, int numQueries, DBResultSet[] results, any[] queryData)
@@ -416,13 +420,6 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 		LogMessage("Elo gain for player %s is %i. Pre win/loss bonus.", auth, eloGain);
 		LogMessage("Current elo for player %s is %i", auth, playerElo);
 
-		if (playerElo < 0)
-		{
-			LogMessage("Player %s elo was minus. We need to rectify this. NOW.", auth);
-			Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=0 WHERE `steamid` = '%s'", auth);
-			LogMessage("Query %s is run", sQuery);
-			SQL_FastQuery(db, sQuery);
-		}
 		player.GetValue("matchesplayed", playerMatches);
 		if (team == seriesWinner)
 		{
@@ -466,6 +463,7 @@ public void SQL_TranSuccess_EndMatch(Database db, MatchTeam seriesWinner, int nu
 				}
 			}
 		}
+
 		Format(sQuery, sizeof(sQuery), "UPDATE `player_elo` SET `elo`=elo+%d, `matches`=matches+1 WHERE `steamid` = '%s'", eloGain, auth);
 		LogMessage("The query which is run: %s", sQuery);
 		txn_UpdateElo.AddQuery(sQuery);
